@@ -1,0 +1,56 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Unified Drug Search Result",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "source": {
+                "type": "string",
+                "enum": [
+                    "db1",
+                    "db2"
+                ],
+                "description": "Source database of the record"
+            },
+            "originalId": {
+                "type": "string",
+                "description": "ID in the source database"
+            },
+            "brandName": {
+                "type": "string",
+                "description": "Brand or Trade name of the drug"
+            },
+            "activeIngredient": {
+                "type": "string",
+                "description": "Standardized active ingredient name"
+            },
+            "strengthMg": {
+                "type": "number",
+                "description": "Strength in mg (normalized)"
+            },
+            "dosageForm": {
+                "type": "string",
+                "description": "Dosage form (e.g., tablet, capsule)"
+            },
+            "route": {
+                "type": "string",
+                "description": "Route of administration (e.g., oral, PO)"
+            },
+            "manufacturer": {
+                "type": "string",
+                "description": "Manufacturer or Organization name"
+            },
+            "country": {
+                "type": "string",
+                "description": "Country code or Market"
+            }
+        },
+        "required": [
+            "source",
+            "originalId",
+            "brandName",
+            "activeIngredient"
+        ]
+    }
+}

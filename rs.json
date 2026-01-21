@@ -1,0 +1,90 @@
+[
+    {
+        "source": "db1",
+        "originalId": "1",
+        "brandName": "Tylenol",
+        "activeIngredient": "acetaminophen",
+        "strengthMg": 500.0,
+        "dosageForm": "tablet",
+        "route": "oral",
+        "manufacturer": "J&J",
+        "country": "US"
+    },
+    {
+        "source": "db1",
+        "originalId": "2",
+        "brandName": "TYLENOL ",
+        "activeIngredient": "acetaminophen",
+        "strengthMg": 500.0,
+        "dosageForm": "tablet",
+        "route": "oral",
+        "manufacturer": "J&J",
+        "country": "US"
+    },
+    {
+        "source": "db1",
+        "originalId": "9",
+        "brandName": "Acetaminophen ER",
+        "activeIngredient": "acetaminophen",
+        "strengthMg": 650.0,
+        "dosageForm": "tablet",
+        "route": "oral",
+        "manufacturer": "GenericCo",
+        "country": "US"
+    },
+    {
+        "source": "db1",
+        "originalId": "10",
+        "brandName": "Tylenol PM",
+        "activeIngredient": "acetaminophen",
+        "strengthMg": 500.0,
+        "dosageForm": "tablet",
+        "route": "oral",
+        "manufacturer": "J&J",
+        "country": "US"
+    },
+    {
+        "source": "db2",
+        "originalId": "1",
+        "brandName": "Tylenol",
+        "activeIngredient": "acetaminophen",
+        "strengthMg": 500.0,
+        "dosageForm": "tab",
+        "route": "oral",
+        "manufacturer": "J&J",
+        "country": "US"
+    },
+    {
+        "source": "db2",
+        "originalId": "2",
+        "brandName": "tylenol",
+        "activeIngredient": "acetaminophen",
+        "strengthMg": 500.0,
+        "dosageForm": "tab",
+        "route": "oral",
+        "manufacturer": "J&J",
+        "country": "US"
+    },
+    {
+        "source": "db2",
+        "originalId": "9",
+        "brandName": "Acetaminophen ER",
+        "activeIngredient": "acetaminophen",
+        "strengthMg": 650.0,
+        "dosageForm": "tab",
+        "route": "oral",
+        "manufacturer": "GenericCo",
+        "country": "US"
+    },
+    {
+        "source": "db2",
+        "originalId": "10",
+        "brandName": "Tylenol  ",
+        "activeIngredient": "acetaminophen",
+        "strengthMg": 500.0,
+        "dosageForm": "tab",
+        "route": "oral",
+        "manufacturer": "J&J",
+        "country": "US"
+    }
+]
