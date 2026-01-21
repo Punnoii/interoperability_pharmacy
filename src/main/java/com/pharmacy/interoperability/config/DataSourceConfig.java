@@ -32,8 +32,8 @@ public class DataSourceConfig {
     @Bean
     public DataSourceInitializer db1DataSourceInitializer(@Qualifier("db1DataSource") DataSource dataSource) {
         ResourceDatabasePopulator resourceDatabasePopulator = new ResourceDatabasePopulator();
-        resourceDatabasePopulator.addScript(new ClassPathResource("schema-db1.sql"));
-
+        resourceDatabasePopulator.addScript(new ClassPathResource("h2-fix.sql"));
+        resourceDatabasePopulator.addScript(new ClassPathResource("db1.sql"));
         DataSourceInitializer dataSourceInitializer = new DataSourceInitializer();
         dataSourceInitializer.setDataSource(dataSource);
         dataSourceInitializer.setDatabasePopulator(resourceDatabasePopulator);
@@ -56,7 +56,7 @@ public class DataSourceConfig {
     @Bean
     public DataSourceInitializer db2DataSourceInitializer(@Qualifier("db2DataSource") DataSource dataSource) {
         ResourceDatabasePopulator resourceDatabasePopulator = new ResourceDatabasePopulator();
-        resourceDatabasePopulator.addScript(new ClassPathResource("schema-db2.sql"));
+        resourceDatabasePopulator.addScript(new ClassPathResource("db2.sql"));
 
         DataSourceInitializer dataSourceInitializer = new DataSourceInitializer();
         dataSourceInitializer.setDataSource(dataSource);
