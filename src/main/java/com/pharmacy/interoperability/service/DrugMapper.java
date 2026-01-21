@@ -1,14 +1,14 @@
 package com.pharmacy.interoperability.service;
 
 import com.pharmacy.interoperability.model.UnifiedDrug;
+import org.apache.jena.rdf.model.*;
+import org.apache.jena.util.FileManager;
 import org.springframework.stereotype.Component;
-import org.yaml.snakeyaml.Yaml;
 
 import java.io.InputStream;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Component
@@ -18,120 +18,79 @@ public class DrugMapper {
     private Map<String, String> db2Cols;
     private Map<String, String> ontologyLookup; // Brand (lowercase) -> Ontology URI
 
+    private static final String NS_IDMP = "http://purl.org/onto/idmp/";
+
     public DrugMapper() {
-        this.db1Cols = new HashMap<>(); // Initialize to avoid NPE fallback
+        this.db1Cols = new HashMap<>();
         this.db2Cols = new HashMap<>();
         this.ontologyLookup = new HashMap<>();
-        parseMappingFile();
+        setDefaultColumns();
+        loadRdfModel();
     }
 
-    @SuppressWarnings("unchecked")
-    private void parseMappingFile() {
-        try (InputStream inputStream = getClass().getResourceAsStream("/mapping.yaml")) {
-            Yaml yaml = new Yaml();
-            Map<String, Object> root = yaml.load(inputStream);
+    private void setDefaultColumns() {
+        this.db1Cols = Map.of(
+            "brand", "brand_name", 
+            "substance", "active_ingredient", 
+            "strength", "strength_mg", 
+            "form", "dosage_form", 
+            "route", "route", 
+            "man", "manufacturer", 
+            "loc", "country_code", 
+            "id", "product_id"
+        );
+        this.db2Cols = Map.of(
+            "brand", "trade_name", 
+            "substance", "substance", 
+            "strength_val", "dose_value",
+            "strength_unit", "dose_unit", 
+            "form", "form", 
+            "route", "administration_route", 
+            "man", "org_name",
+            "loc", "market", 
+            "id", "med_id"
+        );
+    }
 
-            // adapt to "matches" list format
-            List<Map<String, Object>> matches = (List<Map<String, Object>>) root.get("matches");
-            if (matches != null && !matches.isEmpty()) {
-                // Infer columns from the first match
-                Map<String, Object> firstMatch = matches.get(0);
-                Map<String, Object> db1Sample = (Map<String, Object>) firstMatch.get("db1"); // Note: YAML currently
-                                                                                             // uses flat keys
-                                                                                             // "db1_brand" NOT nested
-                                                                                             // "db1: {...}"
+    private void loadRdfModel() {
+        try (InputStream inputStream = getClass().getResourceAsStream("/semantic_output.rdf")) {
+            if (inputStream == null) {
+                System.err.println("Could not find semantic_output.rdf");
+                return;
+            }
 
-                // FIX: User's latest YAML flat format is:
-                // - method: ...
-                // db1_brand: Tylenol
-                // substance_iso_uri: ...
+            Model model = ModelFactory.createDefaultModel();
+            model.read(inputStream, null);
 
-                // Let's adapt to this flat structure if nested structure is missing
-                if (firstMatch.containsKey("db1_brand")) {
-                    // Flat structure detected
-                    // Hardcode standard columns since we can't infer from flat matches easily, OR
-                    // just use standard defaults
-                    // For the Ontology Linking task, the most important part is reading the URI
+            Property pBrand = model.createProperty(NS_IDMP + "brandName");
+            Property pSubstance = model.createProperty(NS_IDMP + "hasSubstance");
 
-                    for (Map<String, Object> match : matches) {
-                        String uri = (String) match.get("substance_iso_uri");
-                        String db1Brand = (String) match.get("db1_brand");
-                        String db2Brand = (String) match.get("db2_brand");
-
-                        if (uri != null) {
-                            if (db1Brand != null)
-                                ontologyLookup.put(db1Brand.toLowerCase(), uri);
-                            if (db2Brand != null)
-                                ontologyLookup.put(db2Brand.toLowerCase(), uri);
-                        }
-                    }
-
-                    // Fallback to defaults (or assume standard naming since schema inference is
-                    // hard on flat structure)
-                    this.db1Cols = Map.of("brand", "brand_name", "substance", "active_ingredient", "strength",
-                            "strength_mg", "form", "dosage_form", "route", "route", "man", "manufacturer", "loc",
-                            "country_code", "id", "product_id");
-                    this.db2Cols = Map.of("brand", "trade_name", "substance", "substance", "strength_val", "dose_value",
-                            "strength_unit", "dose_unit", "form", "form", "route", "administration_route", "man",
-                            "org_name", "loc", "market", "id", "med_id");
-
-                } else {
-                    // Nested structure (previous version), use previous logic
-                    Map<String, Object> db1 = (Map<String, Object>) firstMatch.get("db1");
-                    Map<String, Object> db2 = (Map<String, Object>) firstMatch.get("db2");
-                    this.db1Cols = inferColumns(db1, "db1");
-                    this.db2Cols = inferColumns(db2, "db2");
+            // Iterate over all resources that have a brand name
+            ResIterator iter = model.listResourcesWithProperty(pBrand);
+            while (iter.hasNext()) {
+                Resource res = iter.nextResource();
+                
+                // Get Brand Name
+                String brand = "";
+                if (res.hasProperty(pBrand)) {
+                    brand = res.getProperty(pBrand).getString();
                 }
 
-            } else {
-                // Fallback defaults
-                this.db1Cols = Map.of("brand", "brand_name", "substance", "active_ingredient", "strength",
-                        "strength_mg", "form", "dosage_form", "route", "route", "man", "manufacturer", "loc",
-                        "country_code", "id", "product_id");
-                this.db2Cols = Map.of("brand", "trade_name", "substance", "substance", "strength_val", "dose_value",
-                        "strength_unit", "dose_unit", "form", "form", "route", "administration_route", "man",
-                        "org_name", "loc", "market", "id", "med_id");
+                // Get Substance URI
+                String uri = "";
+                if (res.hasProperty(pSubstance)) {
+                    Resource subRes = res.getProperty(pSubstance).getResource();
+                    uri = subRes.getURI();
+                }
+
+                if (!brand.isEmpty() && !uri.isEmpty()) {
+                    ontologyLookup.put(brand.toLowerCase().trim(), uri);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
-            // Fallback defaults if file fails
-            this.db1Cols = Map.of("brand", "brand_name", "substance", "active_ingredient", "strength", "strength_mg",
-                    "form", "dosage_form", "route", "route", "man", "manufacturer", "loc", "country_code", "id",
-                    "product_id");
-            this.db2Cols = Map.of("brand", "trade_name", "substance", "substance", "strength_val", "dose_value",
-                    "strength_unit", "dose_unit", "form", "form", "route", "administration_route", "man", "org_name",
-                    "loc", "market", "id", "med_id");
+            System.err.println("Error loading RDF model: " + e.getMessage());
         }
-    }
-
-    // Simple heuristic to find column names based on available keys
-    private Map<String, String> inferColumns(Map<String, Object> sample, String dbName) {
-        if (sample == null)
-            return new HashMap<>();
-        // We need to map: brand, substance, strength, form, route, man, loc, id
-        // We look for keys in 'sample' that contain keywords
-        return Map.of(
-                "id", findKey(sample, "id", "code"),
-                "brand", findKey(sample, "brand", "trade", "name"),
-                "substance", findKey(sample, "substance", "ingredient", "generic"),
-                "strength", dbName.equals("db1") ? findKey(sample, "strength", "mg") : "", // DB2 handled specially
-                "strength_val", dbName.equals("db2") ? findKey(sample, "value", "val") : "",
-                "strength_unit", dbName.equals("db2") ? findKey(sample, "unit") : "",
-                "form", findKey(sample, "form", "dosage"),
-                "route", findKey(sample, "route", "admin"),
-                "man", findKey(sample, "org", "manufacturer", "manuf"), // Manuf might not be in sample, handle null
-                "loc", findKey(sample, "market", "country", "loc"));
-    }
-
-    private String findKey(Map<String, Object> sample, String... keywords) {
-        for (String k : sample.keySet()) {
-            String lower = k.toLowerCase();
-            for (String kw : keywords) {
-                if (lower.contains(kw))
-                    return k;
-            }
-        }
-        return ""; // Not found
     }
 
     public UnifiedDrug mapDb1(ResultSet rs, int rowNum) throws SQLException {
@@ -162,8 +121,8 @@ public class DrugMapper {
             drug.setCountry(rs.getString(locCol));
 
         // Ontology Lookup
-        if (brand != null && ontologyLookup.containsKey(brand.toLowerCase())) {
-            drug.setOntologyUri(ontologyLookup.get(brand.toLowerCase()));
+        if (brand != null && ontologyLookup.containsKey(brand.toLowerCase().trim())) {
+            drug.setOntologyUri(ontologyLookup.get(brand.toLowerCase().trim()));
         }
 
         return drug;
@@ -227,8 +186,8 @@ public class DrugMapper {
         }
 
         // Ontology Lookup
-        if (brand != null && ontologyLookup.containsKey(brand.toLowerCase())) {
-            drug.setOntologyUri(ontologyLookup.get(brand.toLowerCase()));
+        if (brand != null && ontologyLookup.containsKey(brand.toLowerCase().trim())) {
+            drug.setOntologyUri(ontologyLookup.get(brand.toLowerCase().trim()));
         }
 
         return drug;
