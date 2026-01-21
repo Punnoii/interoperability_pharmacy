@@ -1,5 +1,6 @@
 package com.pharmacy.semantic;
 
+import com.pharmacy.interoperability.model.UnifiedDrug;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
@@ -14,9 +15,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class SemanticSearchService {
@@ -26,16 +25,14 @@ public class SemanticSearchService {
     @EventListener(ApplicationReadyEvent.class)
     public void loadRdfOnStartup() {
         LOGGER.info("SemanticSearchService: loading RDF files into memory...");
-        // 1. แก้ไข: ลบ .yaml ออก เพราะ Jena อ่านไม่ได้
-        String[] candidateFiles = new String[]{"semantic_output.rdf", "semantic_output.ttl"}; 
-        
+        String[] candidateFiles = new String[] { "semantic_output.rdf", "semantic_output.ttl" };
+
         for (String path : candidateFiles) {
             try {
                 File f = new File(path);
                 if (f.exists() && f.isFile()) {
                     try (InputStream in = new FileInputStream(f)) {
-                        // Jena ฉลาดพอที่จะเดานามสกุลไฟล์เองได้ ใส่ null ไปเลยก็ได้ครับ
-                        model.read(in, null); 
+                        model.read(in, null);
                         LOGGER.info("Loaded RDF file: {}", path);
                     }
                 }
@@ -46,43 +43,108 @@ public class SemanticSearchService {
         LOGGER.info("Model size (triples): {}", model.size());
     }
 
-    public List<Map<String, String>> search(String keyword) {
+    public List<UnifiedDrug> search(String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) {
             return new ArrayList<>();
         }
-        List<Map<String, String>> results = new ArrayList<>();
-        
-        // 2. แก้ไข: เปลี่ยน SPARQL ให้ดึงข้อมูลแบบ IDMP (ชื่อยา + ลิงก์)
-        String queryString = 
-            "PREFIX idmp: <http://purl.org/onto/idmp/> " +
-            "PREFIX owl: <http://www.w3.org/2002/07/owl#> " +
-            "SELECT ?product ?brand ?sameAsProduct " +
-            "WHERE { " +
-            "  ?product a <http://purl.org/onto/idmp/PharmaceuticalProduct> . " +
-            "  ?product idmp:brandName ?brand . " +
-            "  OPTIONAL { ?product owl:sameAs ?sameAsProduct } . " +
-            "  FILTER regex(?brand, ?kw, \"i\") " + 
-            "} LIMIT 50";
+        List<UnifiedDrug> results = new ArrayList<>();
+
+        // Note: The RDF sample shows idmp:hasSubstance pointing to a resource like
+        // iso11238:Substance_Acetaminophen.
+        // We might need to adjust the query if the substance name is not directly
+        // available or if the resource URI itself is what we want.
+        // Looking at sample: <idmp:hasSubstance
+        // rdf:resource="iso11238:Substance_Acetaminophen"/>
+        // We probably need to parse the resource URI to get the name if there's no
+        // label.
+        // Let's refine the query slightly to handle the resource URI as fallback for
+        // substance.
+
+        String refinedQuery = "PREFIX idmp: <http://purl.org/onto/idmp/> " +
+                "PREFIX owl: <http://www.w3.org/2002/07/owl#> " +
+                "SELECT ?product ?brand ?sameAsProduct ?substanceRes ?strengthVal ?strengthUnit ?dosageForm ?route ?manufacturer ?market "
+                +
+                "WHERE { " +
+                "  ?product a <http://purl.org/onto/idmp/PharmaceuticalProduct> . " +
+                "  ?product idmp:brandName ?brand . " +
+                "  OPTIONAL { ?product owl:sameAs ?sameAsProduct } . " +
+                "  OPTIONAL { ?product idmp:hasSubstance ?substanceRes } . " +
+                "  OPTIONAL { " +
+                "    ?product idmp:hasStrength ?strNode . " +
+                "    ?strNode idmp:strengthValue ?strengthVal . " +
+                "    ?strNode idmp:strengthUnit ?strengthUnit . " +
+                "  } . " +
+                "  OPTIONAL { ?product idmp:hasDosageForm ?df . ?df idmp:dosageFormName ?dosageForm } . " +
+                "  OPTIONAL { ?product idmp:hasRouteOfAdministration ?ro . ?ro idmp:routeName ?route } . " +
+                "  OPTIONAL { ?product idmp:manufacturedBy ?man . ?man idmp:manufacturerName ?manufacturer } . " +
+                "  OPTIONAL { ?product idmp:availableIn ?mkt . ?mkt idmp:marketCode ?market } . " +
+                "  FILTER regex(?brand, ?kw, \"i\") " +
+                "} LIMIT 50";
 
         ParameterizedSparqlString pss = new ParameterizedSparqlString();
-        pss.setCommandText(queryString);
+        pss.setCommandText(refinedQuery);
         pss.setLiteral("kw", keyword);
 
         try (QueryExecution qexec = QueryExecutionFactory.create(pss.asQuery(), model)) {
             ResultSet rs = qexec.execSelect();
             while (rs.hasNext()) {
                 QuerySolution qs = rs.next();
-                Map<String, String> row = new HashMap<>();
-                
-                // ดึงข้อมูลออกมาใส่ Map ให้สวยงาม
-                row.put("uri", qs.getResource("product").toString());
-                row.put("brandName", qs.getLiteral("brand").getString());
-                
-                if (qs.contains("sameAsProduct")) {
-                    row.put("linkedTo", qs.getResource("sameAsProduct").toString());
+                UnifiedDrug drug = new UnifiedDrug();
+
+                drug.setSource("semantic");
+                drug.setOriginalId(qs.getResource("product").getLocalName()); // e.g. product_db1_1
+                drug.setOntologyUri(qs.getResource("product").toString());
+
+                if (qs.contains("brand")) {
+                    drug.setBrandName(qs.getLiteral("brand").getString());
                 }
-                
-                results.add(row);
+
+                if (qs.contains("substanceRes")) {
+                    String subUri = qs.getResource("substanceRes").getLocalName();
+                    // Simple cleanup: remove "Substance_" prefix if present
+                    if (subUri.startsWith("Substance_")) {
+                        drug.setActiveIngredient(subUri.replace("Substance_", ""));
+                    } else {
+                        drug.setActiveIngredient(subUri);
+                    }
+                }
+
+                if (qs.contains("strengthVal")) {
+                    try {
+                        drug.setStrengthMg(qs.getLiteral("strengthVal").getDouble());
+                    } catch (Exception e) {
+                        // ignore number format issues
+                    }
+                }
+
+                // Note: UnifiedDrug might expect just strengthMg for sorting, but we can also
+                // store unit if needed.
+                // For now, assuming strengthVal is in mg if unit is mg.
+                // The sample RDF says unit is "mg".
+
+                if (qs.contains("dosageForm")) {
+                    drug.setDosageForm(qs.getLiteral("dosageForm").getString());
+                }
+
+                if (qs.contains("route")) {
+                    drug.setRoute(qs.getLiteral("route").getString());
+                }
+
+                if (qs.contains("manufacturer")) {
+                    drug.setManufacturer(qs.getLiteral("manufacturer").getString());
+                }
+
+                if (qs.contains("market")) {
+                    drug.setCountry(qs.getLiteral("market").getString());
+                }
+
+                if (qs.contains("sameAsProduct")) {
+                    // We could put this in a custom field or description, but existing UnifiedDrug
+                    // might not have a specific field for 'linkedTo'.
+                    // For now, we rely on the main fields.
+                }
+
+                results.add(drug);
             }
         } catch (Exception ex) {
             LOGGER.error("SPARQL search failed: {}", ex.getMessage(), ex);

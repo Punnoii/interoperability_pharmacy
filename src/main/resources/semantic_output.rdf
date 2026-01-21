@@ -1,4 +1,4 @@
-<!-- <?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" xmlns:owl="http://www.w3.org/2002/07/owl#" xmlns:xsd="http://www.w3.org/2001/XMLSchema#" xmlns:idmp="http://purl.org/onto/idmp/" xmlns:iso11238="http://purl.org/onto/idmp/iso11238/" xmlns:pharm="http://pharmacy.interoperability.com/">
   <rdf:Description rdf:about="pharm:product_db1_1">
     <rdf:type rdf:resource="http://purl.org/onto/idmp/PharmaceuticalProduct"/>
@@ -121,4 +121,4 @@
     <owl:sameAs rdf:resource="pharm:medicine_db2_3"/>
     <rdfs:comment>method=exact+brand, score=1.00, verified=true</rdfs:comment>
   </rdf:Description>
-</rdf:RDF> -->
+</rdf:RDF>

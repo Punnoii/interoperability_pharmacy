@@ -11,12 +11,14 @@ public class UnifiedDrug {
     private String manufacturer;
     private String country;
 
+    private String ontologyUri;
+
     public UnifiedDrug() {
     }
 
     public UnifiedDrug(String source, String originalId, String brandName, String activeIngredient,
             Double strengthMg, String dosageForm, String route,
-            String manufacturer, String country) {
+            String manufacturer, String country, String ontologyUri) {
         this.source = source;
         this.originalId = originalId;
         this.brandName = brandName;
@@ -26,6 +28,7 @@ public class UnifiedDrug {
         this.route = route;
         this.manufacturer = manufacturer;
         this.country = country;
+        this.ontologyUri = ontologyUri;
     }
 
     // Getters and Setters
@@ -100,5 +103,13 @@ public class UnifiedDrug {
 
     public void setCountry(String country) {
         this.country = country;
+    }
+
+    public String getOntologyUri() {
+        return ontologyUri;
+    }
+
+    public void setOntologyUri(String ontologyUri) {
+        this.ontologyUri = ontologyUri;
     }
 }

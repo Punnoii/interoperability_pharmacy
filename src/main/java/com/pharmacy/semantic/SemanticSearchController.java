@@ -1,5 +1,6 @@
 package com.pharmacy.semantic;
 
+import com.pharmacy.interoperability.model.UnifiedDrug;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -19,13 +20,13 @@ public class SemanticSearchController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<Map<String, String>>> searchGet(@RequestParam(name = "q") String q) {
+    public ResponseEntity<List<UnifiedDrug>> searchGet(@RequestParam(name = "q") String q) {
         LOGGER.info("Received GET search request: {}", q);
         return ResponseEntity.ok(service.search(q));
     }
 
     @PostMapping("/search")
-    public ResponseEntity<List<Map<String, String>>> searchPost(@RequestBody Map<String, String> body) {
+    public ResponseEntity<List<UnifiedDrug>> searchPost(@RequestBody Map<String, String> body) {
         String q = body != null ? body.get("q") : null;
         LOGGER.info("Received POST search request: {}", q);
         return ResponseEntity.ok(service.search(q));

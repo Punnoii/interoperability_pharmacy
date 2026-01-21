@@ -1,0 +1,55 @@
+# description: Semantic mapping across DB1/DB2 using ISO11238 (IDMP)
+# total_matches: 5
+# verified_matches: 3
+# average_score: 0.93
+# matches:
+#   -
+#     method: exact+brand
+#     score: 1.00
+#     verified: true
+#     db1_brand: Tylenol
+#     db2_brand: Tylenol
+#     substance_iso_uri: http://purl.org/onto/idmp/iso11238/Substance_Acetaminophen
+#     strength_mg: 500
+#     form: tablet
+#     route: oral
+#   -
+#     method: fuzzy_composite_low
+#     score: 0.82
+#     verified: false
+#     db1_brand: Tylenol
+#     db2_brand: Panadol
+#     substance_iso_uri: http://purl.org/onto/idmp/iso11238/Substance_Acetaminophen
+#     strength_mg: 500
+#     form: tablet
+#     route: oral
+#   -
+#     method: fuzzy_composite_low
+#     score: 0.82
+#     verified: false
+#     db1_brand: Panadol
+#     db2_brand: Tylenol
+#     substance_iso_uri: http://purl.org/onto/idmp/iso11238/Substance_Acetaminophen
+#     strength_mg: 500
+#     form: tablet
+#     route: oral
+#   -
+#     method: exact+brand
+#     score: 1.00
+#     verified: true
+#     db1_brand: Panadol
+#     db2_brand: Panadol
+#     substance_iso_uri: http://purl.org/onto/idmp/iso11238/Substance_Acetaminophen
+#     strength_mg: 500
+#     form: tablet
+#     route: oral
+#   -
+#     method: exact+brand
+#     score: 1.00
+#     verified: true
+#     db1_brand: Advil
+#     db2_brand: Advil
+#     substance_iso_uri: http://purl.org/onto/idmp/iso11238/Substance_Ibuprofen
+#     strength_mg: 200
+#     form: tablet
+#     route: oral
