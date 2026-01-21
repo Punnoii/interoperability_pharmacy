@@ -1,10 +1,10 @@
 package com.pharmacy.semantic;
 
+import com.pharmacy.Application;
 import com.pharmacy.interoperability.model.UnifiedDrug;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import com.pharmacy.interoperability.Application;
 
 import java.util.List;
 

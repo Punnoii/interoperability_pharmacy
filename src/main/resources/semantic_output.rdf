@@ -121,4 +121,60 @@
     <owl:sameAs rdf:resource="pharm:medicine_db2_3"/>
     <rdfs:comment>method=exact+brand, score=1.00, verified=true</rdfs:comment>
   </rdf:Description>
+  <!-- <rdf:Description rdf:about="pharm:product_db1_amox_1">
+    <rdf:type rdf:resource="http://purl.org/onto/idmp/PharmaceuticalProduct"/>
+    <idmp:brandName>Amoxil</idmp:brandName>
+    <idmp:hasSubstance rdf:resource="iso11238:Substance_Amoxicillin"/>
+    <idmp:hasStrength>
+      <rdf:Description>
+        <rdf:type rdf:resource="http://purl.org/onto/idmp/Strength"/>
+        <idmp:strengthValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">500</idmp:strengthValue>
+        <idmp:strengthUnit>mg</idmp:strengthUnit>
+      </rdf:Description>
+    </idmp:hasStrength>
+    <idmp:hasDosageForm>
+        <rdf:Description>
+            <idmp:dosageFormName>capsule</idmp:dosageFormName>
+        </rdf:Description>
+    </idmp:hasDosageForm>
+    <idmp:manufacturedBy>
+        <rdf:Description>
+            <idmp:manufacturerName>GSK</idmp:manufacturerName>
+        </rdf:Description>
+    </idmp:manufacturedBy>
+    <idmp:availableIn>
+        <rdf:Description>
+            <idmp:marketCode>US</idmp:marketCode>
+        </rdf:Description>
+    </idmp:availableIn>
+  </rdf:Description>
+
+  <rdf:Description rdf:about="pharm:medicine_db2_amox_1">
+    <rdf:type rdf:resource="http://purl.org/onto/idmp/PharmaceuticalProduct"/>
+    <idmp:brandName>Amoxil</idmp:brandName>
+    <idmp:hasSubstance rdf:resource="iso11238:Substance_Amoxicillin"/>
+    <idmp:hasStrength>
+      <rdf:Description>
+        <rdf:type rdf:resource="http://purl.org/onto/idmp/Strength"/>
+        <idmp:strengthValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">500</idmp:strengthValue>
+        <idmp:strengthUnit>mg</idmp:strengthUnit>
+      </rdf:Description>
+    </idmp:hasStrength>
+    <idmp:hasDosageForm>
+        <rdf:Description>
+            <idmp:dosageFormName>cap</idmp:dosageFormName>
+        </rdf:Description>
+    </idmp:hasDosageForm>
+    <idmp:manufacturedBy>
+        <rdf:Description>
+            <idmp:manufacturerName>GSK</idmp:manufacturerName>
+        </rdf:Description>
+    </idmp:manufacturedBy>
+  </rdf:Description>
+
+  <rdf:Description rdf:about="pharm:match_amox_1">
+    <owl:sameAs rdf:resource="pharm:product_db1_amox_1"/>
+    <owl:sameAs rdf:resource="pharm:medicine_db2_amox_1"/>
+    <rdfs:comment>method=exact+brand, score=1.00, verified=true</rdfs:comment>
+  </rdf:Description> -->
 </rdf:RDF>

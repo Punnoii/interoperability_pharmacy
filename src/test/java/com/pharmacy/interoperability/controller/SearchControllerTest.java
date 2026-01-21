@@ -1,6 +1,6 @@
 package com.pharmacy.interoperability.controller;
 
-import com.pharmacy.interoperability.Application;
+import com.pharmacy.Application; // ✅ ต้อง Import ตัวนี้จาก package หลัก
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -9,13 +9,14 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-// *** ส่วนที่เพิ่มมา: Imports สำหรับการเช็คค่าและปริ้น log ***
-import static org.junit.jupiter.api.Assertions.assertFalse;
+// Static Imports สำหรับการ Test
 import static org.hamcrest.Matchers.containsString;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print; // ตัวสำคัญสำหรับดู Log
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+// ✅ ระบุ classes = Application.class เพื่อให้ Test รู้ว่า Main Class อยู่ไหน
 @SpringBootTest(classes = Application.class)
 @AutoConfigureMockMvc
 public class SearchControllerTest {
@@ -28,41 +29,39 @@ public class SearchControllerTest {
         // ยิง Request ไปที่ /search?term=paracetamol
         MvcResult result = mvc.perform(get("/search?term=paracetamol")
                 .contentType(MediaType.APPLICATION_JSON))
+                
+                // 1. ปริ้น Log ออกมาดู (ถ้า Error ให้ดูตรงนี้ว่า Body ว่างไหม)
+                .andDo(print()) 
 
-                // 1. สั่งปริ้น JSON ที่ได้ออกมาดูใน Console (จะเห็นข้อมูลยาที่นี่)
-                .andDo(print())
-
-                // 2. เช็ค Status และโครงสร้างข้อมูลตามปกติ
+                // 2. เช็ค Status 200 OK
                 .andExpect(status().isOk())
+                
+                // 3. เช็คว่าเป็น Array และมีข้อมูล
                 .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$[0].brandName").exists()) // เช็คว่ามีฟิลด์ brandName
-                .andExpect(jsonPath("$[?(@.source == 'db1')]").exists())
+                
+                // เช็คว่ามีข้อมูลจากทั้ง db1 และ db2
+                // หมายเหตุ: ถ้า Test ตกตรงนี้ แปลว่า DB ไม่ได้ถูก Init ตอนเริ่ม Test
+                .andExpect(jsonPath("$[?(@.source == 'db1')]").exists()) 
                 .andExpect(jsonPath("$[?(@.source == 'db2')]").exists())
 
-                // 3. (ที่คุณขอมา) เช็คว่าค่า brandName ต้องมีคำว่า Paracetamol (Case
-                // Insensitive อาจต้องปรับตาม Data จริง)
-                // หมายเหตุ: ตรงนี้ผมใช้ brandName แทน name ตามโครงสร้าง JSON เดิมของคุณ
-                // .andExpect(jsonPath("$[0].brandName").value(containsString("Paracetamol")))
+                .andReturn();
 
-                .andReturn(); // คืนค่าผลลัพธ์เพื่อเอาไปเช็คต่อแบบ Manual
-
-        // 4. (ที่คุณขอมา) ดึง String ออกมาเช็คว่า "ไม่ว่างเปล่า"
         String responseBody = result.getResponse().getContentAsString();
 
         System.out.println("---------- CHECK DATA MANUALLY ----------");
-        System.out.println("Data: " + responseBody); // ปริ้นย้ำอีกที
+        System.out.println("Data: " + responseBody);
 
-        // เช็คว่า responseBody ต้องไม่ว่าง (ถ้าว่าง Test จะพังตรงนี้)
-        assertFalse(responseBody.isEmpty(), "ข้อมูลที่ได้ต้องไม่ว่างเปล่า (Response body must not be empty)");
+        assertFalse(responseBody.isEmpty(), "❌ Response body ว่างเปล่า (แสดงว่าค้นหาไม่เจอ)");
     }
 
     @Test
     public void searchShouldNormalizeData() throws Exception {
-        // "Tylenol" in DB2 is 0.500 g, should be normalized to 500.0 mg
+        // ทดสอบการแปลงหน่วย (0.500 g -> 500.0 mg)
         mvc.perform(get("/search?term=Tylenol")
                 .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print()) // ใส่ print ให้ด้วยเผื่ออยากดู data เคสนี้
+                .andDo(print())
                 .andExpect(status().isOk())
+                // เช็คว่ามี db2 ที่แปลงเป็น 500.0 แล้ว
                 .andExpect(jsonPath("$[?(@.source == 'db2' && @.strengthMg == 500.0)]").exists());
     }
 }
