@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" xmlns:owl="http://www.w3.org/2002/07/owl#" xmlns:xsd="http://www.w3.org/2001/XMLSchema#" xmlns:idmp="http://purl.org/onto/idmp/" xmlns:iso11238="http://purl.org/onto/idmp/iso11238/" xmlns:pharm="http://pharmacy.interoperability.com/">
+  <rdf:Description rdf:about="pharm:product_db1_1">
+    <rdf:type rdf:resource="http://purl.org/onto/idmp/PharmaceuticalProduct"/>
+    <idmp:brandName>Tylenol</idmp:brandName>
+    <idmp:hasSubstance rdf:resource="iso11238:Substance_Acetaminophen"/>
+    <idmp:hasStrength>
+      <rdf:Description>
+        <rdf:type rdf:resource="http://purl.org/onto/idmp/Strength"/>
+        <idmp:strengthValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">500</idmp:strengthValue>
+        <idmp:strengthUnit>mg</idmp:strengthUnit>
+      </rdf:Description>
+    </idmp:hasStrength>
+    <idmp:hasDosageForm><rdf:Description><rdf:type rdf:resource="http://purl.org/onto/idmp/DosageForm"/><idmp:dosageFormName>tablet</idmp:dosageFormName></rdf:Description></idmp:hasDosageForm>
+    <idmp:hasRouteOfAdministration><rdf:Description><rdf:type rdf:resource="http://purl.org/onto/idmp/RouteOfAdministration"/><idmp:routeName>oral</idmp:routeName></rdf:Description></idmp:hasRouteOfAdministration>
+    <idmp:manufacturedBy><rdf:Description><rdf:type rdf:resource="http://purl.org/onto/idmp/Manufacturer"/><idmp:manufacturerName>J&amp;J</idmp:manufacturerName></rdf:Description></idmp:manufacturedBy>
+    <idmp:availableIn><rdf:Description><rdf:type rdf:resource="http://purl.org/onto/idmp/Market"/><idmp:marketCode>US</idmp:marketCode></rdf:Description></idmp:availableIn>
+  </rdf:Description>
+  <rdf:Description rdf:about="pharm:product_db1_2">
+    <rdf:type rdf:resource="http://purl.org/onto/idmp/PharmaceuticalProduct"/>
+    <idmp:brandName>Panadol</idmp:brandName>
+    <idmp:hasSubstance rdf:resource="iso11238:Substance_Acetaminophen"/>
+    <idmp:hasStrength>
+      <rdf:Description>
+        <rdf:type rdf:resource="http://purl.org/onto/idmp/Strength"/>
+        <idmp:strengthValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">500</idmp:strengthValue>
+        <idmp:strengthUnit>mg</idmp:strengthUnit>
+      </rdf:Description>
+    </idmp:hasStrength>
+    <idmp:hasDosageForm><rdf:Description><rdf:type rdf:resource="http://purl.org/onto/idmp/DosageForm"/><idmp:dosageFormName>tablet</idmp:dosageFormName></rdf:Description></idmp:hasDosageForm>
+    <idmp:hasRouteOfAdministration><rdf:Description><rdf:type rdf:resource="http://purl.org/onto/idmp/RouteOfAdministration"/><idmp:routeName>oral</idmp:routeName></rdf:Description></idmp:hasRouteOfAdministration>
+    <idmp:manufacturedBy><rdf:Description><rdf:type rdf:resource="http://purl.org/onto/idmp/Manufacturer"/><idmp:manufacturerName>GSK</idmp:manufacturerName></rdf:Description></idmp:manufacturedBy>
+    <idmp:availableIn><rdf:Description><rdf:type rdf:resource="http://purl.org/onto/idmp/Market"/><idmp:marketCode>GB</idmp:marketCode></rdf:Description></idmp:availableIn>
+  </rdf:Description>
+  <rdf:Description rdf:about="pharm:product_db1_3">
+    <rdf:type rdf:resource="http://purl.org/onto/idmp/PharmaceuticalProduct"/>
+    <idmp:brandName>Advil</idmp:brandName>
+    <idmp:hasSubstance rdf:resource="iso11238:Substance_Ibuprofen"/>
+    <idmp:hasStrength>
+      <rdf:Description>
+        <rdf:type rdf:resource="http://purl.org/onto/idmp/Strength"/>
+        <idmp:strengthValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">200</idmp:strengthValue>
+        <idmp:strengthUnit>mg</idmp:strengthUnit>
+      </rdf:Description>
+    </idmp:hasStrength>
+    <idmp:hasDosageForm><rdf:Description><rdf:type rdf:resource="http://purl.org/onto/idmp/DosageForm"/><idmp:dosageFormName>tablet</idmp:dosageFormName></rdf:Description></idmp:hasDosageForm>
+    <idmp:hasRouteOfAdministration><rdf:Description><rdf:type rdf:resource="http://purl.org/onto/idmp/RouteOfAdministration"/><idmp:routeName>oral</idmp:routeName></rdf:Description></idmp:hasRouteOfAdministration>
+    <idmp:manufacturedBy><rdf:Description><rdf:type rdf:resource="http://purl.org/onto/idmp/Manufacturer"/><idmp:manufacturerName>Pfizer</idmp:manufacturerName></rdf:Description></idmp:manufacturedBy>
+    <idmp:availableIn><rdf:Description><rdf:type rdf:resource="http://purl.org/onto/idmp/Market"/><idmp:marketCode>US</idmp:marketCode></rdf:Description></idmp:availableIn>
+  </rdf:Description>
+  <rdf:Description rdf:about="pharm:medicine_db2_1">
+    <rdf:type rdf:resource="http://purl.org/onto/idmp/PharmaceuticalProduct"/>
+    <idmp:brandName>Tylenol</idmp:brandName>
+    <idmp:hasSubstance rdf:resource="iso11238:Substance_Acetaminophen"/>
+    <idmp:hasStrength>
+      <rdf:Description>
+        <rdf:type rdf:resource="http://purl.org/onto/idmp/Strength"/>
+        <idmp:strengthValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">500</idmp:strengthValue>
+        <idmp:strengthUnit>mg</idmp:strengthUnit>
+      </rdf:Description>
+    </idmp:hasStrength>
+    <idmp:hasDosageForm><rdf:Description><rdf:type rdf:resource="http://purl.org/onto/idmp/DosageForm"/><idmp:dosageFormName>tablet</idmp:dosageFormName></rdf:Description></idmp:hasDosageForm>
+    <idmp:hasRouteOfAdministration><rdf:Description><rdf:type rdf:resource="http://purl.org/onto/idmp/RouteOfAdministration"/><idmp:routeName>oral</idmp:routeName></rdf:Description></idmp:hasRouteOfAdministration>
+    <idmp:manufacturedBy><rdf:Description><rdf:type rdf:resource="http://purl.org/onto/idmp/Manufacturer"/><idmp:manufacturerName>J&amp;J</idmp:manufacturerName></rdf:Description></idmp:manufacturedBy>
+    <idmp:availableIn><rdf:Description><rdf:type rdf:resource="http://purl.org/onto/idmp/Market"/><idmp:marketCode>US</idmp:marketCode></rdf:Description></idmp:availableIn>
+  </rdf:Description>
+  <rdf:Description rdf:about="pharm:medicine_db2_2">
+    <rdf:type rdf:resource="http://purl.org/onto/idmp/PharmaceuticalProduct"/>
+    <idmp:brandName>Panadol</idmp:brandName>
+    <idmp:hasSubstance rdf:resource="iso11238:Substance_Acetaminophen"/>
+    <idmp:hasStrength>
+      <rdf:Description>
+        <rdf:type rdf:resource="http://purl.org/onto/idmp/Strength"/>
+        <idmp:strengthValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">500</idmp:strengthValue>
+        <idmp:strengthUnit>mg</idmp:strengthUnit>
+      </rdf:Description>
+    </idmp:hasStrength>
+    <idmp:hasDosageForm><rdf:Description><rdf:type rdf:resource="http://purl.org/onto/idmp/DosageForm"/><idmp:dosageFormName>tablet</idmp:dosageFormName></rdf:Description></idmp:hasDosageForm>
+    <idmp:hasRouteOfAdministration><rdf:Description><rdf:type rdf:resource="http://purl.org/onto/idmp/RouteOfAdministration"/><idmp:routeName>oral</idmp:routeName></rdf:Description></idmp:hasRouteOfAdministration>
+    <idmp:manufacturedBy><rdf:Description><rdf:type rdf:resource="http://purl.org/onto/idmp/Manufacturer"/><idmp:manufacturerName>GSK</idmp:manufacturerName></rdf:Description></idmp:manufacturedBy>
+    <idmp:availableIn><rdf:Description><rdf:type rdf:resource="http://purl.org/onto/idmp/Market"/><idmp:marketCode>GB</idmp:marketCode></rdf:Description></idmp:availableIn>
+  </rdf:Description>
+  <rdf:Description rdf:about="pharm:medicine_db2_3">
+    <rdf:type rdf:resource="http://purl.org/onto/idmp/PharmaceuticalProduct"/>
+    <idmp:brandName>Advil</idmp:brandName>
+    <idmp:hasSubstance rdf:resource="iso11238:Substance_Ibuprofen"/>
+    <idmp:hasStrength>
+      <rdf:Description>
+        <rdf:type rdf:resource="http://purl.org/onto/idmp/Strength"/>
+        <idmp:strengthValue rdf:datatype="http://www.w3.org/2001/XMLSchema#integer">200</idmp:strengthValue>
+        <idmp:strengthUnit>mg</idmp:strengthUnit>
+      </rdf:Description>
+    </idmp:hasStrength>
+    <idmp:hasDosageForm><rdf:Description><rdf:type rdf:resource="http://purl.org/onto/idmp/DosageForm"/><idmp:dosageFormName>tablet</idmp:dosageFormName></rdf:Description></idmp:hasDosageForm>
+    <idmp:hasRouteOfAdministration><rdf:Description><rdf:type rdf:resource="http://purl.org/onto/idmp/RouteOfAdministration"/><idmp:routeName>oral</idmp:routeName></rdf:Description></idmp:hasRouteOfAdministration>
+    <idmp:manufacturedBy><rdf:Description><rdf:type rdf:resource="http://purl.org/onto/idmp/Manufacturer"/><idmp:manufacturerName>Pfizer</idmp:manufacturerName></rdf:Description></idmp:manufacturedBy>
+    <idmp:availableIn><rdf:Description><rdf:type rdf:resource="http://purl.org/onto/idmp/Market"/><idmp:marketCode>US</idmp:marketCode></rdf:Description></idmp:availableIn>
+  </rdf:Description>
+  <rdf:Description rdf:about="pharm:match_1_1">
+    <owl:sameAs rdf:resource="pharm:product_db1_1"/>
+    <owl:sameAs rdf:resource="pharm:medicine_db2_1"/>
+    <rdfs:comment>method=exact+brand, score=1.00, verified=true</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="pharm:match_1_2">
+    <owl:sameAs rdf:resource="pharm:product_db1_1"/>
+    <owl:sameAs rdf:resource="pharm:medicine_db2_2"/>
+    <rdfs:comment>method=fuzzy_composite_low, score=0.82, verified=false</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="pharm:match_2_1">
+    <owl:sameAs rdf:resource="pharm:product_db1_2"/>
+    <owl:sameAs rdf:resource="pharm:medicine_db2_1"/>
+    <rdfs:comment>method=fuzzy_composite_low, score=0.82, verified=false</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="pharm:match_2_2">
+    <owl:sameAs rdf:resource="pharm:product_db1_2"/>
+    <owl:sameAs rdf:resource="pharm:medicine_db2_2"/>
+    <rdfs:comment>method=exact+brand, score=1.00, verified=true</rdfs:comment>
+  </rdf:Description>
+  <rdf:Description rdf:about="pharm:match_3_3">
+    <owl:sameAs rdf:resource="pharm:product_db1_3"/>
+    <owl:sameAs rdf:resource="pharm:medicine_db2_3"/>
+    <rdfs:comment>method=exact+brand, score=1.00, verified=true</rdfs:comment>
+  </rdf:Description>
+</rdf:RDF>

@@ -1,0 +1,102 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix idmp: <http://purl.org/onto/idmp/> .
+@prefix iso11238: <http://purl.org/onto/idmp/iso11238/> .
+@prefix pharm: <http://pharmacy.interoperability.com/> .
+
+pharm:product_db1_1
+    a idmp:PharmaceuticalProduct ;
+    idmp:brandName "Tylenol" ;
+    idmp:hasSubstance iso11238:Substance_Acetaminophen ;
+    idmp:hasStrength [ a idmp:Strength ; idmp:strengthValue 500 ; idmp:strengthUnit "mg" ] ;
+    idmp:hasDosageForm [ a idmp:DosageForm ; idmp:dosageFormName "tablet" ] ;
+    idmp:hasRouteOfAdministration [ a idmp:RouteOfAdministration ; idmp:routeName "oral" ] ;
+    idmp:manufacturedBy [ a idmp:Manufacturer ; idmp:manufacturerName "J&J" ] ;
+    idmp:availableIn [ a idmp:Market ; idmp:marketCode "US" ] ;
+    .
+
+pharm:product_db1_2
+    a idmp:PharmaceuticalProduct ;
+    idmp:brandName "Panadol" ;
+    idmp:hasSubstance iso11238:Substance_Acetaminophen ;
+    idmp:hasStrength [ a idmp:Strength ; idmp:strengthValue 500 ; idmp:strengthUnit "mg" ] ;
+    idmp:hasDosageForm [ a idmp:DosageForm ; idmp:dosageFormName "tablet" ] ;
+    idmp:hasRouteOfAdministration [ a idmp:RouteOfAdministration ; idmp:routeName "oral" ] ;
+    idmp:manufacturedBy [ a idmp:Manufacturer ; idmp:manufacturerName "GSK" ] ;
+    idmp:availableIn [ a idmp:Market ; idmp:marketCode "GB" ] ;
+    .
+
+pharm:product_db1_3
+    a idmp:PharmaceuticalProduct ;
+    idmp:brandName "Advil" ;
+    idmp:hasSubstance iso11238:Substance_Ibuprofen ;
+    idmp:hasStrength [ a idmp:Strength ; idmp:strengthValue 200 ; idmp:strengthUnit "mg" ] ;
+    idmp:hasDosageForm [ a idmp:DosageForm ; idmp:dosageFormName "tablet" ] ;
+    idmp:hasRouteOfAdministration [ a idmp:RouteOfAdministration ; idmp:routeName "oral" ] ;
+    idmp:manufacturedBy [ a idmp:Manufacturer ; idmp:manufacturerName "Pfizer" ] ;
+    idmp:availableIn [ a idmp:Market ; idmp:marketCode "US" ] ;
+    .
+
+pharm:medicine_db2_1
+    a idmp:PharmaceuticalProduct ;
+    idmp:brandName "Tylenol" ;
+    idmp:hasSubstance iso11238:Substance_Acetaminophen ;
+    idmp:hasStrength [ a idmp:Strength ; idmp:strengthValue 500 ; idmp:strengthUnit "mg" ] ;
+    idmp:hasDosageForm [ a idmp:DosageForm ; idmp:dosageFormName "tablet" ] ;
+    idmp:hasRouteOfAdministration [ a idmp:RouteOfAdministration ; idmp:routeName "oral" ] ;
+    idmp:manufacturedBy [ a idmp:Manufacturer ; idmp:manufacturerName "J&J" ] ;
+    idmp:availableIn [ a idmp:Market ; idmp:marketCode "US" ] ;
+    .
+
+pharm:medicine_db2_2
+    a idmp:PharmaceuticalProduct ;
+    idmp:brandName "Panadol" ;
+    idmp:hasSubstance iso11238:Substance_Acetaminophen ;
+    idmp:hasStrength [ a idmp:Strength ; idmp:strengthValue 500 ; idmp:strengthUnit "mg" ] ;
+    idmp:hasDosageForm [ a idmp:DosageForm ; idmp:dosageFormName "tablet" ] ;
+    idmp:hasRouteOfAdministration [ a idmp:RouteOfAdministration ; idmp:routeName "oral" ] ;
+    idmp:manufacturedBy [ a idmp:Manufacturer ; idmp:manufacturerName "GSK" ] ;
+    idmp:availableIn [ a idmp:Market ; idmp:marketCode "GB" ] ;
+    .
+
+pharm:medicine_db2_3
+    a idmp:PharmaceuticalProduct ;
+    idmp:brandName "Advil" ;
+    idmp:hasSubstance iso11238:Substance_Ibuprofen ;
+    idmp:hasStrength [ a idmp:Strength ; idmp:strengthValue 200 ; idmp:strengthUnit "mg" ] ;
+    idmp:hasDosageForm [ a idmp:DosageForm ; idmp:dosageFormName "tablet" ] ;
+    idmp:hasRouteOfAdministration [ a idmp:RouteOfAdministration ; idmp:routeName "oral" ] ;
+    idmp:manufacturedBy [ a idmp:Manufacturer ; idmp:manufacturerName "Pfizer" ] ;
+    idmp:availableIn [ a idmp:Market ; idmp:marketCode "US" ] ;
+    .
+
+iso11238:Substance_Acetaminophen a idmp:Substance ; rdfs:label "Paracetamol (Acetaminophen)" ; owl:sameAs iso11238:Substance_Acetaminophen .
+iso11238:Substance_Acetaminophen a idmp:Substance ; rdfs:label "Acetaminophen" ; owl:sameAs iso11238:Substance_Acetaminophen .
+iso11238:Substance_Ibuprofen a idmp:Substance ; rdfs:label "Ibuprofen" ; owl:sameAs iso11238:Substance_Acetaminophen .
+
+pharm:match_1_1
+    owl:sameAs pharm:product_db1_1 ;
+    owl:sameAs pharm:medicine_db2_1 ;
+    rdfs:comment "method=exact+brand, score=1.00, verified=true" .
+
+pharm:match_1_2
+    owl:sameAs pharm:product_db1_1 ;
+    owl:sameAs pharm:medicine_db2_2 ;
+    rdfs:comment "method=fuzzy_composite_low, score=0.82, verified=false" .
+
+pharm:match_2_1
+    owl:sameAs pharm:product_db1_2 ;
+    owl:sameAs pharm:medicine_db2_1 ;
+    rdfs:comment "method=fuzzy_composite_low, score=0.82, verified=false" .
+
+pharm:match_2_2
+    owl:sameAs pharm:product_db1_2 ;
+    owl:sameAs pharm:medicine_db2_2 ;
+    rdfs:comment "method=exact+brand, score=1.00, verified=true" .
+
+pharm:match_3_3
+    owl:sameAs pharm:product_db1_3 ;
+    owl:sameAs pharm:medicine_db2_3 ;
+    rdfs:comment "method=exact+brand, score=1.00, verified=true" .
