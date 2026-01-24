@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE rdf:RDF [
+	<!ENTITY cmns-av "https://www.omg.org/spec/Commons/AnnotationVocabulary/">
+	<!ENTITY cmns-cds "https://www.omg.org/spec/Commons/CodesAndCodeSets/">
+	<!ENTITY cmns-col "https://www.omg.org/spec/Commons/Collections/">
+	<!ENTITY cmns-cxtdsg "https://www.omg.org/spec/Commons/ContextualDesignators/">
+	<!ENTITY cmns-dt "https://www.omg.org/spec/Commons/DatesAndTimes/">
+	<!ENTITY cmns-id "https://www.omg.org/spec/Commons/Identifiers/">
+	<!ENTITY cmns-prd "https://www.omg.org/spec/Commons/ProductsAndServices/">
+	<!ENTITY cmns-pts "https://www.omg.org/spec/Commons/PartiesAndSituations/">
+	<!ENTITY cmns-ra "https://www.omg.org/spec/Commons/RegistrationAuthorities/">
+	<!ENTITY cmns-rga "https://www.omg.org/spec/Commons/RegulatoryAgencies/">
+	<!ENTITY dcterms "http://purl.org/dc/terms/">
+	<!ENTITY idmp-chg "https://spec.pistoiaalliance.org/idmp/ontology/META/ChangeManagement/">
+	<!ENTITY idmp-mprd "https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11615-MedicinalProducts/">
+	<!ENTITY idmp-sub "https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/">
+	<!ENTITY owl "http://www.w3.org/2002/07/owl#">
+	<!ENTITY rdf "http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+	<!ENTITY rdfs "http://www.w3.org/2000/01/rdf-schema#">
+	<!ENTITY skos "http://www.w3.org/2004/02/skos/core#">
+	<!ENTITY xsd "http://www.w3.org/2001/XMLSchema#">
+]>
+<rdf:RDF xml:base="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11616-PharmaceuticalProducts/"
+	xmlns="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11616-PharmaceuticalProducts/"
+	xmlns:cmns-av="https://www.omg.org/spec/Commons/AnnotationVocabulary/"
+	xmlns:cmns-cds="https://www.omg.org/spec/Commons/CodesAndCodeSets/"
+	xmlns:cmns-col="https://www.omg.org/spec/Commons/Collections/"
+	xmlns:cmns-cxtdsg="https://www.omg.org/spec/Commons/ContextualDesignators/"
+	xmlns:cmns-dt="https://www.omg.org/spec/Commons/DatesAndTimes/"
+	xmlns:cmns-id="https://www.omg.org/spec/Commons/Identifiers/"
+	xmlns:cmns-prd="https://www.omg.org/spec/Commons/ProductsAndServices/"
+	xmlns:cmns-pts="https://www.omg.org/spec/Commons/PartiesAndSituations/"
+	xmlns:cmns-ra="https://www.omg.org/spec/Commons/RegistrationAuthorities/"
+	xmlns:cmns-rga="https://www.omg.org/spec/Commons/RegulatoryAgencies/"
+	xmlns:dcterms="http://purl.org/dc/terms/"
+	xmlns:idmp-chg="https://spec.pistoiaalliance.org/idmp/ontology/META/ChangeManagement/"
+	xmlns:idmp-mprd="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11615-MedicinalProducts/"
+	xmlns:idmp-sub="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/"
+	xmlns:owl="http://www.w3.org/2002/07/owl#"
+	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+	xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema#">
+	
+	<owl:Ontology rdf:about="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11616-PharmaceuticalProducts/">
+		<rdfs:label>ISO 11616 Regulated Pharmaceutical Product Information Ontology</rdfs:label>
+		<dcterms:abstract>The regulated pharmaceutical product information ontology provides a semantic model representing the definitions for exchanging basic concepts for the unique identification and exchange of regulated pharmaceutical product information. It is derived from the ISO 11616:2017 Health informatics - Identification of medicinal products - Data elements and structures for the unique identification and exchange of regulated pharmaceutical product information.</dcterms:abstract>
+		<dcterms:license rdf:datatype="&xsd;anyURI">https://opensource.org/licenses/MIT</dcterms:license>
+		<owl:imports rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/master/v1.3.0/ISO/ISO11238-Substances/"/>
+		<owl:imports rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/master/v1.3.0/ISO/ISO11615-MedicinalProducts/"/>
+		<owl:imports rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/master/v1.3.0/META/ChangeManagement/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/Commons/AnnotationVocabulary/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/Commons/CodesAndCodeSets/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/Commons/Collections/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/Commons/ContextualDesignators/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/Commons/DatesAndTimes/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/Commons/Identifiers/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/Commons/PartiesAndSituations/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/Commons/ProductsAndServices/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/Commons/RegistrationAuthorities/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/Commons/RegulatoryAgencies/"/>
+		<owl:versionIRI rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/master/v1.3.0/ISO/ISO11616-PharmaceuticalProducts/"/>
+		<skos:changeNote>The https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11616-PharmaceuticalProducts.rdf version of this ontology was augmented to integrate revisions to the content from the 1.2 revision of the OMG Commons Ontology Library (IDMP-774).</skos:changeNote>
+		<skos:changeNote>The https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11616-PharmaceuticalProducts.rdf version of this ontology was modified to rename &apos;adjuvant role&apos;s to adjuvant for clarification per discussion at the Pistoia Alliance Conference Workshop on 3 November 2022 (IDMP-298).</skos:changeNote>
+		<idmp-chg:hasMaturityLevel rdf:resource="&idmp-chg;Preliminary"/>
+		<cmns-av:copyright>Copyright (c) 2022-2024 EDM Council, Inc.</cmns-av:copyright>
+		<cmns-av:copyright>Copyright (c) 2022-2024 Pistoia Alliance, Inc.</cmns-av:copyright>
+	</owl:Ontology>
+	
+	<owl:Class rdf:about="&idmp-sub;Adjuvant">
+		<dcterms:source>ISO 11616:2017 Health informatics - Identification of medicinal products (IDMP) - Data elements and structures for the unique identification and exchange of regulated pharmaceutical product information, clause 3.1.1</dcterms:source>
+	</owl:Class>
+	
+	<owl:Class rdf:about="&idmp-sub;ManufacturedItem">
+		<dcterms:source>ISO 11616:2017 Health informatics - Identification of medicinal products (IDMP) - Data elements and structures for the unique identification and exchange of regulated pharmaceutical product information, clause 3.1.17</dcterms:source>
+	</owl:Class>
+	
+	<owl:Class rdf:about="&idmp-mprd;AdministrableDoseForm">
+		<dcterms:source>ISO 11616:2017 Health informatics - Identification of medicinal products (IDMP) - Data elements and structures for the unique identification and exchange of regulated pharmaceutical product information, clause 3.1.2</dcterms:source>
+	</owl:Class>
+	
+	<owl:Class rdf:about="&idmp-mprd;ClinicalTrial">
+		<dcterms:source>ISO 11616:2017 Health informatics - Identification of medicinal products (IDMP) - Data elements and structures for the unique identification and exchange of regulated pharmaceutical product information, clause 3.1.3</dcterms:source>
+	</owl:Class>
+	
+	<owl:Class rdf:about="&idmp-mprd;InvestigationalMedicinalProduct">
+		<dcterms:source>ISO 11616:2017 Health informatics - Identification of medicinal products (IDMP) - Data elements and structures for the unique identification and exchange of regulated pharmaceutical product information, clause 3.1.12</dcterms:source>
+	</owl:Class>
+	
+	<owl:Class rdf:about="&idmp-mprd;MedicinalProduct">
+		<dcterms:source>ISO 11616:2017 Health informatics - Identification of medicinal products (IDMP) - Data elements and structures for the unique identification and exchange of regulated pharmaceutical product information, clause 3.1.19</dcterms:source>
+	</owl:Class>
+	
+	<owl:Class rdf:about="&idmp-mprd;MedicinalProductIdentifier">
+		<dcterms:source>ISO 11616:2017 Health informatics - Identification of medicinal products (IDMP) - Data elements and structures for the unique identification and exchange of regulated pharmaceutical product information, clause 3.1.20</dcterms:source>
+	</owl:Class>
+	
+	<owl:Class rdf:about="&idmp-mprd;MedicinesRegulatoryAgency">
+		<dcterms:source>ISO 11616:2017 Health informatics - Identification of medicinal products (IDMP) - Data elements and structures for the unique identification and exchange of regulated pharmaceutical product information, clause 3.1.22</dcterms:source>
+	</owl:Class>
+	
+	<owl:Class rdf:about="&idmp-mprd;PharmaceuticalDoseForm">
+		<dcterms:source>ISO 11616:2017 Health informatics - Identification of medicinal products (IDMP) - Data elements and structures for the unique identification and exchange of regulated pharmaceutical product information, clause 3.1.7</dcterms:source>
+	</owl:Class>
+	
+	<owl:Class rdf:about="&idmp-mprd;PharmaceuticalProduct">
+		<dcterms:source>ISO 11616:2017 Health informatics - Identification of medicinal products (IDMP) - Data elements and structures for the unique identification and exchange of regulated pharmaceutical product information, clause 3.1.24</dcterms:source>
+	</owl:Class>
+	
+	<owl:Class rdf:about="&idmp-mprd;PharmaceuticalProductIdentifier">
+		<dcterms:source>ISO 11616:2017 Health informatics - Identification of medicinal products (IDMP) - Data elements and structures for the unique identification and exchange of regulated pharmaceutical product information, clause 3.1.25</dcterms:source>
+	</owl:Class>
+	
+	<owl:Class rdf:about="&idmp-mprd;Strength">
+		<dcterms:source>ISO 11616:2017 Health informatics - Identification of medicinal products (IDMP) - Data elements and structures for the unique identification and exchange of regulated pharmaceutical product information, clause 3.1.27</dcterms:source>
+		<skos:note>It is necessary for the quantitative composition of the substance(s) or the specified substance descriptions of the finished investigational or authorised medicinal products (depending on the pharmaceutical form concerned) to specify the mass, or the number of units of biological activity, either per dosage unit or per unit of mass or volume, of each substance or specified substance. Substance or specified substance descriptions present in the form of compounds or derivatives are always designated quantitatively by their total mass and, if necessary or relevant, by the mass of active entity, or entities, of the molecule.</skos:note>
+		<skos:note>Strength is also defined as the amount of substance and specified substance constituents of the investigational or authorised medicinal product expressed in a ratio scale.</skos:note>
+		<cmns-av:synonym>quantitative composition</cmns-av:synonym>
+	</owl:Class>
+
+</rdf:RDF>

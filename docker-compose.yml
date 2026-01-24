@@ -1,0 +1,27 @@
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: company_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./sql/mysql:/docker-entrypoint-initdb.d
+    command: --default-authentication-plugin=mysql_native_password
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: regulator_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./sql/postgres:/docker-entrypoint-initdb.d
+
+volumes:
+  mysql_data:
+  pg_data:
