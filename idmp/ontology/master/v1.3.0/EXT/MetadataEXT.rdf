@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE rdf:RDF [
+	<!ENTITY cmns-av "https://www.omg.org/spec/Commons/AnnotationVocabulary/">
+	<!ENTITY dcterms "http://purl.org/dc/terms/">
+	<!ENTITY idmp-chg "https://spec.pistoiaalliance.org/idmp/ontology/META/ChangeManagement/">
+	<!ENTITY idmp-ext-mod "https://spec.pistoiaalliance.org/idmp/ontology/EXT/MetadataEXT/">
+	<!ENTITY owl "http://www.w3.org/2002/07/owl#">
+	<!ENTITY rdf "http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+	<!ENTITY rdfs "http://www.w3.org/2000/01/rdf-schema#">
+	<!ENTITY xsd "http://www.w3.org/2001/XMLSchema#">
+]>
+<rdf:RDF xml:base="https://spec.pistoiaalliance.org/idmp/ontology/EXT/MetadataEXT/"
+	xmlns:cmns-av="https://www.omg.org/spec/Commons/AnnotationVocabulary/"
+	xmlns:dcterms="http://purl.org/dc/terms/"
+	xmlns:idmp-chg="https://spec.pistoiaalliance.org/idmp/ontology/META/ChangeManagement/"
+	xmlns:idmp-ext-mod="https://spec.pistoiaalliance.org/idmp/ontology/EXT/MetadataEXT/"
+	xmlns:owl="http://www.w3.org/2002/07/owl#"
+	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema#">
+	
+	<owl:Ontology rdf:about="https://spec.pistoiaalliance.org/idmp/ontology/EXT/MetadataEXT/">
+		<rdfs:label>IDMP Extensions Library</rdfs:label>
+		<dcterms:abstract>The IDMP Extensions Library includes ontologies that extend the core ISO standard ontologies or provide examples that are important to demonstrate the efficacy of the IDMP ontologies and assist users in mapping their data. Note that these ontologies are informative, not a normative part of the set of IDMP ontologies corresponding to the ISO IDMP specifications. In other words, they should not be incorporated in applications but are provided to inform IDMP ontology users. They also provide the basis for regression testing for IDMP-O.</dcterms:abstract>
+		<dcterms:issued rdf:datatype="&xsd;dateTime">2023-12-31T18:00:00</dcterms:issued>
+		<dcterms:license rdf:datatype="&xsd;anyURI">https://opensource.org/licenses/MIT</dcterms:license>
+		<owl:imports rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/master/v1.3.0/META/ChangeManagement/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/Commons/AnnotationVocabulary/"/>
+		<owl:versionIRI rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/master/v1.3.0/EXT/MetadataEXT/"/>
+		<cmns-av:copyright>Copyright (c) 2022-2023 EDM Council, Inc.</cmns-av:copyright>
+		<cmns-av:copyright>Copyright (c) 2022-2023 Pistoia Alliance, Inc.</cmns-av:copyright>
+	</owl:Ontology>
+	
+	<owl:AnnotationProperty rdf:about="&dcterms;hasPart">
+	</owl:AnnotationProperty>
+	
+	<owl:NamedIndividual rdf:about="&idmp-ext-mod;EXTModule">
+		<rdf:type rdf:resource="&idmp-chg;Module"/>
+		<rdfs:label>IDMP Extensions Library</rdfs:label>
+		<dcterms:abstract>The IDMP Extensions Library includes ontologies that extend the core ISO standard ontologies or provide examples that are important to demonstrate the efficacy of the IDMP ontologies and assist users in mapping their data. Note that these ontologies are informative, not a normative part of the set of IDMP ontologies corresponding to the ISO IDMP specifications. In other words, they should not be incorporated in applications but are provided to inform IDMP ontology users. They also provide the basis for regression testing for IDMP-O.</dcterms:abstract>
+		<dcterms:hasPart rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/EXT/Examples/AmlodipineExample/"/>
+		<dcterms:hasPart rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/EXT/Examples/EuropeanUnionClinicalTrialsRegister/"/>
+		<dcterms:hasPart rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/EXT/Examples/QlairaExample/"/>
+		<dcterms:hasPart rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/EXT/Examples/TerlipressinExample/"/>
+		<dcterms:hasPart rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/EXT/Extensions/DocumentComponents/"/>
+		<dcterms:hasPart rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/EXT/Extensions/UnifiedCodeForUnitsOfMeasure/"/>
+		<dcterms:license rdf:datatype="&xsd;anyURI">https://opensource.org/licenses/MIT</dcterms:license>
+		<rdfs:isDefinedBy rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/EXT/MetadataEXT/"/>
+		<cmns-av:copyright>Copyright (c) 2022-2023 EDM Council, Inc.</cmns-av:copyright>
+		<cmns-av:copyright>Copyright (c) 2022-2023 Pistoia Alliance, Inc.</cmns-av:copyright>
+	</owl:NamedIndividual>
+
+</rdf:RDF>

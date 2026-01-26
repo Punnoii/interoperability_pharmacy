@@ -1,0 +1,3 @@
+If want to use 2 DB might do this :
+1.) use trino + do main staging/view
+2.) split Ontop 2 instance and merch it on application layer 

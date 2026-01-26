@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE rdf:RDF [
+	<!ENTITY cmns-av "https://www.omg.org/spec/Commons/AnnotationVocabulary/">
+	<!ENTITY cmns-col "https://www.omg.org/spec/Commons/Collections/">
+	<!ENTITY cmns-cxtdsg "https://www.omg.org/spec/Commons/ContextualDesignators/">
+	<!ENTITY cmns-id "https://www.omg.org/spec/Commons/Identifiers/">
+	<!ENTITY cmns-org "https://www.omg.org/spec/Commons/Organizations/">
+	<!ENTITY cmns-prd "https://www.omg.org/spec/Commons/ProductsAndServices/">
+	<!ENTITY cmns-pts "https://www.omg.org/spec/Commons/PartiesAndSituations/">
+	<!ENTITY cmns-ra "https://www.omg.org/spec/Commons/RegistrationAuthorities/">
+	<!ENTITY cmns-rga "https://www.omg.org/spec/Commons/RegulatoryAgencies/">
+	<!ENTITY cmns-rlcmp "https://www.omg.org/spec/Commons/RolesAndCompositions/">
+	<!ENTITY dcterms "http://purl.org/dc/terms/">
+	<!ENTITY idmp-chg "https://spec.pistoiaalliance.org/idmp/ontology/META/ChangeManagement/">
+	<!ENTITY idmp-ra "https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities/">
+	<!ENTITY idmp-sub "https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/">
+	<!ENTITY lcc-3166-1 "https://www.omg.org/spec/LCC/Countries/ISO3166-1-CountryCodes/">
+	<!ENTITY mvf "https://www.omg.org/spec/MVF/MultipleVocabularyFacility/">
+	<!ENTITY owl "http://www.w3.org/2002/07/owl#">
+	<!ENTITY rdf "http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+	<!ENTITY rdfs "http://www.w3.org/2000/01/rdf-schema#">
+	<!ENTITY skos "http://www.w3.org/2004/02/skos/core#">
+	<!ENTITY xsd "http://www.w3.org/2001/XMLSchema#">
+]>
+<rdf:RDF xml:base="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities/"
+	xmlns:cmns-av="https://www.omg.org/spec/Commons/AnnotationVocabulary/"
+	xmlns:cmns-col="https://www.omg.org/spec/Commons/Collections/"
+	xmlns:cmns-cxtdsg="https://www.omg.org/spec/Commons/ContextualDesignators/"
+	xmlns:cmns-id="https://www.omg.org/spec/Commons/Identifiers/"
+	xmlns:cmns-org="https://www.omg.org/spec/Commons/Organizations/"
+	xmlns:cmns-prd="https://www.omg.org/spec/Commons/ProductsAndServices/"
+	xmlns:cmns-pts="https://www.omg.org/spec/Commons/PartiesAndSituations/"
+	xmlns:cmns-ra="https://www.omg.org/spec/Commons/RegistrationAuthorities/"
+	xmlns:cmns-rga="https://www.omg.org/spec/Commons/RegulatoryAgencies/"
+	xmlns:cmns-rlcmp="https://www.omg.org/spec/Commons/RolesAndCompositions/"
+	xmlns:dcterms="http://purl.org/dc/terms/"
+	xmlns:idmp-chg="https://spec.pistoiaalliance.org/idmp/ontology/META/ChangeManagement/"
+	xmlns:idmp-ra="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities/"
+	xmlns:idmp-sub="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/"
+	xmlns:lcc-3166-1="https://www.omg.org/spec/LCC/Countries/ISO3166-1-CountryCodes/"
+	xmlns:mvf="https://www.omg.org/spec/MVF/MultipleVocabularyFacility/"
+	xmlns:owl="http://www.w3.org/2002/07/owl#"
+	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+	xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema#">
+	
+	<owl:Ontology rdf:about="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities/">
+		<rdfs:label>ISO 11238 Registration Authorities Ontology</rdfs:label>
+		<dcterms:abstract>The registration authorities ontology defines international registration authorities, regulatory agencies and codes required for identification of substances and medicinal products. It is derived from the ISO 11238:2018 Health informatics - Identification of medicinal products - Data elements and structures for the unique identification and exchange of regulated information on substances standard.</dcterms:abstract>
+		<dcterms:license rdf:datatype="&xsd;anyURI">https://opensource.org/licenses/MIT</dcterms:license>
+		<owl:imports rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/master/v1.3.0/ISO/EuropeanJurisdiction/EuropeanRegistrationAuthorities/"/>
+		<owl:imports rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/master/v1.3.0/ISO/ISO11238-Substances/"/>
+		<owl:imports rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/master/v1.3.0/ISO/ISO11615-MedicinalProducts/"/>
+		<owl:imports rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/master/v1.3.0/ISO/NorthAmericanJurisdiction/NorthAmericanRegistrationAuthorities/"/>
+		<owl:imports rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/master/v1.3.0/ISO/NorthAmericanJurisdiction/NorthAmericanRegulatoryAgencies/"/>
+		<owl:imports rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/master/v1.3.0/META/ChangeManagement/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/Commons/AnnotationVocabulary/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/Commons/Collections/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/Commons/ContextualDesignators/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/Commons/Identifiers/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/Commons/Organizations/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/Commons/PartiesAndSituations/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/Commons/ProductsAndServices/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/Commons/RegistrationAuthorities/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/Commons/RegulatoryAgencies/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/Commons/RolesAndCompositions/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/LCC/Countries/ISO3166-1-CountryCodes/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/MVF/MultipleVocabularyFacility/"/>
+		<owl:versionIRI rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/master/v1.3.0/ISO/ISO11238-RegistrationAuthorities/"/>
+		<skos:changeNote>The https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities.rdf version of this ontology was augmented to integrate revisions to the content from the 1.2 revision of the OMG Commons Ontology Library (IDMP-774).</skos:changeNote>
+		<skos:changeNote>The https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities.rdf version of this ontology was modified to move the North American registries and registration authorities to a separate, jurisdiction-specific ontology.</skos:changeNote>
+		<skos:changeNote>The https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities.rdf version of this ontology was modified to reflect the migration of some content in Commons from the Parties and Situations ontology to a new Composites ontology at OMG (IDMP-642).</skos:changeNote>
+		<skos:changeNote>The https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities.rdf version of this ontology was modified to split the named individual for FDA patent exclusivity into two separate named individuals - one for patent exclusivity and one for FDA exclusivity (IDMP-514) and to add the registry and identifier for the International Medical Dictionary for Regulatory Activities (MeDRA) (IDMP-561).</skos:changeNote>
+		<skos:changeNote>The https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities.rdf version of this ontology was revised to normalize the use of hasTextualName from MVF rather than from LCC.</skos:changeNote>
+		<skos:scopeNote>Note that jurisdiction-specific counterparties and codes are specified in subordinate ontologies supporting those jurisdictions.</skos:scopeNote>
+		<idmp-chg:hasMaturityLevel rdf:resource="&idmp-chg;Provisional"/>
+		<cmns-av:copyright>Copyright (c) 2022-2024 EDM Council, Inc.</cmns-av:copyright>
+		<cmns-av:copyright>Copyright (c) 2022-2024 Pistoia Alliance, Inc.</cmns-av:copyright>
+	</owl:Ontology>
+	
+	<owl:NamedIndividual rdf:about="&idmp-ra;AnatomicalTherapeuticChemicalClassificationSystem">
+		<rdf:type rdf:resource="&cmns-ra;Registry"/>
+		<rdfs:label>Anatomical Therapeutic Chemical Classification System</rdfs:label>
+		<rdfs:isDefinedBy rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities/"/>
+		<skos:definition>registry that was developed to assist regulators in managing substance information</skos:definition>
+		<cmns-av:abbreviation>WHO-ATC</cmns-av:abbreviation>
+		<cmns-av:adaptedFrom>ISO 11238:2018 Health informatics - Identification of medicinal products (IDMP) - Data elements and structures for the unique identification and exchange of regulated information on substances, clause 4.2.2</cmns-av:adaptedFrom>
+		<cmns-av:explanatoryNote>In the Anatomical Therapeutic Chemical (ATC) classification system, the active substances are divided into different groups according to the organ or system on which they act and their therapeutic, pharmacological and chemical properties. Drugs are classified in groups at five different levels.</cmns-av:explanatoryNote>
+		<cmns-org:isManagedBy rdf:resource="&idmp-ra;WorldHealthOrganizationRegistrationAuthority"/>
+		<mvf:hasTextualName>Anatomical Therapeutic Chemical Classification System</mvf:hasTextualName>
+	</owl:NamedIndividual>
+	
+	<owl:NamedIndividual rdf:about="&idmp-ra;AustralianNationalBotanicGardens">
+		<rdf:type rdf:resource="&cmns-pts;Party"/>
+		<rdfs:label>Australian National Botanic Gardens</rdfs:label>
+		<rdfs:isDefinedBy rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities/"/>
+		<rdfs:seeAlso rdf:resource="https://www.anbg.gov.au/gardens/index.html"/>
+		<skos:definition>botanical garden that maintains a scientific collection of native plants from all parts of Australia</skos:definition>
+	</owl:NamedIndividual>
+	
+	<owl:NamedIndividual rdf:about="&idmp-ra;AustralianNationalBotanicGardensRegistrationAuthority">
+		<rdf:type rdf:resource="&cmns-ra;RegistrationAuthority"/>
+		<rdfs:label>Australian National Botanic Gardens registration authority</rdfs:label>
+		<rdfs:isDefinedBy rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities/"/>
+		<skos:definition>Australian National Botanic Gardens in its role as a Registration Authority (RA)</skos:definition>
+		<cmns-org:manages rdf:resource="&idmp-ra;AustralianPlantNameIndex"/>
+		<cmns-rlcmp:isPlayedBy rdf:resource="&idmp-ra;AustralianNationalBotanicGardens"/>
+	</owl:NamedIndividual>
+	
+	<owl:NamedIndividual rdf:about="&idmp-ra;AustralianPlantNameIndex">
+		<rdf:type rdf:resource="&cmns-ra;Registry"/>
+		<rdfs:label>Australian Plant Name Index</rdfs:label>
+		<rdfs:isDefinedBy rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities/"/>
+		<skos:definition>tool for the botanical community that deals with plant names and their usage in the scientific literature</skos:definition>
+		<cmns-av:abbreviation>APNI</cmns-av:abbreviation>
+		<cmns-av:directSource rdf:resource="https://www.anbg.gov.au/apni/index.html"/>
+		<cmns-org:isManagedBy rdf:resource="&idmp-ra;AustralianNationalBotanicGardensRegistrationAuthority"/>
+		<mvf:hasTextualName>Australian Plant Name Index (APNI)</mvf:hasTextualName>
+	</owl:NamedIndividual>
+	
+	<owl:Class rdf:about="&idmp-ra;AustralianPlantNameIndexEntry">
+		<rdfs:subClassOf rdf:resource="&cmns-ra;RegistryEntry"/>
+		<rdfs:subClassOf>
+			<owl:Restriction>
+				<owl:onProperty rdf:resource="&cmns-col;isIncludedIn"/>
+				<owl:hasValue rdf:resource="&idmp-ra;AustralianPlantNameIndex"/>
+			</owl:Restriction>
+		</rdfs:subClassOf>
+		<rdfs:subClassOf>
+			<owl:Restriction>
+				<owl:onProperty rdf:resource="&cmns-col;comprises"/>
+				<owl:someValuesFrom rdf:resource="&idmp-ra;AustralianPlantNameIndexIdentifier"/>
+			</owl:Restriction>
+		</rdfs:subClassOf>
+		<rdfs:subClassOf>
+			<owl:Restriction>
+				<owl:onProperty rdf:resource="&cmns-cxtdsg;appliesTo"/>
+				<owl:someValuesFrom rdf:resource="&idmp-sub;Substance"/>
+			</owl:Restriction>
+		</rdfs:subClassOf>
+		<rdfs:label>Australian Plant Name Index registry entry</rdfs:label>
+		<rdfs:isDefinedBy rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities/"/>
+		<skos:definition>entry in the Australian Plant Name Index that includes the Australian Plant Name Index Identifier used in electronic listing and other regulatory activities</skos:definition>
+	</owl:Class>
+	
+	<owl:Class rdf:about="&idmp-ra;AustralianPlantNameIndexIdentifier">
+		<rdfs:subClassOf rdf:resource="&cmns-ra;RegisteredIdentifier"/>
+		<rdfs:subClassOf>
+			<owl:Restriction>
+				<owl:onProperty rdf:resource="&cmns-ra;hasRegistrationAuthority"/>
+				<owl:hasValue rdf:resource="&idmp-ra;AustralianNationalBotanicGardensRegistrationAuthority"/>
+			</owl:Restriction>
+		</rdfs:subClassOf>
+		<rdfs:subClassOf>
+			<owl:Restriction>
+				<owl:onProperty rdf:resource="&cmns-ra;isRegisteredIn"/>
+				<owl:hasValue rdf:resource="&idmp-ra;AustralianPlantNameIndex"/>
+			</owl:Restriction>
+		</rdfs:subClassOf>
+		<rdfs:subClassOf>
+			<owl:Restriction>
+				<owl:onProperty rdf:resource="&cmns-cxtdsg;appliesTo"/>
+				<owl:someValuesFrom rdf:resource="&idmp-sub;Substance"/>
+			</owl:Restriction>
+		</rdfs:subClassOf>
+		<rdfs:label>Australian Plant Name Index Identifier</rdfs:label>
+		<rdfs:isDefinedBy rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities/"/>
+		<skos:definition>sequence of characters that is used to uniquely identify records in the Australian Plant Name Index registry</skos:definition>
+	</owl:Class>
+	
+	<owl:NamedIndividual rdf:about="&idmp-ra;CodexGeneralStandardForFoodAdditivesOnlineDatabase">
+		<rdf:type rdf:resource="&cmns-ra;Registry"/>
+		<rdfs:label>Codex General Standard for Food Additives Online Database</rdfs:label>
+		<rdfs:isDefinedBy rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities/"/>
+		<skos:definition>repository defining the conditions under which permitted food additives may be used in all foods, whether or not they have previously been standardized by Codex</skos:definition>
+		<cmns-av:abbreviation>GSFA</cmns-av:abbreviation>
+		<cmns-av:directSource rdf:resource="https://www.fao.org/fao-who-codexalimentarius/codex-texts/dbs/gsfa/en/"/>
+		<mvf:hasTextualName>Codex General Standard for Food Additives (GSFA) Online Database</mvf:hasTextualName>
+	</owl:NamedIndividual>
+	
+	<owl:NamedIndividual rdf:about="&idmp-ra;EvaluationsOfTheJointExpertCommitteeOnFoodAdditives">
+		<rdf:type rdf:resource="&cmns-ra;Registry"/>
+		<rdfs:label>Evaluations of the Joint FAO/WHO Expert Committee on Food Additives</rdfs:label>
+		<rdfs:isDefinedBy rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities/"/>
+		<skos:definition>searchable database contains the summaries of all the evaluations of flavours, food additives, contaminants, toxicants and veterinary drugs JECFA has performed</skos:definition>
+		<cmns-av:abbreviation>JECFA</cmns-av:abbreviation>
+		<cmns-av:directSource rdf:resource="https://apps.who.int/food-additives-contaminants-jecfa-database/"/>
+		<mvf:hasTextualName>Evaluations of the Joint FAO/WHO Expert Committee on Food Additives</mvf:hasTextualName>
+	</owl:NamedIndividual>
+	
+	<owl:NamedIndividual rdf:about="&idmp-ra;InternationalCouncilForHarmonisationOfTechnicalRequirementsForPharmaceuticalsForHumanUse">
+		<rdf:type rdf:resource="&cmns-pts;Party"/>
+		<rdfs:label>International Council for Harmonisation of Technical Requirements for Pharmaceuticals for Human Use</rdfs:label>
+		<rdfs:isDefinedBy rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities/"/>
+		<skos:definition>consortium founded by the European Commission in the EU, Food and Drug Administration (FDA) in the United States, and MHLW/PMDA in Japan that supports drug registration worldwide</skos:definition>
+		<cmns-av:abbreviation>ICH</cmns-av:abbreviation>
+		<cmns-av:adaptedFrom>https://www.ich.org/page/mission</cmns-av:adaptedFrom>
+		<cmns-av:explanatoryNote>The International Council for Harmonisation of Technical Requirements for Pharmaceuticals for Human Use (ICH) is unique in bringing together the regulatory authorities and pharmaceutical industry to discuss scientific and technical aspects of drug registration. Since its inception in 1990, ICH has gradually evolved, to respond to the increasingly global face of drug development. ICH&apos;s mission is to achieve greater harmonization worldwide to ensure that safe, effective, and high quality medicines are developed and registered in the most resource-efficient manner. Harmonisation is achieved through the development of ICH Guidelines via a process of scientific consensus with regulatory and industry experts working side-by-side. Key to the success of this process is the commitment of the ICH regulators to implement the final Guidelines.</cmns-av:explanatoryNote>
+	</owl:NamedIndividual>
+	
+	<owl:Class rdf:about="&idmp-ra;InternationalNonproprietaryName">
+		<rdfs:subClassOf rdf:resource="&idmp-sub;SubstanceName"/>
+		<rdfs:subClassOf>
+			<owl:Restriction>
+				<owl:onProperty rdf:resource="&cmns-ra;isRegisteredBy"/>
+				<owl:hasValue rdf:resource="&idmp-ra;WorldHealthOrganizationRegistrationAuthority"/>
+			</owl:Restriction>
+		</rdfs:subClassOf>
+		<rdfs:label>international nonproprietary name</rdfs:label>
+		<dcterms:source>ISO 11238:2018 Health informatics - Identification of medicinal products (IDMP) - Data elements and structures for the unique identification and exchange of regulated information on substances, clauses 4.9</dcterms:source>
+		<rdfs:isDefinedBy rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities/"/>
+		<rdfs:seeAlso rdf:resource="https://www.who.int/teams/health-product-and-policy-standards/inn/"/>
+		<skos:definition>unique generic name allocated to an active pharmaceutical substance used in medicine worldwide</skos:definition>
+		<skos:note>INNs usually contain a common syllable (known as a stem) to indicate the pharmacological or chemical family to which the substance belongs. The ending –mycin, for example – denotes a type of antibiotic. Syllables, letters or separate words are then added to differentiate between substances in the same family – such as kanamycin, erythromycin. Twice a year, the INN Expert Group gathers at WHO to painstakingly consider and create names for new substances used in medicines. The aim is come up with a single name – an INN – that can be recognized and used globally by doctors, pharmacists, scientists, medicines regulators and patients.</skos:note>
+		<skos:note>International Nonproprietary Names (INN) facilitate the identification of pharmaceutical substances or active pharmaceutical ingredients. Each INN is a unique name that is globally recognized and is public property. A nonproprietary name is also known as a generic name.</skos:note>
+		<skos:note>Nonproprietary names are intended for use in pharmacopoeias, labelling, product information, advertising and other promotional material, drug regulation and scientific literature, and as a basis for product names, e.g. for generics. Their use is normally required by national or, as in the case of the European Community, by international legislation. As a result of ongoing collaboration, national names such as British Approved Names (BAN), Dénominations Communes Françaises (DCF), Japanese Adopted Names (JAN) and United States Adopted Names (USAN) are nowadays, with rare exceptions, identical to the INN.</skos:note>
+		<skos:note>The World Health Organization collaborates closely with INN experts and national nomenclature committees to select a single name of worldwide acceptability for each active substance that is to be marketed as a pharmaceutical. To avoid confusion, which could jeopardize the safety of patients, trade-marks should neither be derived from INNs nor contain common stems used in INNs. The selection and publication of INNs falls under the responsibility of the EMP/RHT/TSN team of the INN Programme.</skos:note>
+		<cmns-av:abbreviation>INN</cmns-av:abbreviation>
+		<cmns-av:synonym>generic name</cmns-av:synonym>
+	</owl:Class>
+	
+	<owl:NamedIndividual rdf:about="&idmp-ra;KyotoEncyclopediaOfGenesAndGenomes">
+		<rdf:type rdf:resource="&cmns-ra;Registry"/>
+		<rdfs:label>Kyoto Encyclopedia of Genes and Genomes</rdfs:label>
+		<rdfs:isDefinedBy rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities/"/>
+		<skos:definition>database resource for understanding high-level functions and utilities of the biological system, such as the cell, the organism and the ecosystem, from molecular-level information, especially large-scale molecular datasets generated by genome sequencing and other high-throughput experimental technologies</skos:definition>
+		<cmns-av:abbreviation>KEGG</cmns-av:abbreviation>
+		<cmns-av:directSource rdf:resource="https://www.genome.jp/kegg/"/>
+		<mvf:hasTextualName>Kyoto Encyclopedia of Genes and Genomes</mvf:hasTextualName>
+	</owl:NamedIndividual>
+	
+	<owl:NamedIndividual rdf:about="&idmp-ra;MedNetINN">
+		<rdf:type rdf:resource="&cmns-ra;Registry"/>
+		<rdfs:label>MedNet INN</rdfs:label>
+		<rdfs:isDefinedBy rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities/"/>
+		<cmns-av:directSource rdf:resource="https://extranet.who.int/soinn/"/>
+		<cmns-org:isManagedBy rdf:resource="&idmp-ra;WorldHealthOrganizationRegistrationAuthority"/>
+		<mvf:hasTextualName>MedNet INN</mvf:hasTextualName>
+	</owl:NamedIndividual>
+	
+	<owl:NamedIndividual rdf:about="&idmp-ra;MerckIndexOnline">
+		<rdf:type rdf:resource="&cmns-ra;Registry"/>
+		<rdfs:label>Merck Index Online</rdfs:label>
+		<rdfs:isDefinedBy rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities/"/>
+		<skos:definition>online encyclopedia of information on chemicals, drugs and biologicals</skos:definition>
+		<cmns-av:directSource rdf:resource="https://www.rsc.org/Merck-Index/"/>
+		<cmns-av:synonym>Merck Index</cmns-av:synonym>
+		<mvf:hasTextualName>Merck Index Online</mvf:hasTextualName>
+	</owl:NamedIndividual>
+	
+	<owl:NamedIndividual rdf:about="&idmp-ra;ModelListOfEssentialMedicines">
+		<rdf:type rdf:resource="&cmns-ra;Registry"/>
+		<rdfs:label>model list of essential medicines</rdfs:label>
+		<rdfs:isDefinedBy rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities/"/>
+		<cmns-av:directSource rdf:resource="https://list.essentialmeds.org/"/>
+		<cmns-org:isManagedBy rdf:resource="&idmp-ra;WorldHealthOrganizationRegistrationAuthority"/>
+		<mvf:hasTextualName>Model List of Essential Medicines</mvf:hasTextualName>
+	</owl:NamedIndividual>
+	
+	<owl:NamedIndividual rdf:about="&idmp-ra;UnitedNationsSustainableDevelopmentGoals">
+		<rdf:type rdf:resource="&cmns-ra;Registry"/>
+		<rdfs:label>United Nations sustainable development goals</rdfs:label>
+		<rdfs:isDefinedBy rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities/"/>
+		<cmns-av:directSource rdf:resource="https://www.who.int/data/gho/data/themes/sustainable-development-goals"/>
+		<cmns-org:isManagedBy rdf:resource="&idmp-ra;WorldHealthOrganizationRegistrationAuthority"/>
+		<mvf:hasTextualName>The United Nations Sustainable Development Goals</mvf:hasTextualName>
+	</owl:NamedIndividual>
+	
+	<owl:NamedIndividual rdf:about="&idmp-ra;WorldHealthOrganization">
+		<rdf:type rdf:resource="&cmns-pts;Party"/>
+		<rdfs:label>World Health Organization</rdfs:label>
+		<rdfs:isDefinedBy rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities/"/>
+		<rdfs:seeAlso rdf:resource="https://www.who.int/"/>
+		<skos:definition>United Nations agency that connects nations, partners and people to promote health, keep the world safe and serve the vulnerable – so everyone, everywhere can attain the highest level of health</skos:definition>
+		<cmns-av:abbreviation>WHO</cmns-av:abbreviation>
+		<cmns-av:explanatoryNote>WHO leads global efforts to expand universal health coverage. We direct and coordinate the world’s response to health emergencies. And we promote healthier lives – from pregnancy care through old age. Our Triple Billion targets outline an ambitious plan for the world to achieve good health for all using science-based policies and programmes.</cmns-av:explanatoryNote>
+	</owl:NamedIndividual>
+	
+	<owl:NamedIndividual rdf:about="&idmp-ra;WorldHealthOrganizationInternationalPharmacopoeia">
+		<rdf:type rdf:resource="&cmns-ra;Registry"/>
+		<rdfs:label>World Health Organization International Pharmacopoeia</rdfs:label>
+		<rdfs:isDefinedBy rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities/"/>
+		<skos:definition>online collection of recommended procedures for analysis and specifications for the determination of pharmaceutical substances and dosage forms that is intended to serve as source material for reference or adaptation by any WHO Member State wishing to establish pharmaceutical requirements</skos:definition>
+		<cmns-av:directSource rdf:resource="https://www.guidetopharmacology.org/"/>
+		<mvf:hasTextualName>World Health Organization International Pharmacopoeia</mvf:hasTextualName>
+	</owl:NamedIndividual>
+	
+	<owl:NamedIndividual rdf:about="&idmp-ra;WorldHealthOrganizationRegistrationAuthority">
+		<rdf:type rdf:resource="&cmns-ra;RegistrationAuthority"/>
+		<rdfs:label>World Health Organization Registration Authority</rdfs:label>
+		<rdfs:isDefinedBy rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-RegistrationAuthorities/"/>
+		<skos:definition>World Health Organization (WHO) in its role as a Registration Authority (RA)</skos:definition>
+		<cmns-av:adaptedFrom>ISO 11238:2018 Health informatics - Identification of medicinal products (IDMP) - Data elements and structures for the unique identification and exchange of regulated information on substances, clause 4.2.2</cmns-av:adaptedFrom>
+		<cmns-org:manages rdf:resource="&idmp-ra;AnatomicalTherapeuticChemicalClassificationSystem"/>
+		<cmns-rlcmp:isPlayedBy rdf:resource="&idmp-ra;WorldHealthOrganization"/>
+	</owl:NamedIndividual>
+
+</rdf:RDF>

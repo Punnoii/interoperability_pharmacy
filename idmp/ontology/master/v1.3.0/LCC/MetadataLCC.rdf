@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE rdf:RDF [
+	<!ENTITY cmns-av "https://www.omg.org/spec/Commons/AnnotationVocabulary/">
+	<!ENTITY dcterms "http://purl.org/dc/terms/">
+	<!ENTITY idmp-chg "https://spec.pistoiaalliance.org/idmp/ontology/META/ChangeManagement/">
+	<!ENTITY owl "http://www.w3.org/2002/07/owl#">
+	<!ENTITY rdf "http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+	<!ENTITY rdfs "http://www.w3.org/2000/01/rdf-schema#">
+	<!ENTITY xsd "http://www.w3.org/2001/XMLSchema#">
+]>
+<rdf:RDF xml:base="https://www.omg.org/spec/LCC/MetadataLCC/"
+	xmlns="https://www.omg.org/spec/LCC/MetadataLCC/"
+	xmlns:cmns-av="https://www.omg.org/spec/Commons/AnnotationVocabulary/"
+	xmlns:dcterms="http://purl.org/dc/terms/"
+	xmlns:idmp-chg="https://spec.pistoiaalliance.org/idmp/ontology/META/ChangeManagement/"
+	xmlns:owl="http://www.w3.org/2002/07/owl#"
+	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema#">
+	
+	<owl:Ontology rdf:about="https://www.omg.org/spec/LCC/MetadataLCC/">
+		<rdfs:label>Languages, Countries and Codes (LCC) Module</rdfs:label>
+		<dcterms:abstract>The Languages, Countries and Codes (LCC) Ontologies Module is provided for the convenience of IDMP users and includes ontologies that have been standardized by the Object Management Group (OMG). The latest OMG specification for LCC is available on the OMG web site as are the ontologies. The versions of the LCC ontologies included herein represent work in progress for an LCC 2.0 specification and have been updated from the LCC 1.2 version to include the Commons Ontology Library. We anticipate these changes will be incorporated into LCC in 2023.</dcterms:abstract>
+		<dcterms:issued rdf:datatype="&xsd;dateTime">2022-09-01T18:00:00</dcterms:issued>
+		<dcterms:license rdf:datatype="&xsd;anyURI">http://opensource.org/licenses/MIT</dcterms:license>
+		<owl:imports rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/master/v1.3.0/META/ChangeManagement/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/Commons/AnnotationVocabulary/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/LCC/Countries/CountryRepresentation/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/LCC/Countries/ISO3166-1-CountryCodes/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/LCC/Countries/ISO3166-2-SubdivisionCodes/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/LCC/Countries/UN-M49-RegionCodes/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/LCC/Languages/ISO639-1-LanguageCodes/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/LCC/Languages/ISO639-2-LanguageCodes/"/>
+		<owl:imports rdf:resource="https://www.omg.org/spec/LCC/Languages/LanguageRepresentation/"/>
+		<owl:versionIRI rdf:resource="https://www.omg.org/spec/LCC/20220901/MetadataLCC/"/>
+		<cmns-av:copyright>Copyright (c) 2022 EDM Council, Inc.</cmns-av:copyright>
+		<cmns-av:copyright>Copyright (c) 2022 Pistoia Alliance, Inc.</cmns-av:copyright>
+	</owl:Ontology>
+	
+	<owl:AnnotationProperty rdf:about="&dcterms;hasPart">
+	</owl:AnnotationProperty>
+	
+	<owl:NamedIndividual rdf:about="https://www.omg.org/spec/LCC/MetadataLCC/LCCModule">
+		<rdf:type rdf:resource="&idmp-chg;Module"/>
+		<rdfs:label>Languages, Countries and Codes (LCC) Module</rdfs:label>
+		<dcterms:abstract>The Languages, Countries and Codes (LCC) Ontologies Module is provided for the convenience of IDMP users and includes ontologies that have been standardized by the Object Management Group (OMG). The latest OMG specification for LCC is available on the OMG web site as are the ontologies. The versions of the LCC ontologies included herein represent work in progress for an LCC 2.0 specification and have been updated from the LCC 1.2 version to include the Commons Ontology Library. We anticipate these changes will be incorporated into LCC in 2023.</dcterms:abstract>
+		<dcterms:hasPart rdf:resource="https://www.omg.org/spec/LCC/Countries/CountryRepresentation/"/>
+		<dcterms:hasPart rdf:resource="https://www.omg.org/spec/LCC/Countries/ISO3166-1-CountryCodes/"/>
+		<dcterms:hasPart rdf:resource="https://www.omg.org/spec/LCC/Countries/ISO3166-2-SubdivisionCodes/"/>
+		<dcterms:hasPart rdf:resource="https://www.omg.org/spec/LCC/Countries/UN-M49-RegionCodes/"/>
+		<dcterms:hasPart rdf:resource="https://www.omg.org/spec/LCC/Languages/ISO639-1-LanguageCodes/"/>
+		<dcterms:hasPart rdf:resource="https://www.omg.org/spec/LCC/Languages/ISO639-2-LanguageCodes/"/>
+		<dcterms:hasPart rdf:resource="https://www.omg.org/spec/LCC/Languages/LanguageRepresentation/"/>
+		<dcterms:license rdf:datatype="&xsd;anyURI">http://opensource.org/licenses/MIT</dcterms:license>
+		<rdfs:isDefinedBy rdf:resource="https://www.omg.org/spec/LCC/MetadataLCC/"/>
+		<cmns-av:copyright>Copyright (c) 2022 EDM Council, Inc.</cmns-av:copyright>
+		<cmns-av:copyright>Copyright (c) 2022 Pistoia Alliance, Inc.</cmns-av:copyright>
+	</owl:NamedIndividual>
+
+</rdf:RDF>
