@@ -24,9 +24,10 @@ source SELECT substance_id,
        FROM company_a.substance
 
 mappingId SubstanceNameNodeCompanyA
-target :substance-name/a/{name_id} a idmp-sub:SubstanceName ; idmp-sub:hasSubstanceNameValue "{name_value}"^^xsd:string ; idmp-sub:hasSubstanceNameType <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceNameClassifier-PreferredName> ; idmp-dtp:hasLanguageCode <https://www.omg.org/spec/LCC/Languages/ISO639-1-LanguageCodes/{language_code}> .
+target :substance-name/a/{name_id} a idmp-sub:SubstanceName ; idmp-sub:hasSubstanceNameValue "{name_value}"^^xsd:string ; idmp-sub:hasSubstanceNameType <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceNameClassifier-{name_type}> ; idmp-dtp:hasLanguageCode <https://www.omg.org/spec/LCC/Languages/ISO639-1-LanguageCodes/{language_code}> .
 source SELECT name_id,
        name_value,
+       name_type,
        language_code
        FROM company_a.substance_name
 
@@ -60,9 +61,10 @@ source SELECT substance_code,
        FROM company_b.substance_master
 
 mappingId SubstanceNameNodeCompanyB
-target :substance-name/b/{alias_id} a idmp-sub:SubstanceName ; idmp-sub:hasSubstanceNameValue "{alias_text}"^^xsd:string ; idmp-sub:hasSubstanceNameType <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceNameClassifier-PreferredName> ; idmp-dtp:hasLanguageCode <https://www.omg.org/spec/LCC/Languages/ISO639-1-LanguageCodes/{lang}> .
+target :substance-name/b/{alias_id} a idmp-sub:SubstanceName ; idmp-sub:hasSubstanceNameValue "{alias_text}"^^xsd:string ; idmp-sub:hasSubstanceNameType <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceNameClassifier-{alias_kind}> ; idmp-dtp:hasLanguageCode <https://www.omg.org/spec/LCC/Languages/ISO639-1-LanguageCodes/{lang}> .
 source SELECT alias_id,
        alias_text,
+       alias_kind,
        lang
        FROM company_b.substance_alias
 
