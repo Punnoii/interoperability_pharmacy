@@ -46,3 +46,23 @@ services:
       - "8080:8080"
     depends_on:
       - postgres
+
+  ontop-mysql:
+    image: ontop/ontop:5.3.1
+    environment:
+      ONTOP_ONTOLOGY_FILE: /opt/ontop/input/idmp-entry-iso11238-core-lcc.rdf
+      ONTOP_MAPPING_FILE: /opt/ontop/input/iso11238-mysql.obda
+      ONTOP_PROPERTIES_FILE: /opt/ontop/input/regulator-mysql.properties
+      ONTOP_XML_CATALOG_FILE: /opt/ontop/ontology/catalog-v001.xml
+      ONTOP_CORS_ALLOWED_ORIGINS: "*"
+      ONTOP_LAZY_INIT: "true"
+      ONTOP_WAIT_FOR: "mysql:3306"
+      ONTOP_WAIT_TIMEOUT: "120"
+    volumes:
+      - ./obda:/opt/ontop/input
+      - ./idmp/ontology/master/v1.3.0:/opt/ontop/ontology:ro
+      - ./jdbc:/opt/ontop/jdbc
+    ports:
+      - "8081:8080"
+    depends_on:
+      - mysql

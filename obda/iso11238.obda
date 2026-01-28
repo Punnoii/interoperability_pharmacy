@@ -24,11 +24,15 @@ source SELECT substance_id,
        FROM company_a.substance
 
 mappingId SubstanceNameNodeCompanyA
-target :substance-name/a/{name_id} a idmp-sub:SubstanceName ; idmp-sub:hasSubstanceNameValue "{name_value}"^^xsd:string ; idmp-sub:hasSubstanceNameType <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceNameClassifier-PreferredName> ; idmp-dtp:hasLanguageCode <https://www.omg.org/spec/LCC/Languages/ISO639-1-LanguageCodes/{language_code}> .
+target :substance-name/a/{name_id} a idmp-sub:SubstanceName ; idmp-sub:hasSubstanceNameValue "{name_value}"^^xsd:string ; idmp-sub:hasSubstanceNameType <{idmp_name_type_iri}> ; idmp-dtp:hasLanguageCode <https://www.omg.org/spec/LCC/Languages/ISO639-1-LanguageCodes/{language_code}> .
 source SELECT name_id,
        name_value,
-       language_code
-       FROM company_a.substance_name
+       language_code,
+       m.idmp_name_type_iri
+       FROM company_a.substance_name n
+       JOIN regulator.name_type_map m
+         ON m.company_code = 'A'
+        AND m.source_name_type = n.name_type
 
 mappingId SubstanceNameLinkCompanyA
 target :substance/a/{substance_id} idmp-sub:hasSubstanceName :substance-name/a/{name_id} .
@@ -60,11 +64,15 @@ source SELECT substance_code,
        FROM company_b.substance_master
 
 mappingId SubstanceNameNodeCompanyB
-target :substance-name/b/{alias_id} a idmp-sub:SubstanceName ; idmp-sub:hasSubstanceNameValue "{alias_text}"^^xsd:string ; idmp-sub:hasSubstanceNameType <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceNameClassifier-PreferredName> ; idmp-dtp:hasLanguageCode <https://www.omg.org/spec/LCC/Languages/ISO639-1-LanguageCodes/{lang}> .
+target :substance-name/b/{alias_id} a idmp-sub:SubstanceName ; idmp-sub:hasSubstanceNameValue "{alias_text}"^^xsd:string ; idmp-sub:hasSubstanceNameType <{idmp_name_type_iri}> ; idmp-dtp:hasLanguageCode <https://www.omg.org/spec/LCC/Languages/ISO639-1-LanguageCodes/{lang}> .
 source SELECT alias_id,
        alias_text,
-       lang
-       FROM company_b.substance_alias
+       lang,
+       m.idmp_name_type_iri
+       FROM company_b.substance_alias a
+       JOIN regulator.name_type_map m
+         ON m.company_code = 'B'
+        AND m.source_name_type = a.alias_kind
 
 mappingId SubstanceNameLinkCompanyB
 target :substance/b/{substance_code} idmp-sub:hasSubstanceName :substance-name/b/{alias_id} .
