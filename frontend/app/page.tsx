@@ -118,7 +118,7 @@ export default function Login() {
                         <div className="overlay">
                             <div className="overlay-panel overlay-left">
                                 <h1 className="title">Hello <br /> friends</h1>
-                                <p>if you have an account, login here and have fun</p>
+                                <p>if you have an account, login here and searching the data</p>
                                 <button className="ghost" onClick={() => setIsRegistering(false)}>
                                     Login <i className="lni lni-arrow-left login"></i>
                                 </button>
