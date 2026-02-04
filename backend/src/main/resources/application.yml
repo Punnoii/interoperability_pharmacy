@@ -1,0 +1,14 @@
+server:
+  port: 8082
+
+spring:
+  jackson:
+    serialization:
+      indent_output: true
+
+ontop:
+  default-endpoint: default
+  default-accept: application/sparql-results+json
+  endpoints:
+    default: ${ONTOP_ENDPOINT_DEFAULT:http://localhost:8080/sparql}
+    mysql: ${ONTOP_ENDPOINT_MYSQL:http://localhost:8081/sparql}
