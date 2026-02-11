@@ -7,6 +7,8 @@ services:
       - "3306:3306"
     volumes:
       - ./sql/mysql:/docker-entrypoint-initdb.d
+    networks:
+      - app-network
 
   postgres:
     image: postgres:16
@@ -16,6 +18,8 @@ services:
       - "5432:5432"
     volumes:
       - ./sql/postgres:/docker-entrypoint-initdb.d
+    networks:
+      - app-network
 
   trino:
     image: trinodb/trino:479
@@ -26,6 +30,8 @@ services:
     depends_on:
       - mysql
       - postgres
+    networks:
+      - app-network
 
   ontop:
     image: ontop/ontop:5.3.1
@@ -46,6 +52,8 @@ services:
       - "8080:8080"
     depends_on:
       - postgres
+    networks:
+      - app-network
 
   ontop-mysql:
     image: ontop/ontop:5.3.1
@@ -66,3 +74,41 @@ services:
       - "8081:8080"
     depends_on:
       - mysql
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8082"
+    environment:
+      ONTOP_ENDPOINT_DEFAULT: http://ontop:8080/sparql
+      ONTOP_ENDPOINT_MYSQL: http://ontop-mysql:8080/sparql
+    depends_on:
+      - postgres
+      - mysql
+      - ontop
+      - ontop-mysql
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend:8082
+    depends_on:
+      - backend
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
