@@ -1,0 +1,7 @@
+com/example/idmp/config/OntopConfig.class
+com/example/idmp/IdmpBackendApplication.class
+com/example/idmp/web/dto/SparqlRequest.class
+com/example/idmp/service/OntopClient.class
+com/example/idmp/config/OntopProperties.class
+com/example/idmp/web/SparqlController.class
+com/example/idmp/util/SparqlTemplates.class
