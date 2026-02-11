@@ -1,36 +1,227 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Interoperability Pharmacy
 
-## Getting Started
+โปรเจคระบบ Semantic Data Integration สำหรับข้อมูลยา โดยใช้ SPARQL Endpoint ผ่าน Ontop เพื่อเชื่อมต่อกับฐานข้อมูล MySQL และ PostgreSQL
 
-First, run the development server:
+## 📋 สถาปัตยกรรมระบบ
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+Frontend (Next.js) → Backend (Spring Boot) → Ontop → Database (MySQL/PostgreSQL)
+                                           ↘ Trino
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Components
+- **Frontend**: Next.js 15 (TypeScript, React)
+- **Backend**: Spring Boot (Java 17)
+- **Data Access Layer**: 
+  - Ontop (SPARQL to SQL mapping)
+  - Trino (Distributed SQL query engine)
+- **Databases**: MySQL 8.0, PostgreSQL 16
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🚀 การติดตั้งและรันโปรเจค
 
-## Learn More
+### Prerequisites
+- Docker & Docker Compose
+- Git
 
-To learn more about Next.js, take a look at the following resources:
+### 1. Clone Repository
+```bash
+git clone <repository-url>
+cd interoperability_pharmacy
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 2. รันระบบทั้งหมดด้วย Docker Compose
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+#### สร้าง Docker Images และรันทุก Services
+```bash
+docker-compose up -d --build
+```
 
-## Deploy on Vercel
+#### รัน Services (ถ้า Build แล้ว)
+```bash
+docker-compose up -d
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+#### หยุดทุก Services
+```bash
+docker-compose down
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+#### ดู Logs
+```bash
+# ดู logs ทั้งหมด
+docker-compose logs -f
+
+# ดู logs เฉพาะ service
+docker-compose logs -f backend
+docker-compose logs -f frontend
+```
+
+### 3. เข้าใช้งานระบบ
+
+| Service | URL | Port |
+|---------|-----|------|
+| Frontend | http://localhost:3000 | 3000 |
+| Backend API | http://localhost:8082 | 8082 |
+| Ontop (PostgreSQL) | http://localhost:8080/sparql | 8080 |
+| Ontop (MySQL) | http://localhost:8081/sparql | 8081 |
+| Trino | http://localhost:8090 | 8090 |
+| MySQL | localhost:3306 | 3306 |
+| PostgreSQL | localhost:5432 | 5432 |
+
+---
+
+## 🔌 Backend API Endpoints
+
+### 1. **Execute SPARQL Query**
+```http
+POST /api/sparql
+Content-Type: application/json
+
+{
+  "endpoint": "default",  // "default" หรือ "mysql"
+  "query": "SELECT * WHERE { ?s ?p ?o } LIMIT 10",
+  "accept": "application/sparql-results+json"
+}
+```
+
+### 2. **Get Entity Details**
+```http
+GET /api/entity?iri=<entity-iri>&limit=100&endpoint=default
+```
+
+### 3. **Navigate Graph**
+```http
+GET /api/navigate?iri=<entity-iri>&predicate=<predicate-iri>&direction=out&limit=100
+```
+
+### 4. **Health Check**
+```http
+GET /api/health
+```
+
+---
+
+## 🛠️ Development
+
+### รัน Frontend แยก (Development Mode)
+```bash
+cd frontend
+npm install
+npm run dev
+```
+เข้าใช้งานที่: http://localhost:3000
+
+### รัน Backend แยก (Development Mode)
+```bash
+cd backend
+mvn spring-boot:run
+```
+API จะรันที่: http://localhost:8082
+
+### Environment Variables
+
+#### Frontend (`.env.local`)
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8082
+```
+
+#### Backend (`application.yml`)
+```yaml
+server:
+  port: 8082
+
+ontop:
+  endpoint:
+    default: http://localhost:8080/sparql
+    mysql: http://localhost:8081/sparql
+```
+
+---
+
+## 📦 Docker Services
+
+### Build เฉพาะ Service
+```bash
+# Build frontend
+docker-compose build frontend
+
+# Build backend
+docker-compose build backend
+```
+
+### Restart Service
+```bash
+docker-compose restart frontend
+docker-compose restart backend
+```
+
+### ลบ Containers และ Networks
+```bash
+docker-compose down -v
+```
+
+---
+
+## 🔍 การใช้งาน SPARQL Query
+
+### ตัวอย่าง Query
+```sparql
+# ดึงข้อมูลทั้งหมด 10 รายการ
+SELECT * WHERE { 
+  ?s ?p ?o 
+} LIMIT 10
+
+# ค้นหา Entity ตาม Type
+SELECT ?entity ?label WHERE {
+  ?entity a <http://example.com/Substance> .
+  ?entity rdfs:label ?label .
+}
+```
+
+### วิธีใช้งานผ่าน Frontend
+1. เปิด http://localhost:3000
+2. พิมพ์ SPARQL query ในช่องค้นหา
+3. กดปุ่ม **Run**
+4. ดูผลลัพธ์ใน **Console Log** ของเบราว์เซอร์ (F12)
+
+---
+
+## 🐛 Troubleshooting
+
+### ปัญหา: Frontend ไม่เชื่อมต่อ Backend
+**แก้ไข:** ตรวจสอบว่า Backend รันอยู่ที่ port 8082
+```bash
+docker-compose logs backend
+```
+
+### ปัญหา: Database Connection Error
+**แก้ไข:** รอให้ Database เริ่มทำงานก่อน
+```bash
+docker-compose up -d mysql postgres
+# รอ 10-15 วินาที
+docker-compose up -d ontop ontop-mysql backend
+```
+
+### ปัญหา: Port ถูกใช้งานแล้ว
+**แก้ไข:** เปลี่ยน port ใน `docker-compose.yml`
+```yaml
+ports:
+  - "3001:3000"  # เปลี่ยนจาก 3000 เป็น 3001
+```
+
+---
+
+## 📚 เอกสารเพิ่มเติม
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Spring Boot Documentation](https://spring.io/projects/spring-boot)
+- [Ontop Documentation](https://ontop-vkg.org/)
+- [SPARQL Query Language](https://www.w3.org/TR/sparql11-query/)
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License.
