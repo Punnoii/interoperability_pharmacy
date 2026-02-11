@@ -9,7 +9,6 @@ export default function Homepage() {
 
     return (
         <div className={`app-container ${isDarkMode ? 'dark' : ''}`}>
-            {/* Top Header */}
             <header className="top-header">
                 <div className="logo">RxVKG</div>
                 <div className="header-actions">
@@ -30,7 +29,6 @@ export default function Homepage() {
             </header>
 
             <div className="main-layout">
-                {/* Left Sidebar */}
                 <aside className="sidebar">
                     <nav className="nav-menu">
                         <button
@@ -81,7 +79,6 @@ export default function Homepage() {
                     </div>
                 </aside>
 
-                {/* Database Information Panel */}
                 <aside className="db-panel">
                     <div className="panel-header">
                         <Database size={20} />
@@ -113,7 +110,6 @@ export default function Homepage() {
                     </div>
                 </aside>
 
-                {/* Main Content Area */}
                 <main className="main-content">
                     <div className="search-bar">
                         <input
@@ -121,6 +117,12 @@ export default function Homepage() {
                             placeholder="Search nodes, relationships, or run queries..."
                             className="search-input"
                         />
+                        <button className="run-btn" aria-label="Run query">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <polygon points="5 3 19 12 5 21 5 3" />
+                            </svg>
+                            <span>Run</span>
+                        </button>
                     </div>
 
                     <div className="graph-container">
@@ -487,6 +489,9 @@ export default function Homepage() {
                 .search-bar {
                     margin: 24px 24px 16px;
                     position: relative;
+                    display: flex;
+                    gap: 12px;
+                    align-items: center;
                 }
 
                 .search-icon {
@@ -498,7 +503,7 @@ export default function Homepage() {
                 }
 
                 .search-input {
-                    width: 100%;
+                    flex: 1;
                     padding: 14px 16px 14px 44px;
                     border: 1px solid rgba(0, 0, 0, 0.1);
                     border-radius: 12px;
@@ -507,6 +512,38 @@ export default function Homepage() {
                     backdrop-filter: blur(10px);
                     transition: all 0.2s ease;
                     color: #1a1a1a;
+                }
+
+                .run-btn {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 14px 24px;
+                    border: none;
+                    border-radius: 12px;
+                    background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+                    color: white;
+                    font-size: 14px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    white-space: nowrap;
+                    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+                }
+
+                .run-btn:hover {
+                    background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+                }
+
+                .run-btn:active {
+                    transform: translateY(0);
+                    box-shadow: 0 2px 6px rgba(33, 150, 243, 0.3);
+                }
+
+                .run-btn svg {
+                    fill: white;
                 }
 
                 .search-input::placeholder {
