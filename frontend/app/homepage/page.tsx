@@ -1,13 +1,16 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
-import { Bell, Sun, Moon, User, Database, Clock, Settings, Search, Loader2 } from 'lucide-react';
+import { Bell, Sun, Moon, User, Database, Clock, Settings, Loader2 } from 'lucide-react';
+import D3Graph from '../components/D3Graph';
 
 import 'datatables.net-dt/css/dataTables.dataTables.css';
 import 'datatables.net-responsive-dt/css/responsive.dataTables.css';
 
 export default function Homepage() {
     const [activeTab, setActiveTab] = useState('query');
+    const [viewMode, setViewMode] = useState<'table' | 'graph'>('table');
     const [isDarkMode, setIsDarkMode] = useState(false);
     const [query, setQuery] = useState('SELECT * WHERE { ?s ?p ?o } LIMIT 100');
     const [isLoading, setIsLoading] = useState(false);
@@ -18,7 +21,7 @@ export default function Homepage() {
 
 
     useEffect(() => {
-        if (typeof window === 'undefined' || !queryResults || !tableRef.current) return;
+        if (typeof window === 'undefined' || !queryResults || !tableRef.current || viewMode !== 'table') return;
 
         Promise.all([
             import('jquery'),
@@ -64,7 +67,7 @@ export default function Homepage() {
                 dataTableRef.current = null;
             }
         };
-    }, [queryResults]);
+    }, [queryResults, viewMode]);
 
     const handleRunQuery = async () => {
         if (!query.trim()) return;
@@ -245,41 +248,59 @@ export default function Homepage() {
                             </div>
                         ) : queryResults ? (
                             <div className="results-display">
-                                <div className="table-container">
-                                    <table ref={tableRef} className="results-table display" style={{ width: '100%' }}>
-                                        <thead>
-                                            <tr>
-                                                <th className="row-number-header">#</th>
-                                                {queryResults.results?.bindings?.[0] &&
-                                                    Object.keys(queryResults.results.bindings[0]).map((key: string) => (
-                                                        <th key={key}>{key}</th>
-                                                    ))
-                                                }
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {queryResults.results?.bindings?.map((binding: any, index: number) => (
-                                                <tr key={index}>
-                                                    <td className="row-number">{index + 1}</td>
-                                                    {Object.entries(binding).map(([key, value]: [string, any]) => (
-                                                        <td key={key} className="value-cell">
-                                                            <div className="cell-content">
-                                                                <a
-                                                                    href={value.type === 'uri' ? value.value : undefined}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className={value.type === 'uri' ? 'uri-link' : 'literal-text'}
-                                                                >
-                                                                    {value.value}
-                                                                </a>
-                                                            </div>
-                                                        </td>
-                                                    ))}
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
+                                <div className="view-toggle" style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+                                    <button
+                                        className={`toggle-btn ${viewMode === 'table' ? 'active' : ''}`}
+                                        onClick={() => setViewMode('table')}
+                                        style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #ccc', background: viewMode === 'table' ? '#e3f2fd' : 'transparent', cursor: 'pointer' }}
+                                    >Table</button>
+                                    <button
+                                        className={`toggle-btn ${viewMode === 'graph' ? 'active' : ''}`}
+                                        onClick={() => setViewMode('graph')}
+                                        style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid #ccc', background: viewMode === 'graph' ? '#e3f2fd' : 'transparent', cursor: 'pointer' }}
+                                    >Graph</button>
                                 </div>
+                                {viewMode === 'table' ? (
+                                    <div className="table-container">
+                                        <table ref={tableRef} className="results-table display" style={{ width: '100%' }}>
+                                            <thead>
+                                                <tr>
+                                                    <th className="row-number-header">#</th>
+                                                    {queryResults.results?.bindings?.[0] &&
+                                                        Object.keys(queryResults.results.bindings[0]).map((key: string) => (
+                                                            <th key={key}>{key}</th>
+                                                        ))
+                                                    }
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {queryResults.results?.bindings?.map((binding: any, index: number) => (
+                                                    <tr key={index}>
+                                                        <td className="row-number">{index + 1}</td>
+                                                        {Object.entries(binding).map(([key, value]: [string, any]) => (
+                                                            <td key={key} className="value-cell">
+                                                                <div className="cell-content">
+                                                                    <a
+                                                                        href={value.type === 'uri' ? value.value : undefined}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className={value.type === 'uri' ? 'uri-link' : 'literal-text'}
+                                                                    >
+                                                                        {value.value}
+                                                                    </a>
+                                                                </div>
+                                                            </td>
+                                                        ))}
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                ) : (
+                                    <div className="graph-view-container" style={{ width: '100%', height: 'calc(100vh - 300px)' }}>
+                                        <D3Graph data={queryResults} />
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <div className="graph-placeholder">

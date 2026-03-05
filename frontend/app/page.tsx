@@ -108,7 +108,7 @@ export default function Login() {
                             </div>
                             <button type="submit">Login</button>
                             <div className="mobile-toggle">
-                                <p>Don't have an account?</p>
+                                <p>Don&apos;t have an account?</p>
                                 <button type="button" className="toggle-btn" onClick={() => setIsRegistering(true)}>
                                     Create Account
                                 </button>
