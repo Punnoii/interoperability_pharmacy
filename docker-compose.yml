@@ -6,7 +6,7 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - ./sql/mysql:/docker-entrypoint-initdb.d
+      - ./infra/db/mysql:/docker-entrypoint-initdb.d
 
   postgres:
     image: postgres:16
@@ -15,14 +15,14 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./sql/postgres:/docker-entrypoint-initdb.d
+      - ./infra/db/postgres:/docker-entrypoint-initdb.d
 
   trino:
     image: trinodb/trino:479
     ports:
       - "8090:8080"
     volumes:
-      - ./trino/etc/catalog:/etc/trino/catalog
+      - ./infra/trino/etc/catalog:/etc/trino/catalog
     depends_on:
       - mysql
       - postgres
@@ -39,9 +39,9 @@ services:
       ONTOP_WAIT_FOR: "postgres:5432"
       ONTOP_WAIT_TIMEOUT: "120"
     volumes:
-      - ./obda:/opt/ontop/input
-      - ./idmp/ontology/master/v1.3.0:/opt/ontop/ontology:ro
-      - ./jdbc:/opt/ontop/jdbc
+      - ./infra/ontop/obda:/opt/ontop/input
+      - ./infra/ontop/idmp/ontology/master/v1.3.0:/opt/ontop/ontology:ro
+      - ./infra/ontop/jdbc:/opt/ontop/jdbc
     ports:
       - "8080:8080"
     depends_on:
@@ -59,9 +59,9 @@ services:
       ONTOP_WAIT_FOR: "mysql:3306"
       ONTOP_WAIT_TIMEOUT: "120"
     volumes:
-      - ./obda:/opt/ontop/input
-      - ./idmp/ontology/master/v1.3.0:/opt/ontop/ontology:ro
-      - ./jdbc:/opt/ontop/jdbc
+      - ./infra/ontop/obda:/opt/ontop/input
+      - ./infra/ontop/idmp/ontology/master/v1.3.0:/opt/ontop/ontology:ro
+      - ./infra/ontop/jdbc:/opt/ontop/jdbc
     ports:
       - "8081:8080"
     depends_on:

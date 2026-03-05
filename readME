@@ -1,14 +1,24 @@
-If want to use 2 DB might do this :
+Project structure (clean layout)
+--------------------------------
+- backend: Spring Boot API
+- frontend: simple web client
+- infra/ontop/obda: Ontop mappings, properties, sample SPARQL
+- infra/ontop/jdbc: JDBC drivers
+- infra/ontop/idmp: ontology files
+- infra/db/mysql, infra/db/postgres: database init SQL
+- infra/trino: Trino catalog config
+
+If want to use 2 DB might do this:
 1.) use trino + do main staging/view
 2.) split Ontop 2 instance and merch it on application layer 
 
 curl -G 'http://localhost:8080/sparql' \
-  --data-urlencode 'query@obda/substance.rq' \
+  --data-urlencode 'query@infra/ontop/obda/substance.rq' \
   -H 'Accept: text/csv'
 
 
 curl -G 'http://localhost:8081/sparql' \
-  --data-urlencode 'query@obda/substance.rq' \
+  --data-urlencode 'query@infra/ontop/obda/substance.rq' \
   -H 'Accept: text/csv'
 
 
@@ -36,3 +46,15 @@ Examples:
 Notes:
   - Use endpoint=default or endpoint=mysql to select Ontop instance.
   - Override Ontop URLs with ONTOP_ENDPOINT_DEFAULT / ONTOP_ENDPOINT_MYSQL.
+  - For RDF output, use CONSTRUCT or DESCRIBE query with Accept e.g. text/turtle.
+
+Frontend demo (separate folder)
+-------------------------------
+Run frontend static server:
+  python3 -m http.server 5173 --directory frontend
+
+Open:
+  http://localhost:5173
+
+Note:
+  - Frontend calls backend API URL (default http://localhost:8082/api/sparql).

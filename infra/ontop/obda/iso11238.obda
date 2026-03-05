@@ -1,0 +1,94 @@
+[PrefixDeclaration]
+:            http://example.com/idmp-demo/
+idmp-sub:    https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/
+idmp-dtp:    https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO21090-HarmonizedDatatypes/
+cmns-id:     https://www.omg.org/spec/Commons/Identifiers/
+cmns-dsg:    https://www.omg.org/spec/Commons/Designators/
+cmns-txt:    https://www.omg.org/spec/Commons/TextDatatype/
+lcc-639-1:   https://www.omg.org/spec/LCC/Languages/ISO639-1-LanguageCodes/
+rdf:         http://www.w3.org/1999/02/22-rdf-syntax-ns#
+rdfs:        http://www.w3.org/2000/01/rdf-schema#
+xsd:         http://www.w3.org/2001/XMLSchema#
+
+[MappingDeclaration] @collection [[
+
+mappingId SubstanceCompanyA
+target :substance/a/{substance_id} a idmp-sub:Substance .
+source SELECT substance_id
+       FROM company_a.substance
+
+mappingId SubstanceTypeCompanyA
+target :substance/a/{substance_id} idmp-sub:hasSubstanceType <{substance_type_iri}> .
+source SELECT substance_id,
+       concat('https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceTypeClassifier-', substance_type) AS substance_type_iri
+       FROM company_a.substance
+
+mappingId SubstanceNameNodeCompanyA
+target :substance-name/a/{name_id} a idmp-sub:SubstanceName ; idmp-sub:hasSubstanceNameValue "{name_value}"^^xsd:string ; idmp-sub:hasSubstanceNameType <{idmp_name_type_iri}> ; idmp-dtp:hasLanguageCode <https://www.omg.org/spec/LCC/Languages/ISO639-1-LanguageCodes/{language_code}> .
+source SELECT name_id,
+       name_value,
+       language_code,
+       m.idmp_name_type_iri
+       FROM company_a.substance_name n
+       JOIN regulator.name_type_map m
+         ON m.company_code = 'A'
+        AND m.source_name_type = n.name_type
+
+mappingId SubstanceNameLinkCompanyA
+target :substance/a/{substance_id} idmp-sub:hasSubstanceName :substance-name/a/{name_id} .
+source SELECT substance_id,
+       name_id
+       FROM company_a.substance_name
+
+mappingId SubstanceIdentifierNodeCompanyA
+target :substance-identifier/a/{identifier_id} a idmp-sub:SubstanceIdentifier ; cmns-txt:hasTextValue "{identifier_value}"^^xsd:string .
+source SELECT identifier_id,
+       identifier_value
+       FROM company_a.substance_identifier
+
+mappingId SubstanceIdentifierLinkCompanyA
+target :substance/a/{substance_id} cmns-id:isIdentifiedBy :substance-identifier/a/{identifier_id} .
+source SELECT substance_id,
+       identifier_id
+       FROM company_a.substance_identifier
+
+mappingId SubstanceCompanyB
+target :substance/b/{substance_code} a idmp-sub:Substance .
+source SELECT substance_code
+       FROM company_b.substance_master
+
+mappingId SubstanceTypeCompanyB
+target :substance/b/{substance_code} idmp-sub:hasSubstanceType <{substance_type_iri}> .
+source SELECT substance_code,
+       concat('https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceTypeClassifier-', substance_kind) AS substance_type_iri
+       FROM company_b.substance_master
+
+mappingId SubstanceNameNodeCompanyB
+target :substance-name/b/{alias_id} a idmp-sub:SubstanceName ; idmp-sub:hasSubstanceNameValue "{alias_text}"^^xsd:string ; idmp-sub:hasSubstanceNameType <{idmp_name_type_iri}> ; idmp-dtp:hasLanguageCode <https://www.omg.org/spec/LCC/Languages/ISO639-1-LanguageCodes/{lang}> .
+source SELECT alias_id,
+       alias_text,
+       lang,
+       m.idmp_name_type_iri
+       FROM company_b.substance_alias a
+       JOIN regulator.name_type_map m
+         ON m.company_code = 'B'
+        AND m.source_name_type = a.alias_kind
+
+mappingId SubstanceNameLinkCompanyB
+target :substance/b/{substance_code} idmp-sub:hasSubstanceName :substance-name/b/{alias_id} .
+source SELECT substance_code,
+       alias_id
+       FROM company_b.substance_alias
+
+mappingId SubstanceIdentifierNodeCompanyB
+target :substance-identifier/b/{id_id} a idmp-sub:SubstanceIdentifier ; cmns-txt:hasTextValue "{id_value}"^^xsd:string .
+source SELECT id_id,
+       id_value
+       FROM company_b.substance_id_map
+
+mappingId SubstanceIdentifierLinkCompanyB
+target :substance/b/{substance_code} cmns-id:isIdentifiedBy :substance-identifier/b/{id_id} .
+source SELECT substance_code,
+       id_id
+       FROM company_b.substance_id_map
+]]

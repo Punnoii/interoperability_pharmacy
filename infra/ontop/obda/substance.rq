@@ -1,0 +1,17 @@
+PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
+PREFIX idmp-dtp: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO21090-HarmonizedDatatypes/>
+PREFIX cmns-id: <https://www.omg.org/spec/Commons/Identifiers/>
+PREFIX cmns-txt: <https://www.omg.org/spec/Commons/TextDatatype/>
+PREFIX cmns-dsg: <https://www.omg.org/spec/Commons/Designators/>
+
+SELECT ?substance ?substanceType ?nameValue ?identifierValue
+WHERE {
+  ?substance a idmp-sub:Substance ;
+             idmp-sub:hasSubstanceType ?substanceType ;
+             idmp-sub:hasSubstanceName ?nameNode ;
+             cmns-id:isIdentifiedBy ?identifierNode .
+  ?nameNode idmp-sub:hasSubstanceNameValue ?nameValue .
+  ?identifierNode cmns-txt:hasTextValue ?identifierValue .
+}
+ORDER BY ?substance
+LIMIT 50
