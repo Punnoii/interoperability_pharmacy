@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Bell, Sun, Moon, User, Database, Clock, Settings, Search, Loader2 } from 'lucide-react';
 
-// Import CSS statically (CSS doesn't need SSR protection)
 import 'datatables.net-dt/css/dataTables.dataTables.css';
 import 'datatables.net-responsive-dt/css/responsive.dataTables.css';
 
@@ -17,12 +16,9 @@ export default function Homepage() {
     const tableRef = useRef<HTMLTableElement>(null);
     const dataTableRef = useRef<any>(null);
 
-    // Initialize DataTable when results change
     useEffect(() => {
-        // Only run on client side
         if (typeof window === 'undefined' || !queryResults || !tableRef.current) return;
 
-        // Dynamically import jQuery and DataTables on client side only
         Promise.all([
             import('jquery'),
             import('datatables.net'),
@@ -30,19 +26,17 @@ export default function Homepage() {
         ]).then(([jQueryModule]) => {
             const $ = jQueryModule.default;
 
-            // Destroy existing DataTable if it exists
             if (dataTableRef.current) {
                 dataTableRef.current.destroy();
             }
 
-            // Initialize new DataTable with proper null check
             if (tableRef.current) {
                 dataTableRef.current = $(tableRef.current as any).DataTable({
-                    paging: true,         // เปิดการแบ่งหน้า
-                    pageLength: 10,       // แสดงทีละ 10 รายการ
-                    searching: false,     // ปิด Search box
-                    info: true,           // แสดง "Showing X to Y of Z entries"
-                    lengthChange: false,  // ปิด "Show entries" dropdown
+                    paging: true,
+                    pageLength: 10,
+                    searching: false,
+                    info: true,
+                    lengthChange: false,
                     order: [[0, 'asc']],
                     responsive: true,
                     language: {

@@ -169,7 +169,6 @@ export default function Graph() {
             .attr("stroke", "#fff")
             .attr("stroke-width", 2);
 
-        // Tooltip title
         node.append("title").text((d) => d.id);
 
         node.append("text")
@@ -200,7 +199,6 @@ export default function Graph() {
 
     return (
         <div className="flex flex-col min-h-screen bg-slate-100 p-6 gap-4">
-            {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800">Graph Viewer</h1>
@@ -211,16 +209,15 @@ export default function Graph() {
                 {status === "done" && (
                     <div className="flex gap-3 text-sm text-slate-600">
                         <span className="bg-white rounded-lg px-3 py-1.5 shadow-sm border border-slate-200">
-                            🔵 <strong>{nodeCount}</strong> nodes
+                            <strong>{nodeCount}</strong> nodes
                         </span>
                         <span className="bg-white rounded-lg px-3 py-1.5 shadow-sm border border-slate-200">
-                            🔗 <strong>{linkCount}</strong> links
+                            <strong>{linkCount}</strong> links
                         </span>
                     </div>
                 )}
             </div>
 
-            {/* Graph area */}
             <div
                 ref={containerRef}
                 className="flex-1 bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden relative"
