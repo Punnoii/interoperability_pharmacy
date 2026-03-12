@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Bell, Sun, Moon, User, Database, Clock, Settings, Search, Loader2 } from 'lucide-react';
 
-// Import CSS statically (CSS doesn't need SSR protection)
 import 'datatables.net-dt/css/dataTables.dataTables.css';
 import 'datatables.net-responsive-dt/css/responsive.dataTables.css';
 
@@ -17,12 +16,9 @@ export default function Homepage() {
     const tableRef = useRef<HTMLTableElement>(null);
     const dataTableRef = useRef<any>(null);
 
-    // Initialize DataTable when results change
     useEffect(() => {
-        // Only run on client side
         if (typeof window === 'undefined' || !queryResults || !tableRef.current) return;
 
-        // Dynamically import jQuery and DataTables on client side only
         Promise.all([
             import('jquery'),
             import('datatables.net'),
@@ -30,19 +26,16 @@ export default function Homepage() {
         ]).then(([jQueryModule]) => {
             const $ = jQueryModule.default;
 
-            // Destroy existing DataTable if it exists
             if (dataTableRef.current) {
                 dataTableRef.current.destroy();
             }
-
-            // Initialize new DataTable with proper null check
             if (tableRef.current) {
                 dataTableRef.current = $(tableRef.current as any).DataTable({
-                    paging: true,         // เปิดการแบ่งหน้า
-                    pageLength: 10,       // แสดงทีละ 10 รายการ
-                    searching: false,     // ปิด Search box
-                    info: true,           // แสดง "Showing X to Y of Z entries"
-                    lengthChange: false,  // ปิด "Show entries" dropdown
+                    paging: true,
+                    pageLength: 10,
+                    searching: false,
+                    info: true,
+                    lengthChange: false,
                     order: [[0, 'asc']],
                     responsive: true,
                     language: {
@@ -81,7 +74,7 @@ export default function Homepage() {
 
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8082';
-            const response = await fetch(`${apiUrl}/api/sparql`, {
+            const response = await fetch(`/api/sparql`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -213,13 +206,18 @@ export default function Homepage() {
 
                 <main className="main-content">
                     <div className="search-bar">
-                        <input
-                            type="text"
+                        <textarea
                             placeholder="Search nodes, relationships, or run queries..."
                             className="search-input"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleRunQuery()}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                                    e.preventDefault();
+                                    handleRunQuery();
+                                }
+                            }}
+                            rows={3}
                         />
                         <button
                             className="run-btn"
@@ -654,7 +652,7 @@ export default function Homepage() {
                     position: relative;
                     display: flex;
                     gap: 12px;
-                    align-items: center;
+                    align-items: flex-start;
                 }
 
                 .search-icon {
@@ -667,14 +665,20 @@ export default function Homepage() {
 
                 .search-input {
                     flex: 1;
-                    padding: 14px 16px 14px 44px;
+                    padding: 14px 16px;
                     border: 1px solid rgba(0, 0, 0, 0.1);
                     border-radius: 12px;
                     font-size: 14px;
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
                     background: rgba(255, 255, 255, 0.9);
                     backdrop-filter: blur(10px);
                     transition: all 0.2s ease;
                     color: #1a1a1a;
+                    resize: vertical;
+                    min-height: 52px;
+                    line-height: 1.6;
+                    word-wrap: break-word;
+                    white-space: pre-wrap;
                 }
 
                 .run-btn {
