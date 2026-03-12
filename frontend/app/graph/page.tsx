@@ -14,9 +14,10 @@ interface GraphLink extends d3.SimulationLinkDatum<GraphNode> {
 }
 
 interface SparqlBinding {
-    s: { type: string; value: string };
-    p: { type: string; value: string };
-    o: { type: string; value: string };
+    substance:       { type: string; value: string };
+    substanceType:   { type: string; value: string };
+    nameValue:       { type: string; value: string };
+    identifierValue: { type: string; value: string };
 }
 
 // ย่อ IRI ให้อ่านง่าย: ตัด namespace prefix ออก
@@ -28,31 +29,52 @@ function shortenIri(iri: string): string {
     return iri;
 }
 
-// แปลง SPARQL bindings → nodes + links
+// แปลง SPARQL bindings (substance query) → nodes + links
 function bindingsToGraph(bindings: SparqlBinding[]): { nodes: GraphNode[]; links: GraphLink[] } {
     const nodeMap = new Map<string, GraphNode>();
     const links: GraphLink[] = [];
 
+    const addNode = (id: string, group: number) => {
+        if (!nodeMap.has(id)) nodeMap.set(id, { id, group });
+    };
+
     bindings.forEach((b) => {
-        const sId = b.s.value;
-        const oId = b.o.value;
-        const pLabel = shortenIri(b.p.value);
+        const subId    = b.substance.value;        // URI เช่น .../Substance/X
+        const typeId   = b.substanceType.value;    // URI ประเภทสาร
+        const nameVal  = b.nameValue.value;        // literal ชื่อสาร
+        const idVal    = b.identifierValue.value;  // literal รหัสสาร
 
-        if (!nodeMap.has(sId)) {
-            nodeMap.set(sId, { id: sId, group: 1 });
-        }
-        // literals (type !== uri) ใช้ group 2
-        if (!nodeMap.has(oId)) {
-            nodeMap.set(oId, { id: oId, group: b.o.type === "uri" ? 1 : 2 });
-        }
+        addNode(subId,   1);   // substance → group 1 (URI)
+        addNode(typeId,  1);   // substanceType → group 1 (URI)
+        addNode(nameVal, 2);   // nameValue → group 2 (literal)
+        addNode(idVal,   3);   // identifierValue → group 3 (literal)
 
-        links.push({ source: sId, target: oId, label: pLabel });
+        links.push({ source: subId, target: typeId,  label: "hasSubstanceType" });
+        links.push({ source: subId, target: nameVal, label: "hasSubstanceName" });
+        links.push({ source: subId, target: idVal,   label: "isIdentifiedBy" });
     });
 
     return { nodes: Array.from(nodeMap.values()), links };
 }
 
-const SPARQL_QUERY = `SELECT * WHERE { ?s ?p ?o } LIMIT 10`;
+const SPARQL_QUERY = `
+PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
+PREFIX idmp-dtp: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO21090-HarmonizedDatatypes/>
+PREFIX cmns-id:  <https://www.omg.org/spec/Commons/Identifiers/>
+PREFIX cmns-txt: <https://www.omg.org/spec/Commons/TextDatatype/>
+PREFIX cmns-dsg: <https://www.omg.org/spec/Commons/Designators/>
+
+SELECT ?substance ?substanceType ?nameValue ?identifierValue
+WHERE {
+  ?substance a idmp-sub:Substance ;
+             idmp-sub:hasSubstanceType ?substanceType ;
+             idmp-sub:hasSubstanceName ?nameNode ;
+             cmns-id:isIdentifiedBy ?identifierNode .
+  ?nameNode idmp-sub:hasSubstanceNameValue ?nameValue .
+  ?identifierNode cmns-txt:hasTextValue ?identifierValue .
+}
+ORDER BY ?substance
+LIMIT 50`.trim();
 const color = d3.scaleOrdinal(d3.schemeTableau10);
 
 export default function Graph() {
@@ -201,23 +223,33 @@ export default function Graph() {
     return (
         <div className="flex flex-col min-h-screen bg-slate-100 p-6 gap-4">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-800">Graph Viewer</h1>
+                    <h1 className="text-2xl font-bold text-slate-800">Substance Graph Viewer</h1>
                     <p className="text-sm text-slate-500 mt-0.5">
-                        Query: <code className="bg-slate-200 px-1.5 py-0.5 rounded text-xs">{SPARQL_QUERY}</code>
+                        Query: <code className="bg-slate-200 px-1.5 py-0.5 rounded text-xs">
+                            IDMP Substance — SELECT ?substance ?substanceType ?nameValue ?identifierValue … LIMIT 50
+                        </code>
                     </p>
                 </div>
-                {status === "done" && (
-                    <div className="flex gap-3 text-sm text-slate-600">
-                        <span className="bg-white rounded-lg px-3 py-1.5 shadow-sm border border-slate-200">
-                            🔵 <strong>{nodeCount}</strong> nodes
-                        </span>
-                        <span className="bg-white rounded-lg px-3 py-1.5 shadow-sm border border-slate-200">
-                            🔗 <strong>{linkCount}</strong> links
-                        </span>
-                    </div>
-                )}
+                <div className="flex flex-wrap gap-3 text-sm text-slate-600">
+                    {status === "done" && (
+                        <>
+                            <span className="bg-white rounded-lg px-3 py-1.5 shadow-sm border border-slate-200">
+                                🔵 <strong>{nodeCount}</strong> nodes
+                            </span>
+                            <span className="bg-white rounded-lg px-3 py-1.5 shadow-sm border border-slate-200">
+                                🔗 <strong>{linkCount}</strong> links
+                            </span>
+                        </>
+                    )}
+                    {/* Legend */}
+                    <span className="bg-white rounded-lg px-3 py-1.5 shadow-sm border border-slate-200 flex gap-2">
+                        <span>🔵 Substance/Type</span>
+                        <span>🟠 Name</span>
+                        <span>🟢 Identifier</span>
+                    </span>
+                </div>
             </div>
 
             {/* Graph area */}
