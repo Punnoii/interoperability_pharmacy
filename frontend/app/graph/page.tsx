@@ -138,8 +138,8 @@ export default function Graph() {
 
         const simulation = d3
             .forceSimulation<GraphNode>(nodes)
-            .force("link", d3.forceLink<GraphNode, GraphLink>(links).id((d) => d.id).distance(140))
-            .force("charge", d3.forceManyBody().strength(-250))
+            .force("link", d3.forceLink<GraphNode, GraphLink>(links).id((d) => d.id).distance(40))
+            .force("charge", d3.forceManyBody().strength(50))
             .force("center", d3.forceCenter(width / 2, height / 2))
             .force("collision", d3.forceCollide(36));
 
