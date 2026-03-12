@@ -14,9 +14,9 @@ interface GraphLink extends d3.SimulationLinkDatum<GraphNode> {
 }
 
 interface SparqlBinding {
-    substance:       { type: string; value: string };
-    substanceType:   { type: string; value: string };
-    nameValue:       { type: string; value: string };
+    substance: { type: string; value: string };
+    substanceType: { type: string; value: string };
+    nameValue: { type: string; value: string };
     identifierValue: { type: string; value: string };
 }
 
@@ -39,19 +39,19 @@ function bindingsToGraph(bindings: SparqlBinding[]): { nodes: GraphNode[]; links
     };
 
     bindings.forEach((b) => {
-        const subId    = b.substance.value;        // URI เช่น .../Substance/X
-        const typeId   = b.substanceType.value;    // URI ประเภทสาร
-        const nameVal  = b.nameValue.value;        // literal ชื่อสาร
-        const idVal    = b.identifierValue.value;  // literal รหัสสาร
+        const subId = b.substance.value;        // URI เช่น .../Substance/X
+        const typeId = b.substanceType.value;    // URI ประเภทสาร
+        const nameVal = b.nameValue.value;        // literal ชื่อสาร
+        const idVal = b.identifierValue.value;  // literal รหัสสาร
 
-        addNode(subId,   1);   // substance → group 1 (URI)
-        addNode(typeId,  1);   // substanceType → group 1 (URI)
+        addNode(subId, 1);   // substance → group 1 (URI)
+        addNode(typeId, 1);   // substanceType → group 1 (URI)
         addNode(nameVal, 2);   // nameValue → group 2 (literal)
-        addNode(idVal,   3);   // identifierValue → group 3 (literal)
+        addNode(idVal, 3);   // identifierValue → group 3 (literal)
 
-        links.push({ source: subId, target: typeId,  label: "hasSubstanceType" });
+        links.push({ source: subId, target: typeId, label: "hasSubstanceType" });
         links.push({ source: subId, target: nameVal, label: "hasSubstanceName" });
-        links.push({ source: subId, target: idVal,   label: "isIdentifiedBy" });
+        links.push({ source: subId, target: idVal, label: "isIdentifiedBy" });
     });
 
     return { nodes: Array.from(nodeMap.values()), links };
