@@ -20,7 +20,6 @@ interface SparqlBinding {
     identifierValue: { type: string; value: string };
 }
 
-// ย่อ IRI ให้อ่านง่าย: ตัด namespace prefix ออก
 function shortenIri(iri: string): string {
     const hash = iri.lastIndexOf("#");
     if (hash !== -1) return iri.slice(hash + 1);
@@ -29,7 +28,6 @@ function shortenIri(iri: string): string {
     return iri;
 }
 
-// แปลง SPARQL bindings (substance query) → nodes + links
 function bindingsToGraph(bindings: SparqlBinding[]): { nodes: GraphNode[]; links: GraphLink[] } {
     const nodeMap = new Map<string, GraphNode>();
     const links: GraphLink[] = [];
@@ -39,15 +37,15 @@ function bindingsToGraph(bindings: SparqlBinding[]): { nodes: GraphNode[]; links
     };
 
     bindings.forEach((b) => {
-        const subId = b.substance.value;        // URI เช่น .../Substance/X
-        const typeId = b.substanceType.value;    // URI ประเภทสาร
-        const nameVal = b.nameValue.value;        // literal ชื่อสาร
-        const idVal = b.identifierValue.value;  // literal รหัสสาร
+        const subId = b.substance.value;
+        const typeId = b.substanceType.value;
+        const nameVal = b.nameValue.value;
+        const idVal = b.identifierValue.value;
 
-        addNode(subId, 1);   // substance → group 1 (URI)
-        addNode(typeId, 1);   // substanceType → group 1 (URI)
-        addNode(nameVal, 2);   // nameValue → group 2 (literal)
-        addNode(idVal, 3);   // identifierValue → group 3 (literal)
+        addNode(subId, 1);
+        addNode(typeId, 1);
+        addNode(nameVal, 2);
+        addNode(idVal, 3);
 
         links.push({ source: subId, target: typeId, label: "hasSubstanceType" });
         links.push({ source: subId, target: nameVal, label: "hasSubstanceName" });
@@ -126,7 +124,6 @@ export default function Graph() {
         const svg = d3.select(svgEl).attr("width", width).attr("height", height);
         svg.selectAll("*").remove();
 
-        // Arrow marker
         svg.append("defs")
             .append("marker")
             .attr("id", "arrow")
@@ -146,7 +143,6 @@ export default function Graph() {
             .force("center", d3.forceCenter(width / 2, height / 2))
             .force("collision", d3.forceCollide(36));
 
-        // Links
         const link = svg.append("g")
             .selectAll("line")
             .data(links)
@@ -155,7 +151,6 @@ export default function Graph() {
             .attr("stroke-width", 1.5)
             .attr("marker-end", "url(#arrow)");
 
-        // Link labels
         const linkLabel = svg.append("g")
             .selectAll<SVGTextElement, GraphLink>("text")
             .data(links)
@@ -166,7 +161,6 @@ export default function Graph() {
             .attr("text-anchor", "middle")
             .style("pointer-events", "none");
 
-        // Nodes
         const node = svg.append("g")
             .selectAll<SVGGElement, GraphNode>("g")
             .data(nodes)
@@ -191,7 +185,6 @@ export default function Graph() {
             .attr("stroke", "#fff")
             .attr("stroke-width", 2);
 
-        // Tooltip title
         node.append("title").text((d) => d.id);
 
         node.append("text")
@@ -222,7 +215,6 @@ export default function Graph() {
 
     return (
         <div className="flex flex-col min-h-screen bg-slate-100 p-6 gap-4">
-            {/* Header */}
             <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800">Substance Graph Viewer</h1>
@@ -236,23 +228,21 @@ export default function Graph() {
                     {status === "done" && (
                         <>
                             <span className="bg-white rounded-lg px-3 py-1.5 shadow-sm border border-slate-200">
-                                🔵 <strong>{nodeCount}</strong> nodes
+                                <strong>{nodeCount}</strong> nodes
                             </span>
                             <span className="bg-white rounded-lg px-3 py-1.5 shadow-sm border border-slate-200">
-                                🔗 <strong>{linkCount}</strong> links
+                                <strong>{linkCount}</strong> links
                             </span>
                         </>
                     )}
-                    {/* Legend */}
                     <span className="bg-white rounded-lg px-3 py-1.5 shadow-sm border border-slate-200 flex gap-2">
-                        <span>🔵 Substance/Type</span>
-                        <span>🟠 Name</span>
-                        <span>🟢 Identifier</span>
+                        <span>Substance/Type</span>
+                        <span>Name</span>
+                        <span>Identifier</span>
                     </span>
                 </div>
             </div>
 
-            {/* Graph area */}
             <div
                 ref={containerRef}
                 className="flex-1 bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden relative"
