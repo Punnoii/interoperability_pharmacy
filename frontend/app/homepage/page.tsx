@@ -75,7 +75,7 @@ export default function Homepage() {
 
         try {
             const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8082';
-            const response = await fetch(`${apiUrl}/api/sparql`, {
+            const response = await fetch(`/api/sparql`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
