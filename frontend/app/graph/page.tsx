@@ -19,7 +19,6 @@ interface SparqlBinding {
     o: { type: string; value: string };
 }
 
-// ย่อ IRI ให้อ่านง่าย: ตัด namespace prefix ออก
 function shortenIri(iri: string): string {
     const hash = iri.lastIndexOf("#");
     if (hash !== -1) return iri.slice(hash + 1);
@@ -28,7 +27,6 @@ function shortenIri(iri: string): string {
     return iri;
 }
 
-// แปลง SPARQL bindings → nodes + links
 function bindingsToGraph(bindings: SparqlBinding[]): { nodes: GraphNode[]; links: GraphLink[] } {
     const nodeMap = new Map<string, GraphNode>();
     const links: GraphLink[] = [];
@@ -41,7 +39,7 @@ function bindingsToGraph(bindings: SparqlBinding[]): { nodes: GraphNode[]; links
         if (!nodeMap.has(sId)) {
             nodeMap.set(sId, { id: sId, group: 1 });
         }
-        // literals (type !== uri) ใช้ group 2
+
         if (!nodeMap.has(oId)) {
             nodeMap.set(oId, { id: oId, group: b.o.type === "uri" ? 1 : 2 });
         }
@@ -104,7 +102,6 @@ export default function Graph() {
         const svg = d3.select(svgEl).attr("width", width).attr("height", height);
         svg.selectAll("*").remove();
 
-        // Arrow marker
         svg.append("defs")
             .append("marker")
             .attr("id", "arrow")
@@ -124,7 +121,6 @@ export default function Graph() {
             .force("center", d3.forceCenter(width / 2, height / 2))
             .force("collision", d3.forceCollide(36));
 
-        // Links
         const link = svg.append("g")
             .selectAll("line")
             .data(links)
@@ -133,7 +129,6 @@ export default function Graph() {
             .attr("stroke-width", 1.5)
             .attr("marker-end", "url(#arrow)");
 
-        // Link labels
         const linkLabel = svg.append("g")
             .selectAll<SVGTextElement, GraphLink>("text")
             .data(links)
@@ -144,7 +139,6 @@ export default function Graph() {
             .attr("text-anchor", "middle")
             .style("pointer-events", "none");
 
-        // Nodes
         const node = svg.append("g")
             .selectAll<SVGGElement, GraphNode>("g")
             .data(nodes)
