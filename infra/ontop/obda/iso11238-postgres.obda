@@ -91,4 +91,5 @@ target :substance/b/{substance_code} cmns-id:isIdentifiedBy :substance-identifie
 source SELECT substance_code,
        id_id
        FROM company_b.substance_id_map
+
 ]]

@@ -1,4 +1,13 @@
 services:
+  mongo:
+    image: mongo:7
+    environment:
+      MONGO_INITDB_DATABASE: company_d
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./infra/db/mongo:/docker-entrypoint-initdb.d
+
   mysql:
     image: mysql:8.0
     environment:
@@ -24,15 +33,36 @@ services:
     volumes:
       - ./infra/trino/etc/catalog:/etc/trino/catalog
     depends_on:
+      - mongo
       - mysql
       - postgres
 
-  ontop:
+  ontop-trino:
     image: ontop/ontop:5.3.1
     environment:
       ONTOP_ONTOLOGY_FILE: /opt/ontop/input/idmp-entry-iso11238-core-lcc.rdf
-      ONTOP_MAPPING_FILE: /opt/ontop/input/iso11238.obda
-      ONTOP_PROPERTIES_FILE: /opt/ontop/input/regulator.properties
+      ONTOP_MAPPING_FILE: /opt/ontop/input/iso11238-trino.obda
+      ONTOP_PROPERTIES_FILE: /opt/ontop/input/regulator-trino.properties
+      ONTOP_XML_CATALOG_FILE: /opt/ontop/ontology/catalog-v001.xml
+      ONTOP_CORS_ALLOWED_ORIGINS: "*"
+      ONTOP_LAZY_INIT: "true"
+      ONTOP_WAIT_FOR: "trino:8080"
+      ONTOP_WAIT_TIMEOUT: "120"
+    volumes:
+      - ./infra/ontop/obda:/opt/ontop/input
+      - ./infra/ontop/idmp/ontology/master/v1.3.0:/opt/ontop/ontology:ro
+      - ./infra/ontop/jdbc:/opt/ontop/jdbc
+    ports:
+      - "8083:8080"
+    depends_on:
+      - trino
+
+  ontop-postgres:
+    image: ontop/ontop:5.3.1
+    environment:
+      ONTOP_ONTOLOGY_FILE: /opt/ontop/input/idmp-entry-iso11238-core-lcc.rdf
+      ONTOP_MAPPING_FILE: /opt/ontop/input/iso11238-postgres.obda
+      ONTOP_PROPERTIES_FILE: /opt/ontop/input/regulator-postgres.properties
       ONTOP_XML_CATALOG_FILE: /opt/ontop/ontology/catalog-v001.xml
       ONTOP_CORS_ALLOWED_ORIGINS: "*"
       ONTOP_LAZY_INIT: "true"
