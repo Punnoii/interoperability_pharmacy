@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Loader2 } from "lucide-react";
 
 type Binding = Record<string, { type: string; value: string }>;
@@ -10,9 +10,13 @@ interface SparqlResults {
   results: { bindings: Binding[] };
 }
 
+interface QueryPanelProps {
+  isDark: boolean;
+}
+
 const DEFAULT_QUERY = `SELECT * WHERE { ?s ?p ?o } LIMIT 100`;
 
-export default function QueryPanel() {
+export default function QueryPanel({ isDark }: QueryPanelProps) {
   const [query, setQuery] = useState(DEFAULT_QUERY);
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<SparqlResults | null>(null);
@@ -46,7 +50,6 @@ export default function QueryPanel() {
 
       const data = await res.json();
       setResults(data);
-      // Scroll results into view
       setTimeout(() => tableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error occurred");
@@ -60,12 +63,39 @@ export default function QueryPanel() {
   const totalPages = Math.max(1, Math.ceil(bindings.length / PAGE_SIZE));
   const pageBindings = bindings.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+  // Dark mode token shortcuts
+  const cardBg = isDark ? "rgba(30,41,59,0.9)" : "rgba(255,255,255,0.85)";
+  const cardBorder = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
+  const inputBg = isDark ? "#0f172a" : "#ffffff";
+  const inputBorder = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)";
+  const inputFg = isDark ? "#e2e8f0" : "#1f2937";
+  const placeholderColor = isDark ? "#475569" : "#9ca3af";
+  const tableBg = isDark ? "rgba(30,41,59,0.9)" : "rgba(255,255,255,0.85)";
+  const theadBg = isDark ? "rgba(33,150,243,0.12)" : "rgba(219,234,254,0.6)";
+  const theadColor = isDark ? "#60a5fa" : "#1d4ed8";
+  const theadBorder = isDark ? "#1e40af40" : "#bfdbfe";
+  const rowBorder = isDark ? "rgba(255,255,255,0.04)" : "#f9fafb";
+  const rowHoverBg = isDark ? "rgba(33,150,243,0.08)" : "rgba(219,234,254,0.3)";
+  const mutedText = isDark ? "#64748b" : "#9ca3af";
+  const bodyText = isDark ? "#cbd5e1" : "#374151";
+  const linkColor = isDark ? "#60a5fa" : "#3b82f6";
+  const linkHover = isDark ? "#93c5fd" : "#1d4ed8";
+  const paginationBg = isDark ? "rgba(15,23,42,0.8)" : "rgba(249,250,251,0.8)";
+  const paginationBorder = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
+  const btnBorder = isDark ? "#334155" : "#e5e7eb";
+  const btnText = isDark ? "#94a3b8" : "#4b5563";
+  const btnHoverBg = isDark ? "#1e293b" : "#f3f4f6";
+
   return (
     <div className="flex flex-col h-full gap-4 p-6 overflow-auto">
       {/* ── Query Editor ── */}
       <div
-        className="flex gap-3 items-start rounded-2xl p-4 border border-black/[0.08]"
-        style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(10px)" }}
+        className="flex gap-3 items-start rounded-2xl p-4 transition-colors duration-300"
+        style={{
+          background: cardBg,
+          backdropFilter: "blur(10px)",
+          border: `1px solid ${cardBorder}`,
+        }}
       >
         <textarea
           value={query}
@@ -78,8 +108,14 @@ export default function QueryPanel() {
           }}
           rows={3}
           placeholder="Enter your SPARQL query…"
-          className="flex-1 resize-y min-h-[52px] px-4 py-3 rounded-xl border border-black/10 text-sm font-mono leading-relaxed bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all"
-          style={{ fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace" }}
+          className="flex-1 resize-y min-h-[52px] px-4 py-3 rounded-xl text-sm font-mono leading-relaxed focus:outline-none focus:ring-2 transition-all"
+          style={{
+            background: inputBg,
+            color: inputFg,
+            border: `1px solid ${inputBorder}`,
+            fontFamily: "'JetBrains Mono', 'Fira Code', 'Courier New', monospace",
+            // placeholder color via inline is not standard; handled via CSS variable trick with a class below
+          }}
         />
         <button
           onClick={handleRun}
@@ -110,27 +146,28 @@ export default function QueryPanel() {
           <span>{isLoading ? "Running…" : "Run"}</span>
         </button>
       </div>
-      {/* 
-      <p className="text-xs text-gray-400 -mt-2 pl-1">
-        Tip: Press <kbd className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-mono text-[11px]">Ctrl+Enter</kbd> to run
-      </p> */}
 
       {/* ── Results Area ── */}
       <div
         ref={tableRef}
-        className="flex-1 rounded-2xl border border-black/[0.08] overflow-hidden"
-        style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(10px)", boxShadow: "0 4px 20px rgba(0,0,0,0.06)" }}
+        className="flex-1 rounded-2xl overflow-hidden transition-colors duration-300"
+        style={{
+          background: tableBg,
+          backdropFilter: "blur(10px)",
+          border: `1px solid ${cardBorder}`,
+          boxShadow: isDark ? "0 4px 20px rgba(0,0,0,0.3)" : "0 4px 20px rgba(0,0,0,0.06)",
+        }}
       >
         {/* Error */}
         {error && (
-          <div className="flex flex-col items-center justify-center h-64 gap-3 text-red-500 px-8">
+          <div className="flex flex-col items-center justify-center h-64 gap-3 px-8" style={{ color: "#f87171" }}>
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="8" x2="12" y2="12" />
               <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
             <p className="text-base font-semibold">Query Failed</p>
-            <p className="text-sm text-red-400 text-center max-w-md">{error}</p>
+            <p className="text-sm text-center max-w-md" style={{ color: "#fca5a5" }}>{error}</p>
           </div>
         )}
 
@@ -138,13 +175,13 @@ export default function QueryPanel() {
         {isLoading && (
           <div className="flex flex-col items-center justify-center h-64 gap-3 text-blue-400">
             <Loader2 size={40} className="animate-spin" />
-            <p className="text-sm text-gray-500">Executing query…</p>
+            <p className="text-sm" style={{ color: mutedText }}>Executing query…</p>
           </div>
         )}
 
         {/* Empty state */}
         {!isLoading && !error && !results && (
-          <div className="flex flex-col items-center justify-center h-64 gap-3 text-gray-400">
+          <div className="flex flex-col items-center justify-center h-64 gap-3" style={{ color: mutedText }}>
             <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
               <circle cx="60" cy="60" r="40" stroke="currentColor" strokeWidth="2" opacity="0.3" />
               <circle cx="60" cy="60" r="8" fill="currentColor" opacity="0.5" />
@@ -157,31 +194,37 @@ export default function QueryPanel() {
               <line x1="60" y1="60" x2="30" y2="80" stroke="currentColor" strokeWidth="1.5" opacity="0.3" />
               <line x1="60" y1="60" x2="90" y2="80" stroke="currentColor" strokeWidth="1.5" opacity="0.3" />
             </svg>
-            <p className="text-lg font-semibold text-gray-500">No graph data to display</p>
-            <p className="text-sm text-gray-400">Run a query to see results</p>
+            <p className="text-lg font-semibold" style={{ color: isDark ? "#475569" : "#6b7280" }}>No graph data to display</p>
+            <p className="text-sm" style={{ color: mutedText }}>Run a query to see results</p>
           </div>
         )}
 
-        {/* Results table */}
+        {/* Zero results */}
         {!isLoading && !error && results && bindings.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-64 gap-2 text-gray-400">
+          <div className="flex flex-col items-center justify-center h-64 gap-2" style={{ color: mutedText }}>
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M9 17H7A5 5 0 0 1 7 7h2" />
               <path d="M15 7h2a5 5 0 0 1 0 10h-2" />
               <line x1="8" y1="12" x2="16" y2="12" />
             </svg>
-            <p className="text-sm font-medium text-gray-500">Query returned 0 results</p>
+            <p className="text-sm font-medium" style={{ color: isDark ? "#475569" : "#6b7280" }}>Query returned 0 results</p>
           </div>
         )}
 
         {!isLoading && !error && results && bindings.length > 0 && (
           <div className="flex flex-col h-full">
             {/* Table header bar */}
-            <div className="flex items-center justify-between px-5 py-3 border-b border-black/[0.06] bg-gray-50/80">
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            <div
+              className="flex items-center justify-between px-5 py-3"
+              style={{
+                background: paginationBg,
+                borderBottom: `1px solid ${paginationBorder}`,
+              }}
+            >
+              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: mutedText }}>
                 {bindings.length.toLocaleString()} result{bindings.length !== 1 ? "s" : ""}
               </span>
-              <span className="text-xs text-gray-400">
+              <span className="text-xs" style={{ color: mutedText }}>
                 Page {page} of {totalPages}
               </span>
             </div>
@@ -190,10 +233,19 @@ export default function QueryPanel() {
             <div className="flex-1 overflow-auto">
               <table className="w-full text-sm border-collapse">
                 <thead>
-                  <tr className="bg-blue-50/60 text-blue-700">
-                    <th className="px-4 py-3 text-left font-semibold border-b border-blue-100 w-10 text-xs">#</th>
+                  <tr style={{ background: theadBg, color: theadColor }}>
+                    <th
+                      className="px-4 py-3 text-left font-semibold text-xs w-10"
+                      style={{ borderBottom: `1px solid ${theadBorder}` }}
+                    >
+                      #
+                    </th>
                     {vars.map((v) => (
-                      <th key={v} className="px-4 py-3 text-left font-semibold border-b border-blue-100 text-xs uppercase tracking-wide">
+                      <th
+                        key={v}
+                        className="px-4 py-3 text-left font-semibold text-xs uppercase tracking-wide"
+                        style={{ borderBottom: `1px solid ${theadBorder}` }}
+                      >
                         {v}
                       </th>
                     ))}
@@ -203,9 +255,12 @@ export default function QueryPanel() {
                   {pageBindings.map((binding, idx) => (
                     <tr
                       key={idx}
-                      className="border-b border-gray-50 hover:bg-blue-50/30 transition-colors duration-100"
+                      className="transition-colors duration-100"
+                      style={{ borderBottom: `1px solid ${rowBorder}` }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = rowHoverBg)}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "")}
                     >
-                      <td className="px-4 py-2.5 text-gray-400 text-xs font-mono">
+                      <td className="px-4 py-2.5 text-xs font-mono" style={{ color: mutedText }}>
                         {(page - 1) * PAGE_SIZE + idx + 1}
                       </td>
                       {vars.map((v) => {
@@ -219,18 +274,23 @@ export default function QueryPanel() {
                                   href={cell.value}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-blue-500 hover:text-blue-700 hover:underline truncate block text-xs font-mono"
+                                  className="truncate block text-xs font-mono hover:underline"
+                                  style={{ color: linkColor }}
                                   title={cell.value}
+                                  onMouseEnter={(e) => ((e.target as HTMLElement).style.color = linkHover)}
+                                  onMouseLeave={(e) => ((e.target as HTMLElement).style.color = linkColor)}
                                 >
                                   {cell.value}
                                 </a>
                               ) : (
-                                <span className="text-gray-700 text-xs truncate block" title={cell.value}>
+                                <span className="text-xs truncate block" style={{ color: bodyText }} title={cell.value}>
                                   {cell.value}
                                 </span>
                               )
                             ) : (
-                              <span className="text-gray-300 text-xs">—</span>
+                              <span className="text-xs" style={{ color: isDark ? "#334155" : "#d1d5db" }}>
+                                —
+                              </span>
                             )}
                           </td>
                         );
@@ -243,11 +303,24 @@ export default function QueryPanel() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between px-5 py-3 border-t border-black/[0.06] bg-gray-50/80">
+              <div
+                className="flex items-center justify-between px-5 py-3"
+                style={{
+                  background: paginationBg,
+                  borderTop: `1px solid ${paginationBorder}`,
+                }}
+              >
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors cursor-pointer"
+                  className="px-3 py-1.5 text-xs rounded-lg transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{
+                    border: `1px solid ${btnBorder}`,
+                    color: btnText,
+                    background: "transparent",
+                  }}
+                  onMouseEnter={(e) => { if (page !== 1) (e.currentTarget.style.background = btnHoverBg); }}
+                  onMouseLeave={(e) => { (e.currentTarget.style.background = "transparent"); }}
                 >
                   ← Previous
                 </button>
@@ -264,15 +337,19 @@ export default function QueryPanel() {
                     } else {
                       pageNum = page - 3 + i;
                     }
+                    const isCurrentPage = page === pageNum;
                     return (
                       <button
                         key={pageNum}
                         onClick={() => setPage(pageNum)}
-                        className={`w-7 h-7 text-xs rounded-lg border transition-colors cursor-pointer
-                          ${page === pageNum
-                            ? "bg-blue-500 text-white border-blue-500"
-                            : "border-gray-200 text-gray-600 hover:bg-gray-100"
-                          }`}
+                        className="w-7 h-7 text-xs rounded-lg transition-colors cursor-pointer"
+                        style={{
+                          background: isCurrentPage ? "#2196f3" : "transparent",
+                          color: isCurrentPage ? "#ffffff" : btnText,
+                          border: isCurrentPage ? "1px solid #2196f3" : `1px solid ${btnBorder}`,
+                        }}
+                        onMouseEnter={(e) => { if (!isCurrentPage) (e.currentTarget.style.background = btnHoverBg); }}
+                        onMouseLeave={(e) => { if (!isCurrentPage) (e.currentTarget.style.background = "transparent"); }}
                       >
                         {pageNum}
                       </button>
@@ -283,7 +360,14 @@ export default function QueryPanel() {
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
-                  className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors cursor-pointer"
+                  className="px-3 py-1.5 text-xs rounded-lg transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{
+                    border: `1px solid ${btnBorder}`,
+                    color: btnText,
+                    background: "transparent",
+                  }}
+                  onMouseEnter={(e) => { if (page !== totalPages) (e.currentTarget.style.background = btnHoverBg); }}
+                  onMouseLeave={(e) => { (e.currentTarget.style.background = "transparent"); }}
                 >
                   Next →
                 </button>

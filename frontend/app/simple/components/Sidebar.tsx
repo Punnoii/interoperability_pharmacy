@@ -5,6 +5,7 @@ import { Clock, Settings } from "lucide-react";
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  isDark: boolean;
 }
 
 const navItems = [
@@ -51,23 +52,28 @@ const bottomItems = [
       </svg>
     ),
   },
-  {
-    key: "history",
-    label: "History",
-    icon: <Clock size={20} />,
-  },
-  {
-    key: "settings",
-    label: "Settings",
-    icon: <Settings size={20} />,
-  },
+  { key: "history", label: "History", icon: <Clock size={20} /> },
+  { key: "settings", label: "Settings", icon: <Settings size={20} /> },
 ];
 
-export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
+export default function Sidebar({ activeTab, setActiveTab, isDark }: SidebarProps) {
+  const border = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
+  const bg = isDark ? "rgba(15,23,42,0.85)" : "rgba(255,255,255,0.7)";
+  const mutedColor = isDark ? "#64748b" : "#666";
+  const activeColor = "#2196f3";
+  const activeBg = isDark
+    ? "linear-gradient(135deg, rgba(33,150,243,0.2) 0%, rgba(25,118,210,0.2) 100%)"
+    : "linear-gradient(135deg, rgba(33,150,243,0.15) 0%, rgba(25,118,210,0.15) 100%)";
+  const hoverBg = isDark ? "rgba(33,150,243,0.12)" : "rgba(33,150,243,0.08)";
+
   return (
     <aside
-      className="flex flex-col w-[180px] shrink-0 py-4 px-3 gap-4 border-r border-black/[0.08]"
-      style={{ background: "rgba(255,255,255,0.7)", backdropFilter: "blur(10px)" }}
+      className="flex flex-col w-[180px] shrink-0 py-4 px-3 gap-4 transition-colors duration-300"
+      style={{
+        background: bg,
+        backdropFilter: "blur(10px)",
+        borderRight: `1px solid ${border}`,
+      }}
     >
       {/* Nav items */}
       <nav className="flex flex-col gap-1">
@@ -77,18 +83,19 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
             <button
               key={item.key}
               onClick={() => setActiveTab(item.key)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-[10px] border-none text-sm font-medium text-left cursor-pointer transition-all duration-200
-                ${isActive ? "text-[#2196f3] font-semibold" : "text-[#666] hover:text-[#2196f3]"}`}
-              style={
-                isActive
-                  ? { background: "linear-gradient(135deg, rgba(33,150,243,0.15) 0%, rgba(25,118,210,0.15) 100%)" }
-                  : undefined
-              }
+              className="flex items-center gap-3 px-4 py-3 rounded-[10px] border-none text-sm font-medium text-left cursor-pointer transition-all duration-200"
+              style={{
+                color: isActive ? activeColor : mutedColor,
+                fontWeight: isActive ? 600 : 500,
+                background: isActive ? activeBg : undefined,
+              }}
               onMouseEnter={(e) => {
-                if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(33,150,243,0.08)";
+                if (!isActive) (e.currentTarget as HTMLElement).style.background = hoverBg;
+                if (!isActive) (e.currentTarget as HTMLElement).style.color = activeColor;
               }}
               onMouseLeave={(e) => {
                 if (!isActive) (e.currentTarget as HTMLElement).style.background = "";
+                if (!isActive) (e.currentTarget as HTMLElement).style.color = mutedColor;
               }}
             >
               {item.icon}
@@ -99,12 +106,24 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
       </nav>
 
       {/* Bottom icons */}
-      <div className="mt-auto flex flex-col gap-1 pt-4 border-t border-black/[0.08]">
+      <div
+        className="mt-auto flex flex-col gap-1 pt-4"
+        style={{ borderTop: `1px solid ${border}` }}
+      >
         {bottomItems.map((item) => (
           <button
             key={item.key}
             aria-label={item.label}
-            className="w-full h-10 flex items-center justify-center rounded-lg border-none bg-transparent text-[#666] cursor-pointer transition-all duration-200 hover:bg-black/5 hover:text-[#1a1a1a]"
+            className="w-full h-10 flex items-center justify-center rounded-lg border-none bg-transparent cursor-pointer transition-all duration-200"
+            style={{ color: mutedColor }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.background = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)";
+              (e.currentTarget as HTMLElement).style.color = isDark ? "#e2e8f0" : "#1a1a1a";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.background = "";
+              (e.currentTarget as HTMLElement).style.color = mutedColor;
+            }}
           >
             {item.icon}
           </button>

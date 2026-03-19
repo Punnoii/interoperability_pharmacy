@@ -1,21 +1,35 @@
 "use client";
 
-import { useState } from "react";
 import { Bell, Sun, Moon, User } from "lucide-react";
 
-export default function Header() {
-  const [isDark, setIsDark] = useState(false);
+interface HeaderProps {
+  isDark: boolean;
+  setIsDark: (val: boolean) => void;
+}
 
+export default function Header({ isDark, setIsDark }: HeaderProps) {
   return (
-    <header className="h-14 flex items-center justify-between px-6 bg-white/95 backdrop-blur border-b border-black/[0.08] shadow-sm z-10">
+    <header
+      className="h-14 flex items-center justify-between px-6 z-10 transition-colors duration-300"
+      style={{
+        background: isDark
+          ? "rgba(15,23,42,0.95)"
+          : "rgba(255,255,255,0.95)",
+        backdropFilter: "blur(10px)",
+        borderBottom: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.08)",
+        boxShadow: isDark ? "0 1px 12px rgba(0,0,0,0.4)" : "0 1px 6px rgba(0,0,0,0.06)",
+      }}
+    >
       {/* Brand */}
-      <span className="text-2xl font-bold tracking-tight select-none"
+      <span
+        className="text-2xl font-bold tracking-tight select-none"
         style={{
           background: "linear-gradient(135deg, #2196f3 0%, #1976d2 100%)",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
           backgroundClip: "text",
-        }}>
+        }}
+      >
         RxVKG
       </span>
 
@@ -24,7 +38,16 @@ export default function Header() {
         {/* Notification */}
         <button
           aria-label="Notifications"
-          className="w-9 h-9 flex items-center justify-center rounded-lg border-none bg-transparent text-gray-500 hover:bg-black/5 hover:text-gray-800 transition-all duration-200 cursor-pointer"
+          className="w-9 h-9 flex items-center justify-center rounded-lg border-none bg-transparent cursor-pointer transition-all duration-200"
+          style={{ color: isDark ? "#94a3b8" : "#6b7280" }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.background = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)";
+            (e.currentTarget as HTMLElement).style.color = isDark ? "#e2e8f0" : "#1f2937";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.background = "";
+            (e.currentTarget as HTMLElement).style.color = isDark ? "#94a3b8" : "#6b7280";
+          }}
         >
           <Bell size={20} />
         </button>
@@ -33,7 +56,16 @@ export default function Header() {
         <button
           aria-label="Toggle theme"
           onClick={() => setIsDark(!isDark)}
-          className="w-9 h-9 flex items-center justify-center rounded-lg border-none bg-transparent text-gray-500 hover:bg-black/5 hover:text-gray-800 transition-all duration-200 cursor-pointer"
+          className="w-9 h-9 flex items-center justify-center rounded-lg border-none bg-transparent cursor-pointer transition-all duration-200"
+          style={{ color: isDark ? "#facc15" : "#6b7280" }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.background = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)";
+            (e.currentTarget as HTMLElement).style.color = isDark ? "#fde68a" : "#1f2937";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.background = "";
+            (e.currentTarget as HTMLElement).style.color = isDark ? "#facc15" : "#6b7280";
+          }}
         >
           {isDark ? <Sun size={20} /> : <Moon size={20} />}
         </button>
