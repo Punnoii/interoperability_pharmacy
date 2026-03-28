@@ -12,3 +12,7 @@ ontop:
   endpoints:
     default: ${ONTOP_ENDPOINT_DEFAULT:http://localhost:8080/sparql}
     mysql: ${ONTOP_ENDPOINT_MYSQL:http://localhost:8081/sparql}
+
+wikidata:
+  api-url: ${WIKIDATA_API_URL:https://www.wikidata.org/w/api.php}
+  language: ${WIKIDATA_LANGUAGE:en}

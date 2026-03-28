@@ -26,6 +26,22 @@ services:
     volumes:
       - ./infra/db/postgres:/docker-entrypoint-initdb.d
 
+  postgres-csv-loader:
+    image: postgres:16
+    environment:
+      PGPASSWORD: pgpass
+    depends_on:
+      - postgres
+    volumes:
+      - ./infra/db/postgres_csv:/work/sql:ro
+      - ./infra/db/csv:/work/csv:ro
+    command: >
+      sh -c "
+        until pg_isready -h postgres -U postgres -d postgres; do sleep 2; done &&
+        psql -v ON_ERROR_STOP=1 -h postgres -U postgres -d postgres -f /work/sql/003_company_e_raw.sql &&
+        psql -v ON_ERROR_STOP=1 -h postgres -U postgres -d postgres -f /work/sql/004_company_e_load.sql
+      "
+
   trino:
     image: trinodb/trino:479
     ports:
@@ -33,7 +49,6 @@ services:
     volumes:
       - ./infra/trino/etc/catalog:/etc/trino/catalog
     depends_on:
-      - mongo
       - mysql
       - postgres
 
@@ -96,3 +111,13 @@ services:
       - "8081:8080"
     depends_on:
       - mysql
+
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8082:8082"
+    environment:
+      ONTOP_ENDPOINT_DEFAULT: http://ontop-trino:8080/sparql
+    depends_on:
+      - ontop-trino

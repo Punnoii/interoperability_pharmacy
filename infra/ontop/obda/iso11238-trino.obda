@@ -132,4 +132,86 @@ target :substance/c/{substance_code} cmns-id:isIdentifiedBy :substance-identifie
 source SELECT substance_code,
        id_id
        FROM mysql.company_c.substance_id_map
+
+mappingId SubstanceCompanyE 
+target :substance/e/{partner_substance_code} a idmp-sub:Substance .
+source SELECT partner_substance_code
+       FROM postgres.company_e_raw.substance_catalog_raw
+
+
+mappingId SubstanceTypeCompanyE
+target :substance/e/{partner_substance_code} idmp-sub:hasSubstanceType <{substance_type_iri}> .
+source SELECT partner_substance_code,
+       concat('https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceTypeClassifier-', substance_class) AS substance_type_iri
+       FROM postgres.company_e_raw.substance_catalog_raw
+
+mappingId SubstanceNameNodeCompanyE
+target :substance-name/e/{name_row_id} a idmp-sub:SubstanceName ; idmp-sub:hasSubstanceNameValue "{display_name}"^^xsd:string ; idmp-sub:hasSubstanceNameType <{idmp_name_type_iri}> ; idmp-dtp:hasLanguageCode <https://www.omg.org/spec/LCC/Languages/ISO639-1-LanguageCodes/{lang_tag}> .
+source SELECT n.name_row_id,
+       n.display_name,
+       n.lang_tag,
+       l.idmp_name_type_iri
+       FROM postgres.company_e_raw.name_entries_raw n
+       JOIN postgres.company_e_raw.name_type_lookup_raw l
+         ON l.source_system = 'E'
+        AND l.source_name_category = n.name_category
+
+mappingId SubstanceNameLinkCompanyE
+target :substance/e/{linked_substance_code} idmp-sub:hasSubstanceName :substance-name/e/{name_row_id} .
+source SELECT linked_substance_code,
+       name_row_id
+       FROM postgres.company_e_raw.name_entries_raw
+
+mappingId SubstanceIdentifierNodeCompanyE
+target :substance-identifier/e/{registry_row_id} a idmp-sub:SubstanceIdentifier ; cmns-txt:hasTextValue "{external_code}"^^xsd:string .
+source SELECT registry_row_id,
+       external_code
+       FROM postgres.company_e_raw.identifier_registry_raw
+
+mappingId SubstanceIdentifierLinkCompanyE
+target :substance/e/{linked_substance_code} cmns-id:isIdentifiedBy :substance-identifier/e/{registry_row_id} .
+source SELECT linked_substance_code,
+       registry_row_id
+       FROM postgres.company_e_raw.identifier_registry_raw
+
+mappingId SubstanceCompanyD
+target :substance/d/{substance_code} a idmp-sub:Substance .
+source SELECT substance_code
+       FROM mongo.company_d.substance_master
+
+mappingId SubstanceCompanyD
+target :substance/d/{substance_code} idmp-sub:hasSubstanceType <{substance_type_iri}> .
+source SELECT substance_code,
+       concat('https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceTypeClassifier-', substance_kind) AS substance_type_iri
+       FROM mongo.company_d.substance_master
+
+mappingId SubstanceNameNodeCompanyD
+target :substance-name/d/{alias_id} a idmp-sub:SubstanceName ; idmp-sub:hasSubstanceNameValue "{alias_text}"^^xsd:string ; idmp-sub:hasSubstanceNameType <{idmp_name_type_iri}> ; idmp-dtp:hasLanguageCode <https://www.omg.org/spec/LCC/Languages/ISO639-1-LanguageCodes/{lang}> .
+source SELECT a.alias_id,
+       a.alias_text,
+       a.lang,
+       n.idmp_name_type_iri
+       FROM mongo.company_d.substance_alias a
+       JOIN mongo.company_d.name_type_map n
+         ON a.alias_kind = n.source_name_type
+        AND n.company_code = 'D'
+
+mappingId SubstanceNameLinkCompanyD
+target :substance/d/{substance_code} idmp-sub:hasSubstanceName :substance-name/d/{alias_id} .
+source SELECT substance_code,
+       alias_id
+       FROM mongo.company_d.substance_alias
+
+mappingId SubstanceIdentifierNodeCompanyD
+target :substance-identifier/d/{id_id} a idmp-sub:SubstanceIdentifier ; cmns-txt:hasTextValue "{id_value}"^^xsd:string .
+source SELECT id_id,
+       id_value
+       FROM mongo.company_d.substance_id_map
+
+mappingId SubstanceIdentifierLinkCompanyD
+target :substance/d/{substance_code} cmns-id:isIdentifiedBy :substance-identifier/d/{id_id} .
+source SELECT substance_code,
+       id_id
+       FROM mongo.company_d.substance_id_map
+
 ]]
