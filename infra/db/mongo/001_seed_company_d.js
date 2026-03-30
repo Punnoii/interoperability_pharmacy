@@ -103,7 +103,7 @@ upsertBy(
   {
     id_id: 6000,
     substance_code: "D-100",
-    id_value: "UNII-XT9YQ2H9CD",
+    id_value: "UNII-9100L32L2N",
     id_system: "UNII",
   },
   "substance_id_map"
@@ -163,6 +163,220 @@ upsertBy(
       "https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceNameClassifier-OtherName",
   },
   "name_type_map"
+);
+
+// ============================================================
+// Additional substances — covering all 5 types (6 total new)
+// Cross-source match: D-100 Metformin shares UNII-9100L32L2N with Company A (substance_id=4)
+// ============================================================
+
+// --- substance_master: D-400 to D-800 ---
+upsertBy(
+  { substance_code: "D-400" },
+  {
+    substance_code: "D-400",
+    substance_kind: "Protein",
+    status: "active",
+    created_on: new Date("2026-01-15T00:00:00Z"),
+  },
+  "substance_master"
+);
+
+upsertBy(
+  { substance_code: "D-500" },
+  {
+    substance_code: "D-500",
+    substance_kind: "NucleicAcid",
+    status: "active",
+    created_on: new Date("2026-01-15T00:00:00Z"),
+  },
+  "substance_master"
+);
+
+upsertBy(
+  { substance_code: "D-600" },
+  {
+    substance_code: "D-600",
+    substance_kind: "Polymer",
+    status: "active",
+    created_on: new Date("2026-01-15T00:00:00Z"),
+  },
+  "substance_master"
+);
+
+upsertBy(
+  { substance_code: "D-700" },
+  {
+    substance_code: "D-700",
+    substance_kind: "Mixture",
+    status: "active",
+    created_on: new Date("2026-01-15T00:00:00Z"),
+  },
+  "substance_master"
+);
+
+upsertBy(
+  { substance_code: "D-800" },
+  {
+    substance_code: "D-800",
+    substance_kind: "Chemical",
+    status: "active",
+    created_on: new Date("2026-01-15T00:00:00Z"),
+  },
+  "substance_master"
+);
+
+// --- substance_alias: names for D-400 to D-800 ---
+upsertBy(
+  { alias_id: 5004 },
+  {
+    alias_id: 5004,
+    substance_code: "D-400",
+    alias_text: "Adalimumab",
+    alias_kind: "Preferred",
+    lang: "en",
+  },
+  "substance_alias"
+);
+
+upsertBy(
+  { alias_id: 5005 },
+  {
+    alias_id: 5005,
+    substance_code: "D-400",
+    alias_text: "Humira",
+    alias_kind: "Brand",
+    lang: "en",
+  },
+  "substance_alias"
+);
+
+upsertBy(
+  { alias_id: 5006 },
+  {
+    alias_id: 5006,
+    substance_code: "D-500",
+    alias_text: "Nusinersen",
+    alias_kind: "Preferred",
+    lang: "en",
+  },
+  "substance_alias"
+);
+
+upsertBy(
+  { alias_id: 5007 },
+  {
+    alias_id: 5007,
+    substance_code: "D-500",
+    alias_text: "Spinraza",
+    alias_kind: "Brand",
+    lang: "en",
+  },
+  "substance_alias"
+);
+
+upsertBy(
+  { alias_id: 5008 },
+  {
+    alias_id: 5008,
+    substance_code: "D-600",
+    alias_text: "Carbomer",
+    alias_kind: "Preferred",
+    lang: "en",
+  },
+  "substance_alias"
+);
+
+upsertBy(
+  { alias_id: 5009 },
+  {
+    alias_id: 5009,
+    substance_code: "D-700",
+    alias_text: "Electrolyte Blend",
+    alias_kind: "Preferred",
+    lang: "en",
+  },
+  "substance_alias"
+);
+
+upsertBy(
+  { alias_id: 5010 },
+  {
+    alias_id: 5010,
+    substance_code: "D-800",
+    alias_text: "Amoxicillin",
+    alias_kind: "Preferred",
+    lang: "en",
+  },
+  "substance_alias"
+);
+
+upsertBy(
+  { alias_id: 5011 },
+  {
+    alias_id: 5011,
+    substance_code: "D-800",
+    alias_text: "Amoxil",
+    alias_kind: "Brand",
+    lang: "en",
+  },
+  "substance_alias"
+);
+
+// --- substance_id_map: identifiers for D-400 to D-800 ---
+upsertBy(
+  { id_id: 6003 },
+  {
+    id_id: 6003,
+    substance_code: "D-400",
+    id_value: "UNII-FYS6T7F842",
+    id_system: "UNII",
+  },
+  "substance_id_map"
+);
+
+upsertBy(
+  { id_id: 6004 },
+  {
+    id_id: 6004,
+    substance_code: "D-500",
+    id_value: "UNII-0S4TQG4NHQ",
+    id_system: "UNII",
+  },
+  "substance_id_map"
+);
+
+upsertBy(
+  { id_id: 6005 },
+  {
+    id_id: 6005,
+    substance_code: "D-600",
+    id_value: "UNII-97TBZ6CKJF",
+    id_system: "UNII",
+  },
+  "substance_id_map"
+);
+
+upsertBy(
+  { id_id: 6006 },
+  {
+    id_id: 6006,
+    substance_code: "D-700",
+    id_value: "MIX-EB002",
+    id_system: "LOCAL",
+  },
+  "substance_id_map"
+);
+
+upsertBy(
+  { id_id: 6007 },
+  {
+    id_id: 6007,
+    substance_code: "D-800",
+    id_value: "UNII-804826J2HU",
+    id_system: "UNII",
+  },
+  "substance_id_map"
 );
 
 // Basic indexes for demo query behavior

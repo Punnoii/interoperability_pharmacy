@@ -7,6 +7,12 @@ services:
       - "27017:27017"
     volumes:
       - ./infra/db/mongo:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --eval \"db.adminCommand('ping')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   mysql:
     image: mysql:8.0
@@ -16,6 +22,12 @@ services:
       - "3306:3306"
     volumes:
       - ./infra/db/mysql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -prootpass"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   postgres:
     image: postgres:16
@@ -25,13 +37,20 @@ services:
       - "5432:5432"
     volumes:
       - ./infra/db/postgres:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   postgres-csv-loader:
     image: postgres:16
     environment:
       PGPASSWORD: pgpass
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     volumes:
       - ./infra/db/postgres_csv:/work/sql:ro
       - ./infra/db/csv:/work/csv:ro
@@ -49,8 +68,18 @@ services:
     volumes:
       - ./infra/trino/etc/catalog:/etc/trino/catalog
     depends_on:
-      - mysql
-      - postgres
+      postgres:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/v1/info || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   ontop-trino:
     image: ontop/ontop:5.3.1
@@ -70,47 +99,14 @@ services:
     ports:
       - "8083:8080"
     depends_on:
-      - trino
-
-  ontop-postgres:
-    image: ontop/ontop:5.3.1
-    environment:
-      ONTOP_ONTOLOGY_FILE: /opt/ontop/input/idmp-entry-iso11238-core-lcc.rdf
-      ONTOP_MAPPING_FILE: /opt/ontop/input/iso11238-postgres.obda
-      ONTOP_PROPERTIES_FILE: /opt/ontop/input/regulator-postgres.properties
-      ONTOP_XML_CATALOG_FILE: /opt/ontop/ontology/catalog-v001.xml
-      ONTOP_CORS_ALLOWED_ORIGINS: "*"
-      ONTOP_LAZY_INIT: "true"
-      ONTOP_WAIT_FOR: "postgres:5432"
-      ONTOP_WAIT_TIMEOUT: "120"
-    volumes:
-      - ./infra/ontop/obda:/opt/ontop/input
-      - ./infra/ontop/idmp/ontology/master/v1.3.0:/opt/ontop/ontology:ro
-      - ./infra/ontop/jdbc:/opt/ontop/jdbc
-    ports:
-      - "8080:8080"
-    depends_on:
-      - postgres
-
-  ontop-mysql:
-    image: ontop/ontop:5.3.1
-    environment:
-      ONTOP_ONTOLOGY_FILE: /opt/ontop/input/idmp-entry-iso11238-core-lcc.rdf
-      ONTOP_MAPPING_FILE: /opt/ontop/input/iso11238-mysql.obda
-      ONTOP_PROPERTIES_FILE: /opt/ontop/input/regulator-mysql.properties
-      ONTOP_XML_CATALOG_FILE: /opt/ontop/ontology/catalog-v001.xml
-      ONTOP_CORS_ALLOWED_ORIGINS: "*"
-      ONTOP_LAZY_INIT: "true"
-      ONTOP_WAIT_FOR: "mysql:3306"
-      ONTOP_WAIT_TIMEOUT: "120"
-    volumes:
-      - ./infra/ontop/obda:/opt/ontop/input
-      - ./infra/ontop/idmp/ontology/master/v1.3.0:/opt/ontop/ontology:ro
-      - ./infra/ontop/jdbc:/opt/ontop/jdbc
-    ports:
-      - "8081:8080"
-    depends_on:
-      - mysql
+      trino:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/sparql || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   backend:
     build:
@@ -120,4 +116,11 @@ services:
     environment:
       ONTOP_ENDPOINT_DEFAULT: http://ontop-trino:8080/sparql
     depends_on:
-      - ontop-trino
+      ontop-trino:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8082/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
