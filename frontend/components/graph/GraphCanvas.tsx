@@ -17,7 +17,6 @@ export interface GraphCanvasHandle {
 interface GraphCanvasProps {
   nodes: GraphNode[];
   links: GraphLink[];
-  /** Ordered list of variable names; node colors derive from index in this list. */
   allTypes: string[];
   isDark: boolean;
   selectedNodeId: string | null;
@@ -25,13 +24,6 @@ interface GraphCanvasProps {
   onSelectNode: (node: GraphNode | null) => void;
 }
 
-/**
- * Force-directed knowledge-graph canvas with zoom/pan, hover highlight,
- * search pulse, drag-to-pin, and click-to-select interactions.
- *
- * Pure D3 rendering inside a React ref for performance (avoids re-rendering
- * 100+ <g> elements through React's diff).
- */
 const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function GraphCanvas(
   { nodes, links, allTypes, isDark, selectedNodeId, searchTerm, onSelectNode },
   ref
@@ -41,7 +33,6 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
   const zoomBehaviorRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
   const simulationRef = useRef<d3.Simulation<GraphNode, GraphLink> | null>(null);
 
-  // Pre-compute adjacency for hover/select highlighting
   const adjacency = useMemo(() => {
     const map = new Map<string, Set<string>>();
     for (const link of links) {
@@ -55,7 +46,6 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
     return map;
   }, [links]);
 
-  // ── Imperative API ────────────────────────────────────────────────────
   useImperativeHandle(ref, () => ({
     resetView: () => {
       const svg = svgRef.current;
@@ -91,9 +81,9 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
     const edgeBase = isDark ? "#334155" : "#cbd5e1";
     const edgeHighlight = isDark ? "#cbd5e1" : "#1e293b";
     const labelColor = isDark ? "#94a3b8" : "#64748b";
-    const dimOpacity = 0.12;
+    const dimOpacity = 0.35;
 
-    // ── Defs: arrow markers + glow filter ──
+    // Arrow markers for edges
     const defs = svg.append("defs");
     defs
       .append("marker")
@@ -118,26 +108,12 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
       .attr("d", "M0,-5L10,0L0,5")
       .attr("fill", edgeHighlight);
 
-    const filter = defs
-      .append("filter")
-      .attr("id", "node-glow")
-      .attr("x", "-50%")
-      .attr("y", "-50%")
-      .attr("width", "200%")
-      .attr("height", "200%");
-    filter.append("feGaussianBlur").attr("stdDeviation", "4").attr("result", "coloredBlur");
-    const feMerge = filter.append("feMerge");
-    feMerge.append("feMergeNode").attr("in", "coloredBlur");
-    feMerge.append("feMergeNode").attr("in", "SourceGraphic");
-
-    // ── Zoom root ────────────────────────────────────────────────────────
     const root = svg.append("g").attr("class", "zoom-root");
 
     const linkGroup = root.append("g").attr("class", "links");
     const linkLabelGroup = root.append("g").attr("class", "link-labels");
     const nodeGroup = root.append("g").attr("class", "nodes");
 
-    // ── Render links ─────────────────────────────────────────────────────
     const linkSel = linkGroup
       .selectAll<SVGLineElement, GraphLink>("line")
       .data(links, (d) => d.id)
@@ -159,7 +135,6 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
       .style("pointer-events", "none")
       .style("opacity", 0);
 
-    // ── Render nodes ─────────────────────────────────────────────────────
     const nodeSel = nodeGroup
       .selectAll<SVGGElement, GraphNode>("g.node")
       .data(nodes, (d) => d.id)
@@ -192,23 +167,30 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
 
     nodeSel.append("title").text((d) => `${d.type}: ${d.id}\nConnections: ${d.degree}`);
 
-    // ── Highlight helper ────────────────────────────────────────────────
     const applyHighlight = (focusId: string | null) => {
       if (!focusId) {
         nodeSel.style("opacity", 1);
+        nodeSel.select("circle").attr("fill-opacity", 1).attr("stroke-width", 2.5);
+        nodeSel.select("text").style("opacity", 1);
         linkSel
           .attr("stroke", edgeBase)
           .attr("stroke-width", 1.4)
           .attr("marker-end", "url(#arrow-base)")
           .style("opacity", 1);
         linkLabelSel.style("opacity", 0);
-        nodeSel.select("circle").attr("filter", null);
         return;
       }
       const neighbors = adjacency.get(focusId) ?? new Set<string>();
       neighbors.add(focusId);
+      nodeSel.style("opacity", 1);
+      nodeSel
+        .select("circle")
+        .attr("fill-opacity", (d) => (neighbors.has(d.id) ? 1 : dimOpacity))
+        .attr("stroke-width", (d) => (d.id === focusId ? 4 : 2.5));
+      nodeSel
+        .select("text")
+        .style("opacity", (d) => (neighbors.has(d.id) ? 1 : dimOpacity));
 
-      nodeSel.style("opacity", (d) => (neighbors.has(d.id) ? 1 : dimOpacity));
       linkSel
         .attr("stroke", (d) => {
           const s = typeof d.source === "string" ? d.source : d.source.id;
@@ -230,6 +212,7 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
           const t = typeof d.target === "string" ? d.target : d.target.id;
           return s === focusId || t === focusId ? 1 : dimOpacity;
         });
+
       linkLabelSel
         .style("opacity", (d) => {
           const s = typeof d.source === "string" ? d.source : d.source.id;
@@ -241,11 +224,8 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
           const t = typeof d.target === "string" ? d.target : d.target.id;
           return s === focusId || t === focusId ? edgeHighlight : labelColor;
         });
-
-      nodeSel.select("circle").attr("filter", (d) => (d.id === focusId ? "url(#node-glow)" : null));
     };
 
-    // ── Interaction wiring ──────────────────────────────────────────────
     nodeSel
       .on("mouseenter", function (_, d) {
         if (selectedNodeId) return;
@@ -265,7 +245,6 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
 
     svg.on("click", () => onSelectNode(null));
 
-    // Drag behavior
     const drag = d3
       .drag<SVGGElement, GraphNode>()
       .on("start", (event, d) => {
@@ -285,7 +264,6 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
 
     nodeSel.call(drag);
 
-    // ── Zoom ────────────────────────────────────────────────────────────
     const zoom = d3
       .zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.15, 5])
@@ -293,7 +271,6 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
     zoomBehaviorRef.current = zoom;
     svg.call(zoom);
 
-    // ── Force simulation ────────────────────────────────────────────────
     const simulation = d3
       .forceSimulation<GraphNode>(nodes)
       .force(
@@ -336,7 +313,6 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
     };
   }, [nodes, links, allTypes, isDark, adjacency, onSelectNode]);
 
-  // ── Re-apply highlight when selection or search changes ────────────────
   useEffect(() => {
     const svgEl = svgRef.current;
     if (!svgEl) return;
@@ -349,10 +325,12 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
     const edgeBase = isDark ? "#334155" : "#cbd5e1";
     const edgeHighlight = isDark ? "#cbd5e1" : "#1e293b";
     const labelColor = isDark ? "#94a3b8" : "#64748b";
-    const dimOpacity = 0.12;
+    const dimOpacity = 0.35;
 
     const focusId = selectedNodeId;
     const lowerSearch = searchTerm.trim().toLowerCase();
+
+    nodeSel.style("opacity", 1);
 
     if (lowerSearch.length > 0) {
       const matches = new Set(
@@ -360,24 +338,27 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
           .filter((n) => n.label.toLowerCase().includes(lowerSearch) || n.id.toLowerCase().includes(lowerSearch))
           .map((n) => n.id)
       );
-      nodeSel.style("opacity", (d) => (matches.has(d.id) ? 1 : dimOpacity));
-      nodeSel.select("circle").attr("stroke-width", (d) => (matches.has(d.id) ? 4 : 2.5));
+      nodeSel
+        .select("circle")
+        .attr("fill-opacity", (d) => (matches.has(d.id) ? 1 : dimOpacity))
+        .attr("stroke-width", (d) => (matches.has(d.id) ? 4 : 2.5));
+      nodeSel
+        .select("text")
+        .style("opacity", (d) => (matches.has(d.id) ? 1 : dimOpacity));
       linkSel.style("opacity", 0.25);
       linkLabelSel.style("opacity", 0);
       return;
     }
 
-    nodeSel.select("circle").attr("stroke-width", 2.5);
-
     if (!focusId) {
-      nodeSel.style("opacity", 1);
+      nodeSel.select("circle").attr("fill-opacity", 1).attr("stroke-width", 2.5);
+      nodeSel.select("text").style("opacity", 1);
       linkSel
         .attr("stroke", edgeBase)
         .attr("stroke-width", 1.4)
         .attr("marker-end", "url(#arrow-base)")
         .style("opacity", 1);
       linkLabelSel.style("opacity", 0);
-      nodeSel.select("circle").attr("filter", null);
       return;
     }
 
@@ -389,7 +370,14 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
       if (t === focusId) neighbors.add(s);
     }
 
-    nodeSel.style("opacity", (d) => (neighbors.has(d.id) ? 1 : dimOpacity));
+    nodeSel
+      .select("circle")
+      .attr("fill-opacity", (d) => (neighbors.has(d.id) ? 1 : dimOpacity))
+      .attr("stroke-width", (d) => (d.id === focusId ? 4 : 2.5));
+    nodeSel
+      .select("text")
+      .style("opacity", (d) => (neighbors.has(d.id) ? 1 : dimOpacity));
+
     linkSel
       .attr("stroke", (d) => {
         const s = typeof d.source === "string" ? d.source : d.source.id;
@@ -411,6 +399,7 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
         const t = typeof d.target === "string" ? d.target : d.target.id;
         return s === focusId || t === focusId ? 1 : dimOpacity;
       });
+
     linkLabelSel
       .style("opacity", (d) => {
         const s = typeof d.source === "string" ? d.source : d.source.id;
@@ -422,20 +411,13 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
         const t = typeof d.target === "string" ? d.target : d.target.id;
         return s === focusId || t === focusId ? edgeHighlight : labelColor;
       });
-
-    nodeSel.select("circle").attr("filter", (d) => (d.id === focusId ? "url(#node-glow)" : null));
   }, [selectedNodeId, searchTerm, nodes, links, isDark]);
 
   return (
     <div ref={containerRef} className="w-full h-full relative">
       <svg
         ref={svgRef}
-        className="w-full h-full"
-        style={{
-          background: isDark
-            ? "radial-gradient(ellipse at center, #0f172a 0%, #050816 100%)"
-            : "radial-gradient(ellipse at center, #fafbff 0%, #eef2ff 100%)",
-        }}
+        className={`w-full h-full ${isDark ? "bg-slate-900" : "bg-gray-50"}`}
       />
     </div>
   );

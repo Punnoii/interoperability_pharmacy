@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useMemo } from "react";
 import { getTypeMeta, shortenIri, type GraphLink, type GraphNode } from "./graphUtils";
 
@@ -52,24 +52,16 @@ export default function NodeDetailPanel({
 
   const meta = getTypeMeta(node.type, allTypes);
   const accent = isDark ? meta.colorDark : meta.color;
-  const bg = isDark ? "rgba(15,23,42,0.96)" : "rgba(255,255,255,0.98)";
-  const border = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)";
-  const titleColor = isDark ? "#f1f5f9" : "#0f172a";
-  const labelColor = isDark ? "#94a3b8" : "#64748b";
-  const subtleBg = isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.025)";
-  const hintColor = isDark ? "#64748b" : "#94a3b8";
-  const linkColor = isDark ? "#60a5fa" : "#2563eb";
+  const wrap = isDark
+    ? "bg-slate-800 border-slate-700 text-slate-100"
+    : "bg-white border-gray-200 text-gray-900";
+  const muted = isDark ? "text-slate-400" : "text-gray-500";
+  const subtleBox = isDark ? "bg-slate-900 border-slate-700" : "bg-gray-50 border-gray-200";
 
   return (
     <aside
-      className="absolute top-3 right-3 bottom-3 w-80 rounded-2xl p-4 backdrop-blur-md flex flex-col gap-3 overflow-hidden z-30"
-      style={{
-        background: bg,
-        border: `1px solid ${border}`,
-        boxShadow: isDark ? "0 16px 48px rgba(0,0,0,0.6)" : "0 16px 48px rgba(0,0,0,0.12)",
-      }}
+      className={`absolute top-3 right-3 bottom-3 w-80 rounded border p-4 flex flex-col gap-3 overflow-hidden z-30 ${wrap}`}
     >
-      {/* Header */}
       <header className="flex items-start gap-2">
         <span
           className="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold shrink-0"
@@ -82,90 +74,62 @@ export default function NodeDetailPanel({
           ?{meta.label}
         </span>
         <div className="flex-1 min-w-0">
-          <h2 className="text-sm font-bold leading-snug break-words" style={{ color: titleColor }}>
+          <h2 className="text-sm font-bold leading-snug break-words">
             {node.isUri ? shortenIri(node.id) : node.label}
           </h2>
-          <p className="text-[11px] mt-0.5" style={{ color: hintColor }}>
+          <p className={`text-[11px] mt-0.5 ${muted}`}>
             {node.isUri ? "URI resource" : "Literal value"}
           </p>
         </div>
         <button
           onClick={onClose}
           aria-label="Close detail panel"
-          className="p-1 rounded-lg transition-colors"
-          style={{ color: labelColor }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = subtleBg;
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "transparent";
-          }}
+          className={`p-1 rounded ${
+            isDark ? "hover:bg-slate-700 text-slate-400" : "hover:bg-gray-100 text-gray-500"
+          }`}
         >
           <X size={14} />
         </button>
       </header>
 
-      {/* Identity */}
-      <section className="rounded-xl p-2.5" style={{ background: subtleBg }}>
-        <div
-          className="text-[10px] uppercase tracking-wider font-semibold mb-1"
-          style={{ color: hintColor }}
-        >
+      <section className={`rounded border p-2.5 ${subtleBox}`}>
+        <div className={`text-[10px] uppercase font-semibold mb-1 ${muted}`}>
           {node.isUri ? "IRI" : "Value"}
         </div>
-        <div className="flex items-start gap-2">
-          <code
-            className="text-[11px] font-mono break-all leading-relaxed flex-1"
-            style={{ color: titleColor }}
+        {node.isUri ? (
+          <a
+            href={node.id}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] font-mono break-all leading-relaxed text-blue-600 underline hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
           >
             {node.id}
+          </a>
+        ) : (
+          <code className="text-[11px] font-mono break-all leading-relaxed">
+            {node.id}
           </code>
-          {node.isUri && (
-            <a
-              href={node.id}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shrink-0 p-1 rounded transition-colors"
-              style={{ color: linkColor }}
-              title="Open IRI in new tab"
-            >
-              <ExternalLink size={12} />
-            </a>
-          )}
-        </div>
+        )}
       </section>
 
-      {/* Degree */}
       <section className="grid grid-cols-2 gap-2">
-        <div className="rounded-xl px-3 py-2" style={{ background: subtleBg }}>
-          <div className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: hintColor }}>
-            Connections
-          </div>
-          <div className="text-xl font-bold" style={{ color: titleColor }}>
-            {node.degree}
-          </div>
+        <div className={`rounded border px-3 py-2 ${subtleBox}`}>
+          <div className={`text-[10px] uppercase font-semibold ${muted}`}>Connections</div>
+          <div className="text-lg font-bold">{node.degree}</div>
         </div>
-        <div className="rounded-xl px-3 py-2" style={{ background: subtleBg }}>
-          <div className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: hintColor }}>
-            Neighbors
-          </div>
-          <div className="text-xl font-bold" style={{ color: titleColor }}>
-            {neighbors.length}
-          </div>
+        <div className={`rounded border px-3 py-2 ${subtleBox}`}>
+          <div className={`text-[10px] uppercase font-semibold ${muted}`}>Neighbors</div>
+          <div className="text-lg font-bold">{neighbors.length}</div>
         </div>
       </section>
 
-      {/* Neighbors */}
       <section className="flex-1 overflow-hidden flex flex-col min-h-0">
-        <div
-          className="text-[10px] uppercase tracking-wider font-semibold mb-2 px-1"
-          style={{ color: hintColor }}
-        >
+        <div className={`text-[10px] uppercase font-semibold mb-2 px-1 ${muted}`}>
           Relationships
         </div>
         <ul className="overflow-y-auto flex-1 flex flex-col gap-1.5 pr-1">
           {neighbors.length === 0 && (
-            <li className="text-xs px-2 py-3 text-center" style={{ color: hintColor }}>
+            <li className={`text-xs px-2 py-3 text-center ${muted}`}>
               No relationships
             </li>
           )}
@@ -176,33 +140,22 @@ export default function NodeDetailPanel({
               <li key={`${nb.node.id}-${idx}`}>
                 <button
                   onClick={() => onSelectNode(nb.node)}
-                  className="w-full text-left rounded-lg px-3 py-2 transition-all"
-                  style={{ background: subtleBg }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = isDark
-                      ? "rgba(255,255,255,0.08)"
-                      : "rgba(0,0,0,0.05)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = subtleBg;
-                  }}
+                  className={`w-full text-left rounded border px-3 py-2 ${
+                    isDark
+                      ? "bg-slate-900 border-slate-700 hover:bg-slate-700"
+                      : "bg-gray-50 border-gray-200 hover:bg-gray-100"
+                  }`}
                 >
                   <div className="flex items-center gap-2 mb-1">
                     <span
                       className="inline-block w-2 h-2 rounded-full"
                       style={{ background: nbAccent }}
                     />
-                    <span
-                      className="text-[10px] font-mono uppercase tracking-wider"
-                      style={{ color: hintColor }}
-                    >
+                    <span className={`text-[10px] font-mono uppercase ${muted}`}>
                       {nb.direction === "outgoing" ? "→" : "←"} {nb.predicate}
                     </span>
                   </div>
-                  <div
-                    className="text-xs font-semibold break-words"
-                    style={{ color: titleColor }}
-                  >
+                  <div className="text-xs font-semibold break-words">
                     {nb.node.isUri ? shortenIri(nb.node.id) : nb.node.label}
                   </div>
                 </button>

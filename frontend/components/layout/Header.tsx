@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Sun, Moon, User } from "lucide-react";
+import { Bell, Moon, Sun, User } from "lucide-react";
 
 interface HeaderProps {
   isDark: boolean;
@@ -10,78 +10,56 @@ interface HeaderProps {
 export default function Header({ isDark, setIsDark }: HeaderProps) {
   return (
     <header
-      className="h-14 flex items-center justify-between px-6 z-10 transition-colors duration-300"
-      style={{
-        background: isDark
-          ? "rgba(15,23,42,0.95)"
-          : "rgba(255,255,255,0.95)",
-        backdropFilter: "blur(10px)",
-        borderBottom: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.08)",
-        boxShadow: isDark ? "0 1px 12px rgba(0,0,0,0.4)" : "0 1px 6px rgba(0,0,0,0.06)",
-      }}
+      className={`h-14 flex items-center justify-between px-6 border-b ${
+        isDark
+          ? "bg-slate-900 border-slate-800 text-slate-100"
+          : "bg-white border-gray-200 text-gray-800"
+      }`}
     >
-      {/* Brand */}
-      <span
-        className="text-2xl font-bold tracking-tight select-none"
-        style={{
-          background: "linear-gradient(135deg, #2196f3 0%, #1976d2 100%)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          backgroundClip: "text",
-        }}
-      >
-        RxVKG
-      </span>
+      <span className="text-xl font-bold tracking-tight text-blue-600">RxVKG</span>
 
-      {/* Right actions */}
       <div className="flex items-center gap-2">
-        {/* Notification */}
-        <button
-          aria-label="Notifications"
-          className="w-9 h-9 flex items-center justify-center rounded-lg border-none bg-transparent cursor-pointer transition-all duration-200"
-          style={{ color: isDark ? "#94a3b8" : "#6b7280" }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.background = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)";
-            (e.currentTarget as HTMLElement).style.color = isDark ? "#e2e8f0" : "#1f2937";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.background = "";
-            (e.currentTarget as HTMLElement).style.color = isDark ? "#94a3b8" : "#6b7280";
-          }}
-        >
-          <Bell size={20} />
-        </button>
+        <IconButton isDark={isDark} aria-label="Notifications">
+          <Bell size={18} />
+        </IconButton>
 
-        {/* Dark mode toggle */}
-        <button
-          aria-label="Toggle theme"
-          onClick={() => setIsDark(!isDark)}
-          className="w-9 h-9 flex items-center justify-center rounded-lg border-none bg-transparent cursor-pointer transition-all duration-200"
-          style={{ color: isDark ? "#facc15" : "#6b7280" }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.background = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)";
-            (e.currentTarget as HTMLElement).style.color = isDark ? "#fde68a" : "#1f2937";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.background = "";
-            (e.currentTarget as HTMLElement).style.color = isDark ? "#facc15" : "#6b7280";
-          }}
-        >
-          {isDark ? <Sun size={20} /> : <Moon size={20} />}
-        </button>
+        <IconButton isDark={isDark} aria-label="Toggle theme" onClick={() => setIsDark(!isDark)}>
+          {isDark ? <Sun size={18} /> : <Moon size={18} />}
+        </IconButton>
 
-        {/* User avatar */}
         <button
           aria-label="User menu"
-          className="w-9 h-9 flex items-center justify-center rounded-lg border-none text-white cursor-pointer transition-all duration-200 hover:-translate-y-px"
-          style={{
-            background: "linear-gradient(135deg, #2196f3 0%, #1976d2 100%)",
-            boxShadow: "0 2px 8px rgba(33,150,243,0.3)",
-          }}
+          className="w-9 h-9 flex items-center justify-center rounded-md bg-blue-600 text-white hover:bg-blue-700"
         >
-          <User size={20} />
+          <User size={18} />
         </button>
       </div>
     </header>
+  );
+}
+
+function IconButton({
+  isDark,
+  children,
+  onClick,
+  ...rest
+}: {
+  isDark: boolean;
+  children: React.ReactNode;
+  onClick?: () => void;
+  "aria-label": string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      {...rest}
+      className={`w-9 h-9 flex items-center justify-center rounded-md ${
+        isDark
+          ? "text-slate-400 hover:bg-slate-800 hover:text-slate-100"
+          : "text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+      }`}
+    >
+      {children}
+    </button>
   );
 }
