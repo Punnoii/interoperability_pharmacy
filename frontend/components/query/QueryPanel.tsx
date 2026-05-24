@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Loader2 } from "lucide-react";
-
-type Binding = Record<string, { type: string; value: string }>;
+import { Loader2, Network, Table2 } from "lucide-react";
+import ResultsGraph from "@/components/graph/ResultsGraph";
+import type { SparqlBinding } from "@/components/graph/graphUtils";
 
 interface SparqlResults {
   head: { vars: string[] };
-  results: { bindings: Binding[] };
+  results: { bindings: SparqlBinding[] };
 }
 
 interface QueryPanelProps {
@@ -15,6 +15,7 @@ interface QueryPanelProps {
 }
 
 type EndpointKey = "default" | "mysql";
+type ViewMode = "table" | "graph";
 
 const DEFAULT_QUERY = `SELECT * WHERE { ?s ?p ?o } LIMIT 100`;
 
@@ -29,6 +30,7 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<SparqlResults | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>("table");
 
   // Simple client-side pagination
   const [page, setPage] = useState(1);
@@ -42,6 +44,7 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
     setError(null);
     setResults(null);
     setPage(1);
+    setViewMode("table");
 
     try {
       const res = await fetch("/api/sparql", {
@@ -243,9 +246,9 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
 
         {!isLoading && !error && results && bindings.length > 0 && (
           <div className="flex flex-col h-full">
-            {/* Table header bar */}
+            {/* Header bar: result count + view toggle + page info */}
             <div
-              className="flex items-center justify-between px-5 py-3"
+              className="flex items-center justify-between px-5 py-2.5 gap-3"
               style={{
                 background: paginationBg,
                 borderBottom: `1px solid ${paginationBorder}`,
@@ -254,12 +257,70 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
               <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: mutedText }}>
                 {bindings.length.toLocaleString()} result{bindings.length !== 1 ? "s" : ""}
               </span>
-              <span className="text-xs" style={{ color: mutedText }}>
-                Page {page} of {totalPages}
+
+              {/* Table / Graph toggle */}
+              <div
+                className="flex rounded-lg overflow-hidden text-xs font-medium"
+                style={{ border: `1px solid ${btnBorder}` }}
+                role="tablist"
+              >
+                <button
+                  role="tab"
+                  aria-selected={viewMode === "table"}
+                  onClick={() => setViewMode("table")}
+                  className="flex items-center gap-1.5 px-3 py-1.5 cursor-pointer transition-colors"
+                  style={{
+                    background: viewMode === "table" ? "#2196f3" : "transparent",
+                    color: viewMode === "table" ? "#ffffff" : btnText,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (viewMode !== "table") (e.currentTarget.style.background = btnHoverBg);
+                  }}
+                  onMouseLeave={(e) => {
+                    if (viewMode !== "table") (e.currentTarget.style.background = "transparent");
+                  }}
+                >
+                  <Table2 size={13} />
+                  Table
+                </button>
+                <button
+                  role="tab"
+                  aria-selected={viewMode === "graph"}
+                  onClick={() => setViewMode("graph")}
+                  disabled={vars.length < 2}
+                  title={vars.length < 2 ? "Need at least 2 SELECT variables" : "View as graph"}
+                  className="flex items-center gap-1.5 px-3 py-1.5 cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  style={{
+                    background: viewMode === "graph" ? "#2196f3" : "transparent",
+                    color: viewMode === "graph" ? "#ffffff" : btnText,
+                    borderLeft: `1px solid ${btnBorder}`,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (viewMode !== "graph" && vars.length >= 2) (e.currentTarget.style.background = btnHoverBg);
+                  }}
+                  onMouseLeave={(e) => {
+                    if (viewMode !== "graph") (e.currentTarget.style.background = "transparent");
+                  }}
+                >
+                  <Network size={13} />
+                  Graph
+                </button>
+              </div>
+
+              <span className="text-xs tabular-nums" style={{ color: mutedText }}>
+                {viewMode === "table" ? `Page ${page} of ${totalPages}` : `${vars.length} variables`}
               </span>
             </div>
 
+            {/* Graph view */}
+            {viewMode === "graph" && (
+              <div className="flex-1 min-h-[420px] overflow-hidden">
+                <ResultsGraph vars={vars} bindings={bindings} isDark={isDark} />
+              </div>
+            )}
+
             {/* Scrollable table */}
+            {viewMode === "table" && (
             <div className="flex-1 overflow-auto">
               <table className="w-full text-sm border-collapse">
                 <thead>
@@ -330,9 +391,10 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
                 </tbody>
               </table>
             </div>
+            )}
 
             {/* Pagination */}
-            {totalPages > 1 && (
+            {viewMode === "table" && totalPages > 1 && (
               <div
                 className="flex items-center justify-between px-5 py-3"
                 style={{

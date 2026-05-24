@@ -96,17 +96,15 @@ services:
     restart: unless-stopped
 
   frontend:
-    image: node:20-alpine
-    working_dir: /app
-    command: sh -c "npm install && npm run dev"
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
     environment:
+      # Used server-side by app/api/sparql/route.ts to reach the backend
+      # over the internal docker network.
       NEXT_PUBLIC_API_URL: http://backend:8082
-      WATCHPACK_POLLING: "true"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
     depends_on:
       - backend
     networks:
