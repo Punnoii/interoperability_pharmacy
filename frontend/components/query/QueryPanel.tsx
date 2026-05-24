@@ -14,10 +14,18 @@ interface QueryPanelProps {
   isDark: boolean;
 }
 
+type EndpointKey = "default" | "mysql";
+
 const DEFAULT_QUERY = `SELECT * WHERE { ?s ?p ?o } LIMIT 100`;
+
+const ENDPOINT_OPTIONS: { key: EndpointKey; label: string; hint: string }[] = [
+  { key: "default", label: "PostgreSQL (Company A + B)", hint: "Ontop @ :8080" },
+  { key: "mysql", label: "MySQL (Company C)", hint: "Ontop @ :8081" },
+];
 
 export default function QueryPanel({ isDark }: QueryPanelProps) {
   const [query, setQuery] = useState(DEFAULT_QUERY);
+  const [endpoint, setEndpoint] = useState<EndpointKey>("default");
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<SparqlResults | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +48,7 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          endpoint: "default",
+          endpoint,
           query,
           accept: "application/sparql-results+json",
         }),
@@ -117,25 +125,46 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
             // placeholder color via inline is not standard; handled via CSS variable trick with a class below
           }}
         />
-        <button
-          onClick={handleRun}
-          disabled={isLoading}
-          className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white border-none cursor-pointer transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
-          style={{
-            background: "linear-gradient(135deg, #2196f3 0%, #1976d2 100%)",
-            boxShadow: "0 2px 8px rgba(33,150,243,0.3)",
-          }}
-          onMouseEnter={(e) => {
-            if (!isLoading) {
-              (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)";
-              (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 12px rgba(33,150,243,0.4)";
-            }
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.transform = "";
-            (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 8px rgba(33,150,243,0.3)";
-          }}
-        >
+        <div className="flex flex-col gap-2">
+          <select
+            value={endpoint}
+            onChange={(e) => setEndpoint(e.target.value as EndpointKey)}
+            disabled={isLoading}
+            aria-label="SPARQL endpoint"
+            className="px-3 py-2 rounded-xl text-xs font-medium cursor-pointer focus:outline-none focus:ring-2 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+            style={{
+              background: inputBg,
+              color: inputFg,
+              border: `1px solid ${inputBorder}`,
+              minWidth: 200,
+            }}
+            title={ENDPOINT_OPTIONS.find((o) => o.key === endpoint)?.hint}
+          >
+            {ENDPOINT_OPTIONS.map((opt) => (
+              <option key={opt.key} value={opt.key}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={handleRun}
+            disabled={isLoading}
+            className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white border-none cursor-pointer transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
+            style={{
+              background: "linear-gradient(135deg, #2196f3 0%, #1976d2 100%)",
+              boxShadow: "0 2px 8px rgba(33,150,243,0.3)",
+            }}
+            onMouseEnter={(e) => {
+              if (!isLoading) {
+                (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)";
+                (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 12px rgba(33,150,243,0.4)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.transform = "";
+              (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 8px rgba(33,150,243,0.3)";
+            }}
+          >
           {isLoading ? (
             <Loader2 size={16} className="animate-spin" />
           ) : (
@@ -143,8 +172,9 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
               <polygon points="5 3 19 12 5 21 5 3" />
             </svg>
           )}
-          <span>{isLoading ? "Running…" : "Run"}</span>
-        </button>
+            <span>{isLoading ? "Running…" : "Run"}</span>
+          </button>
+        </div>
       </div>
 
       {/* ── Results Area ── */}
