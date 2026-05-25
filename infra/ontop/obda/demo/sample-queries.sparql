@@ -1,0 +1,172 @@
+# =============================================================================
+# IDMP OBDA — Sample SPARQL Queries (ISO 11238 Substances)
+# =============================================================================
+#
+# ตัวอย่าง SPARQL queries สำหรับระบบ IDMP OBDA ที่ใช้ single SPARQL endpoint
+# ผ่าน Ontop-Trino federation เพื่อ query ข้อมูล substance จาก 5 data sources
+# (Company A-E) ในคราวเดียว
+#
+# Endpoint: http://localhost:8083/sparql  (Ontop-Trino)
+# Backend proxy: http://localhost:8082/api/sparql
+#
+# Ontology: IDMP ISO 11238 Substances v1.3.0 (Pistoia Alliance)
+# =============================================================================
+
+
+# -----------------------------------------------------------------------------
+# Query 1: List all substances with preferred name, type, and identifier
+# -----------------------------------------------------------------------------
+# ดึงรายการ substance ทั้งหมดจากทุก data source พร้อมชื่อ preferred name,
+# substance type, และ identifier (ถ้ามี)
+# ผลลัพธ์จะรวมข้อมูลจาก Company A-E ผ่าน Trino federation
+
+PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
+PREFIX cmns-id:  <https://www.omg.org/spec/Commons/Identifiers/>
+PREFIX cmns-txt: <https://www.omg.org/spec/Commons/TextDatatype/>
+
+SELECT ?substance ?preferredName ?substanceType ?identifier
+WHERE {
+    ?substance a idmp-sub:Substance ;
+               idmp-sub:hasSubstanceType ?substanceType ;
+               idmp-sub:hasSubstanceName ?nameNode .
+    ?nameNode  idmp-sub:hasSubstanceNameValue ?preferredName ;
+               idmp-sub:hasSubstanceNameType
+                   <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceNameClassifier-PreferredName> .
+    OPTIONAL {
+        ?substance cmns-id:isIdentifiedBy ?idNode .
+        ?idNode    cmns-txt:hasTextValue ?identifier .
+    }
+}
+ORDER BY ?preferredName
+
+
+# -----------------------------------------------------------------------------
+# Query 2: Search substances by name (case-insensitive)
+# -----------------------------------------------------------------------------
+# ค้นหา substance ที่มีชื่อประกอบด้วยคำว่า "Amoxicillin" (case-insensitive)
+# เปลี่ยนค่าใน FILTER เพื่อค้นหาสารอื่น เช่น "Metformin", "Insulin"
+
+PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
+PREFIX cmns-id:  <https://www.omg.org/spec/Commons/Identifiers/>
+PREFIX cmns-txt: <https://www.omg.org/spec/Commons/TextDatatype/>
+
+SELECT ?substance ?name ?substanceType ?identifier
+WHERE {
+    ?substance a idmp-sub:Substance ;
+               idmp-sub:hasSubstanceType ?substanceType ;
+               idmp-sub:hasSubstanceName ?nameNode .
+    ?nameNode  idmp-sub:hasSubstanceNameValue ?name .
+    FILTER(CONTAINS(LCASE(?name), LCASE("Amoxicillin")))
+    OPTIONAL {
+        ?substance cmns-id:isIdentifiedBy ?idNode .
+        ?idNode    cmns-txt:hasTextValue ?identifier .
+    }
+}
+ORDER BY ?substance
+
+
+# -----------------------------------------------------------------------------
+# Query 3: Get full details for a specific substance
+# -----------------------------------------------------------------------------
+# ดึงข้อมูลครบถ้วนของ substance รายการเดียว: ชื่อทุกประเภท (preferred, brand,
+# other), identifier ทั้งหมด, substance type, และ language code
+# แทนที่ IRI ด้วย substance ที่ต้องการ
+
+PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
+PREFIX idmp-dtp: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO21090-HarmonizedDatatypes/>
+PREFIX cmns-id:  <https://www.omg.org/spec/Commons/Identifiers/>
+PREFIX cmns-txt: <https://www.omg.org/spec/Commons/TextDatatype/>
+
+SELECT ?substanceType ?nameValue ?nameType ?langCode ?idValue
+WHERE {
+    <http://example.com/idmp-demo/substance/a/1> a idmp-sub:Substance ;
+        idmp-sub:hasSubstanceType ?substanceType ;
+        idmp-sub:hasSubstanceName ?nameNode .
+    ?nameNode idmp-sub:hasSubstanceNameValue ?nameValue ;
+              idmp-sub:hasSubstanceNameType  ?nameType .
+    OPTIONAL {
+        ?nameNode idmp-dtp:hasLanguageCode ?langCode .
+    }
+    OPTIONAL {
+        <http://example.com/idmp-demo/substance/a/1> cmns-id:isIdentifiedBy ?idNode .
+        ?idNode cmns-txt:hasTextValue ?idValue .
+    }
+}
+
+
+# -----------------------------------------------------------------------------
+# Query 4: Cross-source lookup — find substances sharing the same identifier
+# -----------------------------------------------------------------------------
+# ค้นหา substance จากทุก data source ที่มี identifier value เดียวกัน
+# ใช้สำหรับ cross-source matching เช่น หา substance ที่มี UNII code เดียวกัน
+# ใน Company A และ Company D
+# แทนที่ค่า identifier ตามต้องการ เช่น "UNII-9PN0PQR1XX" (Metformin)
+
+PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
+PREFIX cmns-id:  <https://www.omg.org/spec/Commons/Identifiers/>
+PREFIX cmns-txt: <https://www.omg.org/spec/Commons/TextDatatype/>
+
+SELECT ?substance ?preferredName ?substanceType ?identifier
+WHERE {
+    ?substance a idmp-sub:Substance ;
+               idmp-sub:hasSubstanceType ?substanceType ;
+               cmns-id:isIdentifiedBy ?idNode ;
+               idmp-sub:hasSubstanceName ?nameNode .
+    ?idNode    cmns-txt:hasTextValue ?identifier .
+    FILTER(?identifier = "UNII-9PN0PQR1XX")
+    ?nameNode  idmp-sub:hasSubstanceNameValue ?preferredName ;
+               idmp-sub:hasSubstanceNameType
+                   <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceNameClassifier-PreferredName> .
+}
+ORDER BY ?substance
+
+
+# -----------------------------------------------------------------------------
+# Query 5: CONSTRUCT RDF output — generate RDF triples for substances
+# -----------------------------------------------------------------------------
+# สร้าง RDF graph สำหรับ substance ทั้งหมด ใช้สำหรับ export ข้อมูลเป็น RDF
+# หรือ integrate กับ triple store อื่น
+# ผลลัพธ์เป็น RDF triples (Turtle/N-Triples/RDF-XML ขึ้นกับ Accept header)
+
+PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
+PREFIX cmns-id:  <https://www.omg.org/spec/Commons/Identifiers/>
+PREFIX cmns-txt: <https://www.omg.org/spec/Commons/TextDatatype/>
+PREFIX rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+
+CONSTRUCT {
+    ?substance a idmp-sub:Substance ;
+               idmp-sub:hasSubstanceType ?substanceType ;
+               rdfs:label ?preferredName ;
+               cmns-id:isIdentifiedBy ?idNode .
+    ?idNode    cmns-txt:hasTextValue ?identifier .
+}
+WHERE {
+    ?substance a idmp-sub:Substance ;
+               idmp-sub:hasSubstanceType ?substanceType ;
+               idmp-sub:hasSubstanceName ?nameNode .
+    ?nameNode  idmp-sub:hasSubstanceNameValue ?preferredName ;
+               idmp-sub:hasSubstanceNameType
+                   <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceNameClassifier-PreferredName> .
+    OPTIONAL {
+        ?substance cmns-id:isIdentifiedBy ?idNode .
+        ?idNode    cmns-txt:hasTextValue ?identifier .
+    }
+}
+
+
+# -----------------------------------------------------------------------------
+# Query 6: Count substances per data source
+# -----------------------------------------------------------------------------
+# นับจำนวน substance ที่แตกต่างกันในแต่ละ data source (Company A-E)
+# ใช้สำหรับ validation ว่าข้อมูลจากทุก source ถูก map ครบถ้วน
+# source letter ถูกดึงจาก IRI pattern: .../substance/{company_letter}/...
+
+PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
+
+SELECT ?source (COUNT(DISTINCT ?substance) AS ?count)
+WHERE {
+    ?substance a idmp-sub:Substance .
+    BIND(REPLACE(STR(?substance), "^.*/substance/([a-z])/.*$", "$1") AS ?source)
+}
+GROUP BY ?source
+ORDER BY ?source

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IDMP Substance Search</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <span class="navbar-brand">IDMP OBDA</span>
+    <div class="navbar-links">
+      <a href="index.html" class="active" aria-current="page">Substance Search</a>
+      <a href="sparql.html">SPARQL Editor</a>
+    </div>
+  </nav>
+
+  <main class="container">
+
+    <!-- Search Panel -->
+    <section class="card" aria-label="Search substances">
+      <h2 class="mt-0">Substance Search</h2>
+      <div class="search-panel">
+        <div class="field grow">
+          <label for="searchInput">Substance name</label>
+          <input type="text" id="searchInput" placeholder="e.g. Amoxicillin, Metformin..." autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="typeFilter">Type</label>
+          <select id="typeFilter">
+            <option value="">All types</option>
+            <option value="Chemical">Chemical</option>
+            <option value="Protein">Protein</option>
+            <option value="NucleicAcid">NucleicAcid</option>
+            <option value="Polymer">Polymer</option>
+            <option value="Mixture">Mixture</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>&nbsp;</label>
+          <button class="btn-primary" id="searchBtn">Search</button>
+        </div>
+      </div>
+      <div id="status" class="status"></div>
+    </section>
+
+    <!-- Results Table -->
+    <section class="card" aria-label="Search results">
+      <h2 class="mt-0">Results</h2>
+      <div style="overflow-x:auto;">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Identifier</th>
+              <th>Source</th>
+            </tr>
+          </thead>
+          <tbody id="resultsBody">
+            <tr class="empty-row"><td colspan="4">Use the search panel above to find substances, or click Search with an empty query to list all.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Detail Panel (hidden by default) -->
+    <section class="card detail-panel" id="detailPanel" aria-label="Substance details">
+      <h2 class="mt-0">Substance Details</h2>
+      <div id="detailContent"></div>
+    </section>
+
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

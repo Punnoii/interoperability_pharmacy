@@ -1,22 +1,18 @@
 package com.example.idmp.config;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "ontop")
 public class OntopProperties {
-  private String defaultEndpoint = "default";
+  private String endpoint = "http://localhost:8080/sparql";
   private String defaultAccept = "application/sparql-results+json";
-  private Map<String, String> endpoints = new HashMap<>();
 
-  public String getDefaultEndpoint() {
-    return defaultEndpoint;
+  public String getEndpoint() {
+    return endpoint;
   }
 
-  public void setDefaultEndpoint(String defaultEndpoint) {
-    this.defaultEndpoint = defaultEndpoint;
+  public void setEndpoint(String endpoint) {
+    this.endpoint = endpoint;
   }
 
   public String getDefaultAccept() {
@@ -25,13 +21,5 @@ public class OntopProperties {
 
   public void setDefaultAccept(String defaultAccept) {
     this.defaultAccept = defaultAccept;
-  }
-
-  public Map<String, String> getEndpoints() {
-    return endpoints;
-  }
-
-  public void setEndpoints(Map<String, String> endpoints) {
-    this.endpoints = endpoints;
   }
 }

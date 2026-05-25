@@ -33,20 +33,19 @@ public class SparqlController {
 
   @PostMapping(value = "/sparql", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<String> sparql(@Valid @RequestBody SparqlRequest request) {
-    return ontopClient.execute(request.endpoint(), request.query(), request.accept());
+    return ontopClient.execute(request.query(), request.accept());
   }
 
   @GetMapping("/entity")
   public ResponseEntity<String> entity(
       @RequestParam("iri") String iri,
       @RequestParam(name = "limit", defaultValue = "100") int limit,
-      @RequestParam(name = "endpoint", required = false) String endpoint,
       @RequestParam(name = "accept", required = false) String accept
   ) {
     validateIri(iri, "iri");
     int safeLimit = clampLimit(limit);
     String query = SparqlTemplates.entityDetails(iri, safeLimit);
-    return ontopClient.execute(endpoint, query, accept);
+    return ontopClient.execute(query, accept);
   }
 
   @GetMapping("/navigate")
@@ -55,7 +54,6 @@ public class SparqlController {
       @RequestParam("predicate") String predicate,
       @RequestParam(name = "direction", defaultValue = "out") String direction,
       @RequestParam(name = "limit", defaultValue = "100") int limit,
-      @RequestParam(name = "endpoint", required = false) String endpoint,
       @RequestParam(name = "accept", required = false) String accept
   ) {
     validateIri(iri, "iri");
@@ -63,7 +61,7 @@ public class SparqlController {
     boolean incoming = parseDirection(direction);
     int safeLimit = clampLimit(limit);
     String query = SparqlTemplates.navigate(iri, predicate, incoming, safeLimit);
-    return ontopClient.execute(endpoint, query, accept);
+    return ontopClient.execute(query, accept);
   }
 
   @GetMapping("/health")

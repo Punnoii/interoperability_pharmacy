@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SPARQL Editor — IDMP OBDA</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <span class="navbar-brand">IDMP OBDA</span>
+    <div class="navbar-links">
+      <a href="index.html">Substance Search</a>
+      <a href="sparql.html" class="active" aria-current="page">SPARQL Editor</a>
+    </div>
+  </nav>
+
+  <main class="container">
+    <section class="card">
+      <h2 class="mt-0">SPARQL Editor</h2>
+      <p class="text-muted text-sm mb-0" style="margin-bottom:12px">
+        Enter a SPARQL query and run it against the OBDA endpoint. Use CONSTRUCT or DESCRIBE for RDF output.
+      </p>
+
+      <label for="accept">Response format</label>
+      <select id="accept" style="margin-bottom:12px;max-width:360px">
+        <option value="text/turtle">RDF Turtle (text/turtle)</option>
+        <option value="application/rdf+xml">RDF XML (application/rdf+xml)</option>
+        <option value="application/ld+json">RDF JSON-LD (application/ld+json)</option>
+        <option value="application/sparql-results+json">SPARQL JSON (for SELECT)</option>
+        <option value="text/csv">SPARQL CSV (for SELECT)</option>
+      </select>
+
+      <textarea id="query" spellcheck="false" aria-label="SPARQL query"></textarea>
+
+      <div class="actions">
+        <button class="btn-primary" id="runBtn">Run Query</button>
+        <button class="btn-secondary" id="rdfSampleBtn">CONSTRUCT Sample</button>
+        <button class="btn-secondary" id="selectSampleBtn">SELECT Sample</button>
+      </div>
+
+      <div id="status" class="status"></div>
+      <pre id="result"></pre>
+    </section>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/sparql-editor.js"></script>
+</body>
+</html>

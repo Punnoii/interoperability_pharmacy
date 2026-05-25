@@ -1,0 +1,389 @@
+/* ============================================================
+   IDMP OBDA — Shared Styles
+   Matches the design language from the original index.html
+   ============================================================ */
+
+/* ── CSS Variables ─────────────────────────────────────────── */
+:root {
+  color-scheme: light;
+  --bg: #f2f5f9;
+  --card: #ffffff;
+  --text: #10243f;
+  --muted: #4d607a;
+  --accent: #0a66c2;
+  --accent-hover: #084d93;
+  --border: #d4dde8;
+  --ok: #0f7b0f;
+  --error: #b3261e;
+  --warning: #b45309;
+  --row-hover: #f0f6ff;
+  --nav-bg: #10243f;
+  --nav-text: #ffffff;
+  --radius: 10px;
+  --shadow: 0 12px 30px rgba(28, 58, 102, 0.08);
+}
+
+/* ── Reset ─────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--text);
+  background: linear-gradient(180deg, #f7faff 0%, var(--bg) 100%);
+  min-height: 100vh;
+}
+
+/* ── Navigation Bar ────────────────────────────────────────── */
+.navbar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: var(--nav-bg);
+  color: var(--nav-text);
+  padding: 0 24px;
+  height: 52px;
+  font-size: 14px;
+}
+
+.navbar-brand {
+  font-weight: 700;
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 4px;
+}
+
+.navbar-links a {
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.navbar-links a:hover,
+.navbar-links a.active {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ── Layout ────────────────────────────────────────────────── */
+.container {
+  width: min(1080px, 100%);
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* ── Card ──────────────────────────────────────────────────── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.card + .card {
+  margin-top: 16px;
+}
+
+.card h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+
+/* ── Search Panel ──────────────────────────────────────────── */
+.search-panel {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.search-panel .field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.search-panel .field.grow {
+  flex: 1;
+  min-width: 200px;
+}
+
+/* ── Form Elements ─────────────────────────────────────────── */
+input,
+select,
+textarea {
+  font: inherit;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: var(--text);
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--accent);
+}
+
+textarea {
+  width: 100%;
+  min-height: 200px;
+  resize: vertical;
+  font-family: Consolas, Monaco, "Courier New", monospace;
+  line-height: 1.45;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ── Buttons ───────────────────────────────────────────────── */
+button {
+  font: inherit;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 9px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background 0.15s;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  color: #fff;
+  background: var(--accent);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.btn-secondary {
+  color: var(--text);
+  background: #eef4fb;
+  border-color: #c8d9ee;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #dce8f7;
+}
+
+.btn-danger {
+  color: #fff;
+  background: var(--error);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #8c1d17;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ── Results Table ─────────────────────────────────────────── */
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.results-table thead th {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 2px solid var(--border);
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.results-table tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.results-table tbody tr {
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.results-table tbody tr:hover {
+  background: var(--row-hover);
+}
+
+.results-table tbody tr.selected {
+  background: #e0edff;
+}
+
+.results-table .empty-row td {
+  text-align: center;
+  color: var(--muted);
+  padding: 32px 12px;
+}
+
+/* ── Detail Panel ──────────────────────────────────────────── */
+.detail-panel {
+  display: none;
+}
+
+.detail-panel.visible {
+  display: block;
+}
+
+.detail-section {
+  margin-bottom: 16px;
+}
+
+.detail-section h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.detail-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.detail-list li {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  display: flex;
+  gap: 8px;
+}
+
+.detail-list li:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  color: var(--muted);
+  min-width: 110px;
+  flex-shrink: 0;
+  font-size: 13px;
+}
+
+.detail-value {
+  word-break: break-word;
+}
+
+/* ── Badge / Tag ───────────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.badge-chemical { background: #dbeafe; color: #1e40af; }
+.badge-protein  { background: #fce7f3; color: #9d174d; }
+.badge-nucleic  { background: #d1fae5; color: #065f46; }
+.badge-polymer  { background: #fef3c7; color: #92400e; }
+.badge-mixture  { background: #ede9fe; color: #5b21b6; }
+.badge-default  { background: #f1f5f9; color: var(--muted); }
+
+/* ── Status / Messages ─────────────────────────────────────── */
+.status {
+  min-height: 22px;
+  margin: 6px 0 10px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.status.ok    { color: var(--ok); }
+.status.error { color: var(--error); }
+.status.warn  { color: var(--warning); }
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Code / Pre ────────────────────────────────────────────── */
+pre {
+  background: #0e1b2f;
+  color: #deebff;
+  border-radius: var(--radius);
+  padding: 14px;
+  overflow: auto;
+  min-height: 120px;
+  margin: 0;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: Consolas, Monaco, "Courier New", monospace;
+}
+
+/* ── Utility ───────────────────────────────────────────────── */
+.hidden { display: none !important; }
+.text-muted { color: var(--muted); }
+.text-sm { font-size: 13px; }
+.mt-0 { margin-top: 0; }
+.mb-0 { margin-bottom: 0; }
+
+/* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .navbar {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 10px 16px;
+    gap: 8px;
+  }
+
+  .search-panel {
+    flex-direction: column;
+  }
+
+  .results-table {
+    font-size: 13px;
+  }
+
+  .results-table thead th,
+  .results-table tbody td {
+    padding: 8px;
+  }
+}
