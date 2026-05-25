@@ -102,7 +102,7 @@ services:
       trino:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/sparql || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep UP || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -114,7 +114,7 @@ services:
     ports:
       - "8082:8082"
     environment:
-      ONTOP_ENDPOINT_DEFAULT: http://ontop-trino:8080/sparql
+      ONTOP_ENDPOINT: http://ontop-trino:8080/sparql
     depends_on:
       ontop-trino:
         condition: service_healthy
@@ -124,3 +124,15 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8082
+    depends_on:
+      backend:
+        condition: service_healthy
+

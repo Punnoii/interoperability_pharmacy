@@ -4,6 +4,7 @@ import { useState } from "react";
 import Header from "@/components/layout/Header";
 import Sidebar from "@/components/layout/Sidebar";
 import QueryPanel from "@/components/query/QueryPanel";
+import SubstancePanel from "@/components/substance/SubstancePanel";
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState("query");
@@ -25,6 +26,7 @@ export default function HomePage() {
 
         <main className="flex-1 overflow-hidden flex flex-col">
           {activeTab === "query" && <QueryPanel isDark={isDark} />}
+          {activeTab === "substances" && <SubstancePanel isDark={isDark} />}
           {activeTab === "explore" && <ComingSoon isDark={isDark} label="Explore" />}
           {activeTab === "dashboards" && <ComingSoon isDark={isDark} label="Dashboards" />}
         </main>
