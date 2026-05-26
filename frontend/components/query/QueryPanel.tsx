@@ -14,15 +14,17 @@ interface QueryPanelProps {
   isDark: boolean;
 }
 
-type EndpointKey = "default" | "mysql";
+type EndpointKey = "default" | "mysql" | "mongo" | "all";
 type ViewMode = "table" | "graph";
 
 const DEFAULT_QUERY = `SELECT * WHERE { ?s ?p ?o } LIMIT 100`;
 const PAGE_SIZE = 10;
 
 const ENDPOINTS: { key: EndpointKey; label: string }[] = [
+  { key: "all",     label: "All Sources (A+B+C+D+E)" },
   { key: "default", label: "PostgreSQL (Company A + B)" },
-  { key: "mysql", label: "MySQL (Company C)" },
+  { key: "mysql",   label: "MySQL (Company C)" },
+  { key: "mongo",   label: "MongoDB (Company D)" },
 ];
 
 export default function QueryPanel({ isDark }: QueryPanelProps) {
@@ -105,7 +107,7 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
             onChange={(e) => setEndpoint(e.target.value as EndpointKey)}
             disabled={isLoading}
             className={`px-2 py-2 rounded border text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-60 ${inputCls}`}
-            style={{ minWidth: 220 }}
+            style={{ minWidth: 240 }}
           >
             {ENDPOINTS.map((opt) => (
               <option key={opt.key} value={opt.key}>
@@ -288,10 +290,10 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
                       key={n}
                       onClick={() => setPage(n)}
                       className={`w-7 h-7 text-xs rounded border tabular-nums ${n === page
-                          ? "bg-blue-600 text-white border-blue-600"
-                          : isDark
-                            ? "border-slate-700 text-slate-400 hover:bg-slate-800"
-                            : "border-gray-300 text-gray-600 hover:bg-gray-100"
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : isDark
+                          ? "border-slate-700 text-slate-400 hover:bg-slate-800"
+                          : "border-gray-300 text-gray-600 hover:bg-gray-100"
                         }`}
                     >
                       {n}
@@ -368,8 +370,8 @@ function PageBtn({
       onClick={onClick}
       disabled={disabled}
       className={`px-3 py-1 text-xs rounded border disabled:opacity-40 disabled:cursor-not-allowed ${isDark
-          ? "border-slate-700 text-slate-400 hover:bg-slate-800"
-          : "border-gray-300 text-gray-600 hover:bg-gray-100"
+        ? "border-slate-700 text-slate-400 hover:bg-slate-800"
+        : "border-gray-300 text-gray-600 hover:bg-gray-100"
         }`}
     >
       {children}
