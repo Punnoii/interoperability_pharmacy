@@ -14,22 +14,72 @@ interface QueryPanelProps {
   isDark: boolean;
 }
 
-type EndpointKey = "default" | "mysql" | "mongo" | "all";
 type ViewMode = "table" | "graph";
+type SourceKey = "all" | "a" | "b" | "c" | "d" | "e";
 
-const DEFAULT_QUERY = `SELECT * WHERE { ?s ?p ?o } LIMIT 100`;
-const PAGE_SIZE = 10;
-
-const ENDPOINTS: { key: EndpointKey; label: string }[] = [
-  { key: "all",     label: "All Sources (A+B+C+D+E)" },
-  { key: "default", label: "PostgreSQL (Company A + B)" },
-  { key: "mysql",   label: "MySQL (Company C)" },
-  { key: "mongo",   label: "MongoDB (Company D)" },
+const SOURCES: { key: SourceKey; label: string }[] = [
+  { key: "all", label: "All Sources" },
+  { key: "a", label: "Company A — PostgreSQL" },
+  { key: "b", label: "Company B — PostgreSQL" },
+  { key: "c", label: "Company C — MySQL" },
+  { key: "d", label: "Company D — MongoDB" },
+  { key: "e", label: "Company E — Postgres (CSV)" },
 ];
+
+const SUBSTANCE_BASE_IRI = "http://example.com/idmp-demo/substance/";
+
+function applySourceFilter(query: string, source: SourceKey): string {
+  if (source === "all") return query;
+  if (!/\?substance\b/.test(query)) return query;
+
+  const prefix = `${SUBSTANCE_BASE_IRI}${source}/`;
+  const filterClause = `  FILTER(STRSTARTS(STR(?substance), "${prefix}"))\n`;
+
+  const whereMatch = query.match(/WHERE\s*\{/i);
+  if (!whereMatch || whereMatch.index === undefined) return query;
+
+  const openIdx = whereMatch.index + whereMatch[0].length;
+  let depth = 0;
+  let closeIdx = -1;
+  for (let i = openIdx; i < query.length; i++) {
+    const ch = query[i];
+    if (ch === "{") depth++;
+    else if (ch === "}") {
+      if (depth === 0) {
+        closeIdx = i;
+        break;
+      }
+      depth--;
+    }
+  }
+
+  if (closeIdx === -1) return query;
+  return query.slice(0, closeIdx) + filterClause + query.slice(closeIdx);
+}
+
+const DEFAULT_QUERY = `PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
+PREFIX idmp-dtp: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO21090-HarmonizedDatatypes/>
+PREFIX cmns-id: <https://www.omg.org/spec/Commons/Identifiers/>
+PREFIX cmns-txt: <https://www.omg.org/spec/Commons/TextDatatype/>
+PREFIX cmns-dsg: <https://www.omg.org/spec/Commons/Designators/>
+
+SELECT ?substance ?substanceType ?nameValue ?identifierValue
+WHERE {
+  ?substance a idmp-sub:Substance ;
+             idmp-sub:hasSubstanceType ?substanceType ;
+             idmp-sub:hasSubstanceName ?nameNode ;
+             cmns-id:isIdentifiedBy ?identifierNode .
+  ?nameNode idmp-sub:hasSubstanceNameValue ?nameValue .
+  ?identifierNode cmns-txt:hasTextValue ?identifierValue .
+}
+ORDER BY ?substance
+LIMIT 50
+`;
+const PAGE_SIZE = 10;
 
 export default function QueryPanel({ isDark }: QueryPanelProps) {
   const [query, setQuery] = useState(DEFAULT_QUERY);
-  const [endpoint, setEndpoint] = useState<EndpointKey>("default");
+  const [source, setSource] = useState<SourceKey>("all");
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<SparqlResults | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -46,13 +96,14 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
     setPage(1);
     setViewMode("table");
 
+    const finalQuery = applySourceFilter(query, source);
+
     try {
       const res = await fetch("/api/sparql", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          endpoint,
-          query,
+          query: finalQuery,
           accept: "application/sparql-results+json",
         }),
       });
@@ -74,7 +125,6 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
   const totalPages = Math.max(1, Math.ceil(bindings.length / PAGE_SIZE));
   const pageBindings = bindings.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  // Tailwind theme helpers
   const card = isDark
     ? "bg-slate-800 border-slate-700"
     : "bg-white border-gray-200";
@@ -101,15 +151,16 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
           placeholder="Enter your SPARQL query..."
           className={`flex-1 resize-y min-h-[52px] px-3 py-2 rounded border text-sm font-mono leading-relaxed focus:outline-none focus:ring-1 focus:ring-blue-500 ${inputCls}`}
         />
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2 self-start">
           <select
-            value={endpoint}
-            onChange={(e) => setEndpoint(e.target.value as EndpointKey)}
+            value={source}
+            onChange={(e) => setSource(e.target.value as SourceKey)}
             disabled={isLoading}
+            title="Inject FILTER(STRSTARTS(?substance, ...)) into the query"
             className={`px-2 py-2 rounded border text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-60 ${inputCls}`}
             style={{ minWidth: 240 }}
           >
-            {ENDPOINTS.map((opt) => (
+            {SOURCES.map((opt) => (
               <option key={opt.key} value={opt.key}>
                 {opt.label}
               </option>
@@ -199,14 +250,12 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
               )}
             </div>
 
-            {/* Graph view */}
             {viewMode === "graph" && (
               <div className="flex-1 min-h-[420px] overflow-hidden">
                 <ResultsGraph vars={vars} bindings={bindings} isDark={isDark} />
               </div>
             )}
 
-            {/* Table view */}
             {viewMode === "table" && (
               <div className="flex-1 overflow-auto">
                 <table className="w-full text-sm border-collapse">

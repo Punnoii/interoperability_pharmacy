@@ -14,7 +14,6 @@ import {
   BookOpen,
 } from "lucide-react";
 
-// ── Types ──────────────────────────────────────────────────────────────────────
 interface SubstanceSummary {
   iri: string;
   preferredName: string;
@@ -99,7 +98,6 @@ export default function SubstancePanel({ isDark }: SubstancePanelProps) {
 
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Initial load
   useEffect(() => {
     fetchSubstances("");
   }, []);
@@ -139,17 +137,14 @@ export default function SubstancePanel({ isDark }: SubstancePanelProps) {
     setDetailLoading(true);
     setCrossLoading(true);
 
-    // Fetch detail
     try {
       const res = await fetch(`/api/substances/details?iri=${encodeURIComponent(s.iri)}`);
       if (res.ok) setDetail(await res.json());
     } catch {
-      // ignore
     } finally {
       setDetailLoading(false);
     }
 
-    // Fetch cross-source
     if (s.identifier) {
       try {
         const res = await fetch(
@@ -166,11 +161,9 @@ export default function SubstancePanel({ isDark }: SubstancePanelProps) {
     }
   }
 
-  // Pagination
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  // Theme
   const card = isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-200";
   const muted = isDark ? "text-slate-400" : "text-gray-500";
   const subtle = isDark ? "text-slate-300" : "text-gray-700";
@@ -183,9 +176,7 @@ export default function SubstancePanel({ isDark }: SubstancePanelProps) {
 
   return (
     <div className="flex h-full overflow-hidden gap-0">
-      {/* LEFT: List */}
       <div className={`flex flex-col w-[420px] shrink-0 border-r ${divider}`}>
-        {/* Search bar */}
         <div className={`px-4 py-3 border-b ${divider}`}>
           <div className="relative">
             <Search size={15} className={`absolute left-3 top-1/2 -translate-y-1/2 ${muted}`} />
@@ -209,7 +200,6 @@ export default function SubstancePanel({ isDark }: SubstancePanelProps) {
           </p>
         </div>
 
-        {/* List */}
         <div className="flex-1 overflow-y-auto">
           {loading && (
             <div className="flex justify-center items-center h-32">
@@ -248,7 +238,6 @@ export default function SubstancePanel({ isDark }: SubstancePanelProps) {
           ))}
         </div>
 
-        {/* Pagination */}
         {totalPages > 1 && (
           <div className={`flex items-center justify-between px-4 py-2 border-t text-xs ${divider} ${muted}`}>
             <button
@@ -270,7 +259,6 @@ export default function SubstancePanel({ isDark }: SubstancePanelProps) {
         )}
       </div>
 
-      {/* RIGHT: Detail */}
       <div className="flex-1 overflow-y-auto p-6">
         {!selected && (
           <div className={`flex flex-col items-center justify-center h-full gap-3 ${muted}`}>
@@ -282,7 +270,6 @@ export default function SubstancePanel({ isDark }: SubstancePanelProps) {
 
         {selected && (
           <div className="flex flex-col gap-5 max-w-2xl">
-            {/* Header */}
             <div>
               <div className="flex items-start justify-between gap-3">
                 <h2 className={`text-xl font-bold ${isDark ? "text-slate-100" : "text-gray-900"}`}>
@@ -308,7 +295,6 @@ export default function SubstancePanel({ isDark }: SubstancePanelProps) {
               </div>
             ) : detail ? (
               <>
-                {/* Names */}
                 {detail.names?.length > 0 && (
                   <Section title="Names" icon={<BookOpen size={15} />} isDark={isDark}>
                     <div className="flex flex-wrap gap-2">
@@ -326,7 +312,6 @@ export default function SubstancePanel({ isDark }: SubstancePanelProps) {
                   </Section>
                 )}
 
-                {/* Identifiers */}
                 {detail.identifiers?.length > 0 && (
                   <Section title="Identifiers" icon={<Tag size={15} />} isDark={isDark}>
                     <div className="flex flex-wrap gap-2">
@@ -342,7 +327,6 @@ export default function SubstancePanel({ isDark }: SubstancePanelProps) {
                   </Section>
                 )}
 
-                {/* Wikidata */}
                 {detail.wikidata && (
                   <Section title="Wikidata Enrichment" icon={<ExternalLink size={15} />} isDark={isDark}>
                     <div className={`rounded-lg p-3 border ${isDark ? "border-slate-700 bg-slate-900/50" : "border-blue-100 bg-blue-50/50"}`}>
@@ -373,7 +357,6 @@ export default function SubstancePanel({ isDark }: SubstancePanelProps) {
               </>
             ) : null}
 
-            {/* Cross-Source Lookup */}
             <Section title="Cross-Source Lookup" icon={<Layers size={15} />} isDark={isDark}>
               {crossLoading ? (
                 <div className="flex items-center gap-2 py-2">
@@ -416,7 +399,6 @@ export default function SubstancePanel({ isDark }: SubstancePanelProps) {
   );
 }
 
-// ── Section wrapper ────────────────────────────────────────────────────────────
 function Section({
   title,
   icon,

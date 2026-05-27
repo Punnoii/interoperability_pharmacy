@@ -112,15 +112,9 @@ export default function NodeDetailPanel({
         )}
       </section>
 
-      <section className="grid grid-cols-2 gap-2">
-        <div className={`rounded border px-3 py-2 ${subtleBox}`}>
-          <div className={`text-[10px] uppercase font-semibold ${muted}`}>Connections</div>
-          <div className="text-lg font-bold">{node.degree}</div>
-        </div>
-        <div className={`rounded border px-3 py-2 ${subtleBox}`}>
-          <div className={`text-[10px] uppercase font-semibold ${muted}`}>Neighbors</div>
-          <div className="text-lg font-bold">{neighbors.length}</div>
-        </div>
+      <section className={`rounded border px-3 py-2 ${subtleBox}`}>
+        <div className={`text-[10px] uppercase font-semibold ${muted}`}>Connections</div>
+        <div className="text-lg font-bold">{node.degree}</div>
       </section>
 
       <section className="flex-1 overflow-hidden flex flex-col min-h-0">

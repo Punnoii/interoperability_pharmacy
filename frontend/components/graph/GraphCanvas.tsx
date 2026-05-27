@@ -66,7 +66,6 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
     },
   }));
 
-  // ── Main effect: build & wire the SVG once per data change ─────────────
   useEffect(() => {
     const svgEl = svgRef.current;
     const container = containerRef.current;
@@ -83,7 +82,6 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
     const labelColor = isDark ? "#94a3b8" : "#64748b";
     const dimOpacity = 0.35;
 
-    // Arrow markers for edges
     const defs = svg.append("defs");
     defs
       .append("marker")
