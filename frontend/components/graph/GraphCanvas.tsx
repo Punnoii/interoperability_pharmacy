@@ -125,9 +125,12 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
       .data(links, (d) => d.id)
       .join("text")
       .text((d) => d.label)
-      .attr("font-size", 9)
+      .attr("font-size", 8)
       .attr("font-weight", 500)
       .attr("fill", labelColor)
+      .attr("stroke", isDark ? "#0f172a" : "#ffffff")
+      .attr("stroke-width", 2.5)
+      .attr("paint-order", "stroke")
       .attr("text-anchor", "middle")
       .attr("dominant-baseline", "middle")
       .style("pointer-events", "none")
@@ -152,14 +155,21 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
       .attr("stroke", isDark ? "#0f172a" : "#ffffff")
       .attr("stroke-width", 2.5);
 
+    const labelFill = isDark ? "#e2e8f0" : "#1e293b";
+    const labelHalo = isDark ? "#0f172a" : "#ffffff";
+
     nodeSel
       .append("text")
-      .text((d) => truncate(d.label, 14))
+      .text((d) => truncate(d.label, 26))
       .attr("text-anchor", "middle")
-      .attr("dominant-baseline", "central")
-      .attr("font-size", (d) => Math.max(9, Math.min(12, nodeRadius(d) * 0.55)))
-      .attr("font-weight", 600)
-      .attr("fill", (d) => getTypeMeta(d.type, allTypes).textColor)
+      .attr("y", (d) => nodeRadius(d) + 14)
+      .attr("font-size", 11)
+      .attr("font-weight", 500)
+      .attr("fill", labelFill)
+      .attr("stroke", labelHalo)
+      .attr("stroke-width", 3)
+      .attr("paint-order", "stroke")
+      .style("opacity", 1)
       .style("pointer-events", "none")
       .style("user-select", "none");
 
@@ -283,7 +293,7 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
       .force("center", d3.forceCenter(width / 2, height / 2))
       .force(
         "collision",
-        d3.forceCollide<GraphNode>().radius((d) => nodeRadius(d) + 6)
+        d3.forceCollide<GraphNode>().radius((d) => nodeRadius(d) + 22)
       )
       .force("x", d3.forceX(width / 2).strength(0.04))
       .force("y", d3.forceY(height / 2).strength(0.04));
