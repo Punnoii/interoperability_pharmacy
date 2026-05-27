@@ -15,66 +15,8 @@ interface QueryPanelProps {
 }
 
 type ViewMode = "table" | "graph";
-type SourceKey = "all" | "a" | "b" | "c" | "d" | "e";
 
-const SOURCES: { key: SourceKey; label: string }[] = [
-  { key: "all", label: "All Sources" },
-  { key: "a", label: "Company A — PostgreSQL" },
-  { key: "b", label: "Company B — PostgreSQL" },
-  { key: "c", label: "Company C — MySQL" },
-  { key: "d", label: "Company D — MongoDB" },
-  { key: "e", label: "Company E — Postgres (CSV)" },
-];
-
-const SUBSTANCE_BASE_IRI = "http://example.com/idmp-demo/substance/";
-
-function applySourceFilter(query: string, source: SourceKey): string {
-  if (source === "all") return query;
-  if (!/\?substance\b/.test(query)) return query;
-
-  const prefix = `${SUBSTANCE_BASE_IRI}${source}/`;
-  const filterClause = `  FILTER(STRSTARTS(STR(?substance), "${prefix}"))\n`;
-
-  const whereMatch = query.match(/WHERE\s*\{/i);
-  if (!whereMatch || whereMatch.index === undefined) return query;
-
-  const openIdx = whereMatch.index + whereMatch[0].length;
-  let depth = 0;
-  let closeIdx = -1;
-  for (let i = openIdx; i < query.length; i++) {
-    const ch = query[i];
-    if (ch === "{") depth++;
-    else if (ch === "}") {
-      if (depth === 0) {
-        closeIdx = i;
-        break;
-      }
-      depth--;
-    }
-  }
-
-  if (closeIdx === -1) return query;
-  return query.slice(0, closeIdx) + filterClause + query.slice(closeIdx);
-}
-
-const DEFAULT_QUERY = `PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
-PREFIX idmp-dtp: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO21090-HarmonizedDatatypes/>
-PREFIX cmns-id: <https://www.omg.org/spec/Commons/Identifiers/>
-PREFIX cmns-txt: <https://www.omg.org/spec/Commons/TextDatatype/>
-PREFIX cmns-dsg: <https://www.omg.org/spec/Commons/Designators/>
-
-SELECT ?substance ?substanceType ?nameValue ?identifierValue
-WHERE {
-  ?substance a idmp-sub:Substance ;
-             idmp-sub:hasSubstanceType ?substanceType ;
-             idmp-sub:hasSubstanceName ?nameNode ;
-             cmns-id:isIdentifiedBy ?identifierNode .
-  ?nameNode idmp-sub:hasSubstanceNameValue ?nameValue .
-  ?identifierNode cmns-txt:hasTextValue ?identifierValue .
-}
-ORDER BY ?substance
-LIMIT 50
-`;
+const DEFAULT_QUERY = `SELECT * WHERE { ?s ?p ?o } LIMIT 100`;
 const PAGE_SIZE = 10;
 
 export default function QueryPanel({ isDark }: QueryPanelProps) {
