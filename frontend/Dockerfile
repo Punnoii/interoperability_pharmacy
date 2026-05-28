@@ -18,7 +18,7 @@ COPY prisma ./prisma
 RUN npx prisma generate
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-CMD ["npm", "run", "dev"]
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss && npm run dev"]
 
 # Stage 2: Builder
 FROM node:20-alpine AS builder
