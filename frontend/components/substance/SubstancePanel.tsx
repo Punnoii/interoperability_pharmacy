@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -102,11 +102,8 @@ export default function SubstancePanel({ isDark }: SubstancePanelProps) {
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 15;
 
+  const [hasSearched, setHasSearched] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    fetchSubstances("");
-  }, []);
 
   async function fetchSubstances(keyword: string) {
     setLoading(true);
@@ -131,7 +128,14 @@ export default function SubstancePanel({ isDark }: SubstancePanelProps) {
   const handleSearch = useCallback((val: string) => {
     setSearch(val);
     if (searchTimer.current) clearTimeout(searchTimer.current);
+    if (!val.trim()) {
+      setSubstances([]);
+      setFiltered([]);
+      setHasSearched(false);
+      return;
+    }
     searchTimer.current = setTimeout(() => {
+      setHasSearched(true);
       fetchSubstances(val.trim());
     }, 400);
   }, []);
@@ -217,7 +221,7 @@ export default function SubstancePanel({ isDark }: SubstancePanelProps) {
           )}
           {!loading && !error && pageItems.length === 0 && (
             <div className={`flex flex-col items-center justify-center h-32 text-sm ${muted}`}>
-              No substances found
+              {hasSearched ? "No substances found" : "Type to search substances"}
             </div>
           )}
           {!loading && !error && pageItems.map((s) => (
