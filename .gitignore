@@ -43,3 +43,5 @@ target/
 package.json
 package-lock.json
 readME
+
+.claude/
