@@ -1,5 +1,6 @@
 package com.example.idmp.service;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,15 +32,16 @@ public class WikidataEnrichmentService {
   public WikidataSearchResponse search(String query, int limit) {
     int safeLimit = Math.max(1,Math.min(limit,10));
 
-    String url = UriComponentsBuilder.fromUriString(apiUrl)
+    URI uri = UriComponentsBuilder.fromUriString(apiUrl)
         .queryParam("action", "wbsearchentities")
         .queryParam("format", "json")
         .queryParam("language", language)
         .queryParam("search", query)
         .queryParam("limit", safeLimit)
-        .toUriString();
+        .build()
+        .toUri();
     JsonNode root = restClient.get()
-        .uri(url)
+        .uri(uri)
         .header("User-Agent", "idmp-backend-demo/0.1 (educational project)")
         .header("Accept", "application/json")
         .retrieve()

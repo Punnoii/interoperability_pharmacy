@@ -9,6 +9,17 @@ COPY package.json package-lock.json ./
 # Install dependencies
 RUN npm ci
 
+# Stage: Dev
+FROM node:20-alpine AS dev
+WORKDIR /app
+RUN apk add --no-cache openssl
+COPY --from=deps /app/node_modules ./node_modules
+COPY prisma ./prisma
+RUN npx prisma generate
+COPY . .
+ENV NEXT_TELEMETRY_DISABLED=1
+CMD ["npm", "run", "dev"]
+
 # Stage 2: Builder
 FROM node:20-alpine AS builder
 

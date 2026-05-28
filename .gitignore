@@ -34,3 +34,12 @@ target/
 
 # Docker
 .dockerignore
+
+# Java/Maven binaries
+*.jar
+*.class
+
+# Root-level artifacts
+package.json
+package-lock.json
+readME

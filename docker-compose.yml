@@ -8,7 +8,7 @@ services:
     volumes:
       - ./infra/db/mongo:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "mongosh --eval \"db.adminCommand('ping')\""]
+      test: [ "CMD-SHELL", "mongosh --eval \"db.adminCommand('ping')\"" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -23,7 +23,7 @@ services:
     volumes:
       - ./infra/db/mysql:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -prootpass"]
+      test: [ "CMD-SHELL", "mysqladmin ping -h localhost -u root -prootpass" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -38,7 +38,7 @@ services:
     volumes:
       - ./infra/db/postgres:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -75,7 +75,7 @@ services:
       mongo:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/v1/info || exit 1"]
+      test: [ "CMD-SHELL", "curl -f http://localhost:8080/v1/info || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -102,7 +102,7 @@ services:
       trino:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep UP || exit 1"]
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep UP || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -111,28 +111,41 @@ services:
   backend:
     build:
       context: ./backend
+      target: dev
     ports:
       - "8082:8082"
     environment:
       ONTOP_ENDPOINT: http://ontop-trino:8080/sparql
+    volumes:
+      - ./backend:/app
+      - backend-m2:/root/.m2
     depends_on:
       ontop-trino:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8082/api/health || exit 1"]
+      test: [ "CMD-SHELL", "curl -f http://localhost:8082/api/health || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 180s
 
   frontend:
     build:
       context: ./frontend
+      target: dev
     ports:
       - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://backend:8082
+      - DATABASE_URL=postgresql://postgres:pgpass@postgres:5432/postgres?schema=public
+      - JWT_SECRET=rxvkg-dev-secret-change-in-production
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
     depends_on:
       backend:
         condition: service_healthy
 
+volumes:
+  backend-m2:

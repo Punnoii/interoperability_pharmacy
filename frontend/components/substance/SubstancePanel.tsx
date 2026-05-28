@@ -32,11 +32,17 @@ interface IdentifierEntry {
   value: string;
 }
 
-interface WikidataEnrichment {
+interface WikidataSearchItem {
   qid: string;
+  iri: string;
   label: string;
   description: string;
-  url: string;
+  source: string;
+}
+
+interface WikidataEnrichment {
+  wikidataAvailable: boolean;
+  items: WikidataSearchItem[];
 }
 
 interface SubstanceDetail {
@@ -327,30 +333,34 @@ export default function SubstancePanel({ isDark }: SubstancePanelProps) {
                   </Section>
                 )}
 
-                {detail.wikidata && (
+                {detail.wikidata?.wikidataAvailable && detail.wikidata.items?.length > 0 && (
                   <Section title="Wikidata Enrichment" icon={<ExternalLink size={15} />} isDark={isDark}>
-                    <div className={`rounded-lg p-3 border ${isDark ? "border-slate-700 bg-slate-900/50" : "border-blue-100 bg-blue-50/50"}`}>
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className={`text-sm font-semibold ${isDark ? "text-slate-100" : "text-gray-900"}`}>
-                            {detail.wikidata.label}
-                          </p>
-                          {detail.wikidata.description && (
-                            <p className={`text-xs mt-1 ${muted}`}>{detail.wikidata.description}</p>
-                          )}
-                          <span className={`text-xs font-mono mt-1 inline-block ${isDark ? "text-blue-400" : "text-blue-600"}`}>
-                            {detail.wikidata.qid}
-                          </span>
+                    <div className="flex flex-col gap-3">
+                      {detail.wikidata.items.map((item, idx) => (
+                        <div key={idx} className={`rounded-lg p-3 border ${isDark ? "border-slate-700 bg-slate-900/50" : "border-blue-100 bg-blue-50/50"}`}>
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <p className={`text-sm font-semibold ${isDark ? "text-slate-100" : "text-gray-900"}`}>
+                                {item.label}
+                              </p>
+                              {item.description && (
+                                <p className={`text-xs mt-1 ${muted}`}>{item.description}</p>
+                              )}
+                              <span className={`text-xs font-mono mt-1 inline-block ${isDark ? "text-blue-400" : "text-blue-600"}`}>
+                                {item.qid}
+                              </span>
+                            </div>
+                            <a
+                              href={item.iri}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="shrink-0 text-blue-500 hover:text-blue-600"
+                            >
+                              <ExternalLink size={14} />
+                            </a>
+                          </div>
                         </div>
-                        <a
-                          href={detail.wikidata.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="shrink-0 text-blue-500 hover:text-blue-600"
-                        >
-                          <ExternalLink size={14} />
-                        </a>
-                      </div>
+                      ))}
                     </div>
                   </Section>
                 )}

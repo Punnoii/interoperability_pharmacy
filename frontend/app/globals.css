@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source "../node_modules/@premieroctet/next-admin/dist";
 
 /* :root {
   --foreground-rgb: 0, 0, 0;
