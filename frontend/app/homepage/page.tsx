@@ -5,10 +5,11 @@ import Header from "@/components/layout/Header";
 import Sidebar from "@/components/layout/Sidebar";
 import QueryPanel from "@/components/query/QueryPanel";
 import SubstancePanel from "@/components/substance/SubstancePanel";
+import { useDarkMode } from "@/lib/useDarkMode";
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState("query");
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useDarkMode();
 
   return (
     <div

@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { Bookmark, Code2, Database, Loader2, Network, Play, Sparkles, Table2, Wand2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Bookmark, Code2, Database, FileCode2, Loader2, MoreVertical, Network, Pencil, Play, Sparkles, Table2, Trash2, Wand2, X } from "lucide-react";
 import ResultsGraph from "@/components/graph/ResultsGraph";
 import type { SparqlBinding } from "@/components/graph/graphUtils";
 
@@ -14,6 +14,14 @@ interface SparqlResults {
 
 interface QueryPanelProps {
   isDark: boolean;
+}
+
+interface BookmarkItem {
+  id: string;
+  name: string;
+  query: string;
+  source: string;
+  createdAt: string;
 }
 
 type ViewMode = "table" | "graph";
@@ -87,7 +95,167 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("table");
   const [page, setPage] = useState(1);
 
+  const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
+  const [bookmarksLoading, setBookmarksLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [editingBookmark, setEditingBookmark] = useState<BookmarkItem | null>(null);
+  const [editQueryText, setEditQueryText] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
+
   const resultsRef = useRef<HTMLDivElement>(null);
+
+  const fetchBookmarks = useCallback(async () => {
+    setBookmarksLoading(true);
+    try {
+      const res = await fetch("/api/bookmarks", { cache: "no-store" });
+      if (!res.ok) {
+        setBookmarks([]);
+        return;
+      }
+      const data = await res.json();
+      setBookmarks(Array.isArray(data.bookmarks) ? data.bookmarks : []);
+    } catch {
+      setBookmarks([]);
+    } finally {
+      setBookmarksLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchBookmarks();
+  }, [fetchBookmarks]);
+
+  async function handleSaveBookmark() {
+    if (!query.trim() || saving) return;
+    const defaultName = `Query ${new Date().toLocaleString()}`;
+    const name = window.prompt("Name this saved query:", defaultName)?.trim();
+    if (!name) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/bookmarks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, query, source }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(`Save failed: ${data?.error ?? res.statusText}`);
+        return;
+      }
+      const data = await res.json();
+      if (data.bookmark) {
+        setBookmarks((prev) => [data.bookmark, ...prev]);
+      } else {
+        fetchBookmarks();
+      }
+    } catch (e) {
+      alert(`Save failed: ${e instanceof Error ? e.message : "unknown error"}`);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleLoadBookmark(b: BookmarkItem) {
+    if (!confirm(`Do you wanna use ${b.name} to Query?`)) return;
+    setQueryMode("manual");
+    setQuery(b.query);
+    if (b.source === "all" || b.source === "a" || b.source === "b" || b.source === "c" || b.source === "d" || b.source === "e") {
+      setSource(b.source);
+    }
+  }
+
+  async function handleDeleteBookmark(id: string) {
+    setOpenMenuId(null);
+    if (!confirm("ลบ bookmark นี้?")) return;
+    try {
+      const res = await fetch(`/api/bookmarks/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(`Delete failed: ${data?.error ?? res.statusText}`);
+        return;
+      }
+      setBookmarks((prev) => prev.filter((b) => b.id !== id));
+    } catch (e) {
+      alert(`Delete failed: ${e instanceof Error ? e.message : "unknown error"}`);
+    }
+  }
+
+  async function handleRenameBookmark(b: BookmarkItem) {
+    setOpenMenuId(null);
+    const next = window.prompt("Rename saved query:", b.name)?.trim();
+    if (!next || next === b.name) return;
+    try {
+      const res = await fetch(`/api/bookmarks/${b.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: next }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(`Rename failed: ${data?.error ?? res.statusText}`);
+        return;
+      }
+      const data = await res.json();
+      const updated: BookmarkItem | undefined = data.bookmark;
+      if (updated) {
+        setBookmarks((prev) => prev.map((x) => (x.id === b.id ? updated : x)));
+      }
+    } catch (e) {
+      alert(`Rename failed: ${e instanceof Error ? e.message : "unknown error"}`);
+    }
+  }
+
+  function handleEditBookmarkOpen(b: BookmarkItem) {
+    setOpenMenuId(null);
+    setEditingBookmark(b);
+    setEditQueryText(b.query);
+  }
+
+  function handleEditBookmarkCancel() {
+    if (editSaving) return;
+    setEditingBookmark(null);
+    setEditQueryText("");
+  }
+
+  async function handleEditBookmarkSave() {
+    if (!editingBookmark) return;
+    const next = editQueryText.trim();
+    if (!next) {
+      alert("Query ห้ามว่าง");
+      return;
+    }
+    if (next === editingBookmark.query) {
+      // no change
+      setEditingBookmark(null);
+      setEditQueryText("");
+      return;
+    }
+    setEditSaving(true);
+    try {
+      const res = await fetch(`/api/bookmarks/${editingBookmark.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: next }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(`Update failed: ${data?.error ?? res.statusText}`);
+        return;
+      }
+      const data = await res.json();
+      const updated: BookmarkItem | undefined = data.bookmark;
+      if (updated) {
+        setBookmarks((prev) => prev.map((x) => (x.id === updated.id ? updated : x)));
+      }
+      setEditingBookmark(null);
+      setEditQueryText("");
+    } catch (e) {
+      alert(`Update failed: ${e instanceof Error ? e.message : "unknown error"}`);
+    } finally {
+      setEditSaving(false);
+    }
+  }
 
   async function handleRun() {
     if (!query.trim()) return;
@@ -145,6 +313,14 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
         onModeChange={setQueryMode}
         sourceLabel={sourceLabel}
         resultCount={results ? bindings.length : null}
+        bookmarks={bookmarks}
+        bookmarksLoading={bookmarksLoading}
+        openMenuId={openMenuId}
+        onOpenMenu={setOpenMenuId}
+        onLoadBookmark={handleLoadBookmark}
+        onRenameBookmark={handleRenameBookmark}
+        onEditBookmark={handleEditBookmarkOpen}
+        onDeleteBookmark={handleDeleteBookmark}
       />
 
       <section className="flex-1 overflow-auto">
@@ -154,6 +330,82 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
           <ManualQueryView isDark={isDark} />
         )}
       </section>
+
+      {/* Edit Query modal — overlays everything, edits the saved query's content. */}
+      {editingBookmark && (
+        <div
+          className="fixed inset-0 z-[9998] flex items-center justify-center p-4 bg-black/60"
+          onClick={handleEditBookmarkCancel}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className={`w-full max-w-2xl rounded-lg border shadow-2xl ${
+              isDark ? "bg-slate-900 border-slate-700" : "bg-white border-gray-200"
+            }`}
+          >
+            <div
+              className={`flex items-center justify-between px-4 py-3 border-b ${
+                isDark ? "border-slate-700" : "border-gray-200"
+              }`}
+            >
+              <h3 className={`text-sm font-bold truncate ${isDark ? "text-slate-100" : "text-gray-900"}`}>
+                Edit Query — {editingBookmark.name}
+              </h3>
+              <button
+                onClick={handleEditBookmarkCancel}
+                disabled={editSaving}
+                aria-label="Close"
+                className={`p-1 rounded shrink-0 ${
+                  isDark ? "text-slate-400 hover:bg-slate-800" : "text-gray-500 hover:bg-gray-100"
+                } disabled:opacity-60`}
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="p-4">
+              <textarea
+                value={editQueryText}
+                onChange={(e) => setEditQueryText(e.target.value)}
+                rows={14}
+                spellCheck={false}
+                className={`w-full px-3 py-2 rounded border text-xs font-mono leading-relaxed focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                  isDark
+                    ? "bg-slate-950 border-slate-700 text-slate-100"
+                    : "bg-white border-gray-300 text-gray-900"
+                }`}
+              />
+              <p className={`text-[10px] mt-2 ${isDark ? "text-slate-500" : "text-gray-500"}`}>
+                แก้ไข SPARQL ของ bookmark นี้ จากนั้นกด Save เพื่อบันทึก (ไม่กระทบ editor หลัก)
+              </p>
+            </div>
+            <div
+              className={`px-4 py-3 border-t flex justify-end gap-2 ${
+                isDark ? "border-slate-700" : "border-gray-200"
+              }`}
+            >
+              <button
+                onClick={handleEditBookmarkCancel}
+                disabled={editSaving}
+                className={`px-3 py-1.5 rounded text-xs font-medium border disabled:opacity-60 ${
+                  isDark
+                    ? "border-slate-700 text-slate-300 hover:bg-slate-800"
+                    : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEditBookmarkSave}
+                disabled={editSaving || !editQueryText.trim()}
+                className="flex items-center gap-2 px-3 py-1.5 rounded text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {editSaving ? <Loader2 size={12} className="animate-spin" /> : null}
+                <span>{editSaving ? "Saving..." : "Save"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -198,10 +450,8 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
             <span>{isLoading ? "Running..." : "Run"}</span>
           </button>
           <button
-            onClick={() =>
-              alert("ระบบ Save ยังไม่เสร็จเว้ยไอ้พวกโง่\n\nเปิดหาพ่อมึงหรอ")
-            }
-            disabled={isLoading}
+            onClick={handleSaveBookmark}
+            disabled={isLoading || saving || !query.trim()}
             title="Save this query to your bookmarks"
             className={`flex items-center justify-center gap-2 px-4 py-2 rounded text-sm font-medium border transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
               isDark
@@ -209,8 +459,8 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
                 : "border-gray-300 text-gray-700 hover:bg-gray-100"
             }`}
           >
-            <Bookmark size={14} />
-            <span>Save</span>
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Bookmark size={14} />}
+            <span>{saving ? "Saving..." : "Save"}</span>
           </button>
         </div>
       </div>
@@ -411,12 +661,28 @@ function DatabaseInfoPanel({
   onModeChange,
   sourceLabel,
   resultCount,
+  bookmarks,
+  bookmarksLoading,
+  openMenuId,
+  onOpenMenu,
+  onLoadBookmark,
+  onRenameBookmark,
+  onEditBookmark,
+  onDeleteBookmark,
 }: {
   isDark: boolean;
   mode: QueryMode;
   onModeChange: (m: QueryMode) => void;
   sourceLabel: string;
   resultCount: number | null;
+  bookmarks: BookmarkItem[];
+  bookmarksLoading: boolean;
+  openMenuId: string | null;
+  onOpenMenu: (id: string | null) => void;
+  onLoadBookmark: (b: BookmarkItem) => void;
+  onRenameBookmark: (b: BookmarkItem) => void;
+  onEditBookmark: (b: BookmarkItem) => void;
+  onDeleteBookmark: (id: string) => void;
 }) {
   const bg = isDark ? "bg-slate-900 border-slate-800" : "bg-white border-gray-200";
   const heading = isDark ? "text-slate-100" : "text-gray-900";
@@ -430,6 +696,37 @@ function DatabaseInfoPanel({
   const statBox = isDark
     ? "rounded border border-slate-800 bg-slate-950 p-2"
     : "rounded border border-gray-200 bg-gray-50 p-2";
+
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
+
+  useEffect(() => {
+    if (!openMenuId) return;
+    function close() {
+      onOpenMenu(null);
+      setMenuPos(null);
+    }
+    function onDocClick(e: MouseEvent) {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      if (target.closest("[data-bookmark-popup]")) return;
+      if (target.closest(`[data-bookmark-kebab="${openMenuId}"]`)) return;
+      close();
+    }
+    function onScrollOrResize() {
+      close();
+    }
+    document.addEventListener("mousedown", onDocClick);
+    window.addEventListener("scroll", onScrollOrResize, true);
+    window.addEventListener("resize", onScrollOrResize);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      window.removeEventListener("scroll", onScrollOrResize, true);
+      window.removeEventListener("resize", onScrollOrResize);
+    };
+  }, [openMenuId, onOpenMenu]);
+
+  const MENU_WIDTH = 168;
+  const openBookmark = openMenuId ? bookmarks.find((b) => b.id === openMenuId) : null;
 
   return (
     <aside className={`w-72 shrink-0 border-r overflow-y-auto ${bg}`}>
@@ -470,7 +767,131 @@ function DatabaseInfoPanel({
             </div>
           </button>
         </div>
+
+        {/* Saved bookmarks — bottom-left of QueryPanel */}
+        <div className="flex flex-col gap-1 mt-auto pt-2">
+          <div className="flex items-center justify-between">
+            <span className={sectionLabel}>Saved Queries</span>
+            <span className={`text-[10px] tabular-nums ${muted}`}>
+              {bookmarksLoading ? "…" : bookmarks.length}
+            </span>
+          </div>
+          {!bookmarksLoading && bookmarks.length === 0 && (
+            <p className={`text-[11px] ${muted} italic px-1 py-2`}>
+              ยังไม่มี bookmark — กดปุ่ม Save ที่ editor เพื่อบันทึก query แรก
+            </p>
+          )}
+          <ul className="flex flex-col gap-1 max-h-72 overflow-y-auto pr-1">
+            {bookmarks.map((b) => {
+              const isMenuOpen = openMenuId === b.id;
+              return (
+                <li key={b.id}>
+                  <div
+                    className={`group rounded border px-2 py-1.5 ${
+                      isDark
+                        ? "border-slate-700 bg-slate-950 hover:bg-slate-800"
+                        : "border-gray-200 bg-gray-50 hover:bg-gray-100"
+                    }`}
+                  >
+                    <div className="flex items-start gap-1.5">
+                      <button
+                        onClick={() => onLoadBookmark(b)}
+                        className="flex-1 min-w-0 text-left"
+                      >
+                        <div className={`text-xs font-semibold truncate ${heading}`}>
+                          {b.name}
+                        </div>
+                        <div className={`text-[9px] mt-0.5 ${muted}`}>
+                          {new Date(b.createdAt).toLocaleDateString()}
+                        </div>
+                      </button>
+                      <button
+                        data-bookmark-kebab={b.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isMenuOpen) {
+                            onOpenMenu(null);
+                            setMenuPos(null);
+                            return;
+                          }
+                          const rect = (
+                            e.currentTarget as HTMLElement
+                          ).getBoundingClientRect();
+                          const top = rect.bottom + 4;
+                          const left = Math.max(
+                            8,
+                            Math.min(
+                              window.innerWidth - MENU_WIDTH - 8,
+                              rect.right - MENU_WIDTH,
+                            ),
+                          );
+                          setMenuPos({ top, left });
+                          onOpenMenu(b.id);
+                        }}
+                        aria-haspopup="menu"
+                        aria-expanded={isMenuOpen}
+                        aria-label="Bookmark actions"
+                        className={`p-1 rounded shrink-0 transition-opacity ${
+                          isMenuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                        } ${
+                          isDark
+                            ? "text-slate-300 hover:bg-slate-700"
+                            : "text-gray-600 hover:bg-gray-200"
+                        }`}
+                      >
+                        <MoreVertical size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       </div>
+
+      {/* Floating kebab dropdown — position: fixed, anchored to clicked kebab. */}
+      {openBookmark && menuPos && (
+        <div
+          role="menu"
+          data-bookmark-popup
+          style={{
+            position: "fixed",
+            top: menuPos.top,
+            left: menuPos.left,
+            width: MENU_WIDTH,
+            zIndex: 9999,
+          }}
+          className={`rounded-md border shadow-lg py-1 ${
+            isDark ? "bg-slate-900 border-slate-700" : "bg-white border-gray-200"
+          }`}
+        >
+          <MenuItem
+            isDark={isDark}
+            icon={<Pencil size={12} />}
+            label="Rename"
+            onClick={() => onRenameBookmark(openBookmark)}
+          />
+          <MenuItem
+            isDark={isDark}
+            icon={<FileCode2 size={12} />}
+            label="Edit Query"
+            onClick={() => onEditBookmark(openBookmark)}
+          />
+          <div
+            className={`my-1 border-t ${
+              isDark ? "border-slate-700" : "border-gray-200"
+            }`}
+          />
+          <MenuItem
+            isDark={isDark}
+            icon={<Trash2 size={12} />}
+            label="Delete"
+            danger
+            onClick={() => onDeleteBookmark(openBookmark.id)}
+          />
+        </div>
+      )}
     </aside>
   );
 }
@@ -537,6 +958,35 @@ function NLPPlaceholder({ isDark }: { isDark: boolean }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function MenuItem({
+  isDark,
+  icon,
+  label,
+  danger,
+  onClick,
+}: {
+  isDark: boolean;
+  icon: React.ReactNode;
+  label: string;
+  danger?: boolean;
+  onClick: () => void;
+}) {
+  const base = "w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left";
+  const cls = danger
+    ? isDark
+      ? "text-red-400 hover:bg-red-900/30"
+      : "text-red-600 hover:bg-red-50"
+    : isDark
+      ? "text-slate-200 hover:bg-slate-800"
+      : "text-gray-700 hover:bg-gray-100";
+  return (
+    <button role="menuitem" onClick={onClick} className={`${base} ${cls}`}>
+      <span className="shrink-0">{icon}</span>
+      <span>{label}</span>
+    </button>
   );
 }
 

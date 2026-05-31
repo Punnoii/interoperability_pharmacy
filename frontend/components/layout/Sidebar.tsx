@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, Settings, FlaskConical } from "lucide-react";
+import { Clock, Settings, FlaskConical, HelpCircle } from "lucide-react";
 
 interface SidebarProps {
   activeTab: string;
@@ -48,15 +48,7 @@ const navItems = [
 ];
 
 const bottomItems = [
-  {
-    key: "bookmark",
-    label: "Bookmarks",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-      </svg>
-    ),
-  },
+  { key: "help", label: "Help", icon: <HelpCircle size={18} /> },
   { key: "history", label: "History", icon: <Clock size={18} /> },
   { key: "settings", label: "Settings", icon: <Settings size={18} /> },
 ];
