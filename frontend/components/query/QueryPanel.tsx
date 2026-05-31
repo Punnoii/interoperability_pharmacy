@@ -1,9 +1,11 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Loader2, Network, Play, Table2 } from "lucide-react";
+import { Bookmark, Code2, Database, Loader2, Network, Play, Sparkles, Table2, Wand2 } from "lucide-react";
 import ResultsGraph from "@/components/graph/ResultsGraph";
 import type { SparqlBinding } from "@/components/graph/graphUtils";
+
+type QueryMode = "nlp" | "manual";
 
 interface SparqlResults {
   head: { vars: string[] };
@@ -76,6 +78,7 @@ LIMIT 50
 const PAGE_SIZE = 10;
 
 export default function QueryPanel({ isDark }: QueryPanelProps) {
+  const [queryMode, setQueryMode] = useState<QueryMode>("manual");
   const [query, setQuery] = useState(DEFAULT_QUERY);
   const [source, setSource] = useState<SourceKey>("all");
   const [isLoading, setIsLoading] = useState(false);
@@ -132,10 +135,32 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
     ? "bg-slate-900 border-slate-700 text-slate-100"
     : "bg-white border-gray-300 text-gray-900";
 
+  const sourceLabel = SOURCES.find((s) => s.key === source)?.label ?? "All Sources";
+
   return (
+    <div className="flex h-full overflow-hidden">
+      <DatabaseInfoPanel
+        isDark={isDark}
+        mode={queryMode}
+        onModeChange={setQueryMode}
+        sourceLabel={sourceLabel}
+        resultCount={results ? bindings.length : null}
+      />
+
+      <section className="flex-1 overflow-auto">
+        {queryMode === "nlp" ? (
+          <NLPPlaceholder isDark={isDark} />
+        ) : (
+          <ManualQueryView isDark={isDark} />
+        )}
+      </section>
+    </div>
+  );
+
+  function ManualQueryView({ isDark }: { isDark: boolean }) {
+    return (
     <div className="flex flex-col h-full gap-4 p-6 overflow-auto">
-      {/* Query editor */}
-      <div className={`flex gap-3 items-start rounded-lg border p-3 ${card}`}>
+      <div className={`flex gap-3 items-stretch rounded-lg border p-3 ${card}`}>
         <textarea
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -145,11 +170,11 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
               handleRun();
             }
           }}
-          rows={3}
+          rows={6}
           placeholder="Enter your SPARQL query..."
-          className={`flex-1 resize-y min-h-[52px] px-3 py-2 rounded border text-sm font-mono leading-relaxed focus:outline-none focus:ring-1 focus:ring-blue-500 ${inputCls}`}
+          className={`flex-1 resize-y min-h-[140px] px-3 rounded border text-sm font-mono leading-relaxed focus:outline-none focus:ring-1 focus:ring-blue-500 ${inputCls}`}
         />
-        <div className="flex flex-col gap-2 self-start">
+        <div className="flex flex-col gap-2">
           <select
             value={source}
             onChange={(e) => setSource(e.target.value as SourceKey)}
@@ -171,6 +196,21 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
           >
             {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
             <span>{isLoading ? "Running..." : "Run"}</span>
+          </button>
+          <button
+            onClick={() =>
+              alert("ระบบ Save ยังไม่เสร็จเว้ยไอ้พวกโง่\n\nเปิดหาพ่อมึงหรอ")
+            }
+            disabled={isLoading}
+            title="Save this query to your bookmarks"
+            className={`flex items-center justify-center gap-2 px-4 py-2 rounded text-sm font-medium border transition-colors disabled:opacity-60 disabled:cursor-not-allowed ${
+              isDark
+                ? "border-slate-700 text-slate-300 hover:bg-slate-700"
+                : "border-gray-300 text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            <Bookmark size={14} />
+            <span>Save</span>
           </button>
         </div>
       </div>
@@ -359,6 +399,142 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
             )}
           </div>
         )}
+      </div>
+    </div>
+  );
+  }
+}
+
+function DatabaseInfoPanel({
+  isDark,
+  mode,
+  onModeChange,
+  sourceLabel,
+  resultCount,
+}: {
+  isDark: boolean;
+  mode: QueryMode;
+  onModeChange: (m: QueryMode) => void;
+  sourceLabel: string;
+  resultCount: number | null;
+}) {
+  const bg = isDark ? "bg-slate-900 border-slate-800" : "bg-white border-gray-200";
+  const heading = isDark ? "text-slate-100" : "text-gray-900";
+  const muted = isDark ? "text-slate-400" : "text-gray-500";
+  const subtle = isDark ? "text-slate-300" : "text-gray-700";
+  const tabActive = "bg-blue-600 text-white border-blue-600";
+  const tabInactive = isDark
+    ? "border-slate-700 text-slate-300 hover:bg-slate-800"
+    : "border-gray-300 text-gray-600 hover:bg-gray-100";
+  const sectionLabel = `text-[10px] uppercase tracking-wider font-semibold ${muted}`;
+  const statBox = isDark
+    ? "rounded border border-slate-800 bg-slate-950 p-2"
+    : "rounded border border-gray-200 bg-gray-50 p-2";
+
+  return (
+    <aside className={`w-72 shrink-0 border-r overflow-y-auto ${bg}`}>
+      <div className="flex flex-col gap-4 p-4">
+        <div className="flex items-center gap-2">
+          <Database size={16} className="text-blue-600" />
+          <h2 className={`text-sm font-bold ${heading}`}>Database Information</h2>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <span className={sectionLabel}>Query Mode</span>
+          <button
+            onClick={() => onModeChange("nlp")}
+            className={`flex items-start gap-2 px-3 py-2 rounded border text-left text-xs transition-colors ${
+              mode === "nlp" ? tabActive : tabInactive
+            }`}
+          >
+            <Sparkles size={14} className="mt-0.5 shrink-0" />
+            <div className="flex flex-col gap-0.5">
+              <span className="font-semibold">NLP to Query</span>
+              <span className={mode === "nlp" ? "text-blue-100" : muted}>
+                Ask in natural language
+              </span>
+            </div>
+          </button>
+          <button
+            onClick={() => onModeChange("manual")}
+            className={`flex items-start gap-2 px-3 py-2 rounded border text-left text-xs transition-colors ${
+              mode === "manual" ? tabActive : tabInactive
+            }`}
+          >
+            <Code2 size={14} className="mt-0.5 shrink-0" />
+            <div className="flex flex-col gap-0.5">
+              <span className="font-semibold">Manual SPARQL</span>
+              <span className={mode === "manual" ? "text-blue-100" : muted}>
+                Write SPARQL
+              </span>
+            </div>
+          </button>
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function NLPPlaceholder({ isDark }: { isDark: boolean }) {
+  const card = isDark
+    ? "bg-slate-800 border-slate-700"
+    : "bg-white border-gray-200";
+  const muted = isDark ? "text-slate-400" : "text-gray-500";
+  const subtle = isDark ? "text-slate-300" : "text-gray-700";
+  const heading = isDark ? "text-slate-100" : "text-gray-900";
+  const inputCls = isDark
+    ? "bg-slate-900 border-slate-700 text-slate-100 placeholder:text-slate-500"
+    : "bg-white border-gray-300 text-gray-900 placeholder:text-gray-400";
+  const banner = isDark
+    ? "bg-amber-900/30 border-amber-800 text-amber-200"
+    : "bg-amber-50 border-amber-200 text-amber-900";
+  const ghost = isDark
+    ? "bg-slate-700 text-slate-400 border-slate-600 cursor-not-allowed"
+    : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed";
+  const readOnlyBg = isDark
+    ? "bg-slate-950 border-slate-800 text-slate-500"
+    : "bg-gray-50 border-gray-200 text-gray-400";
+
+  return (
+    <div className="flex flex-col h-full gap-4 p-6 overflow-auto">
+      <div className="flex items-center gap-2">
+        <Sparkles size={18} className="text-blue-600" />
+        <h2 className={`text-base font-bold ${heading}`}>Ask in Natural Language</h2>
+      </div>
+      <div className={`flex flex-col gap-2 rounded-lg border p-3 ${card}`}>
+        <label className={`text-xs font-semibold ${subtle}`}>Your question</label>
+        <textarea
+          rows={3}
+          placeholder="e.g. ยา Aspirin มาจากบริษัทไหนและมีรหัส UNII คืออะไร?"
+          className={`resize-y min-h-[80px] px-3 py-2 rounded border text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-blue-500 ${inputCls}`}
+        />
+        <div className="flex justify-end">
+          <button
+            disabled
+            className={`flex items-center gap-2 px-4 py-2 rounded text-sm font-medium border ${ghost}`}
+          >
+            <Wand2 size={14} />
+            Generate SPARQL
+          </button>
+        </div>
+      </div>
+
+      <div className={`flex flex-col gap-2 rounded-lg border p-3 ${card}`}>
+        <label className={`text-xs font-semibold ${subtle}`}>Generated SPARQL</label>
+        <pre
+          className={`min-h-[120px] px-3 py-2 rounded border text-xs font-mono leading-relaxed ${readOnlyBg}`}
+        >
+          {`# Generated SPARQL will appear here.`}
+        </pre>
+        <div className="flex justify-end">
+          <button
+            disabled
+            className={`flex items-center gap-2 px-4 py-2 rounded text-sm font-medium border ${ghost}`}
+          >
+            <Play size={14} />
+            Run
+          </button>
+        </div>
       </div>
     </div>
   );
