@@ -45,3 +45,5 @@ package-lock.json
 readME
 
 .claude/
+*.ipynb
+.ipynb_checkpoints/

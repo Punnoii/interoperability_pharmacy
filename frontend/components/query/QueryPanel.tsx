@@ -103,6 +103,11 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
   const [editQueryText, setEditQueryText] = useState("");
   const [editSaving, setEditSaving] = useState(false);
 
+  const [nlpInput, setNlpInput] = useState("");
+  const [nlpSparql, setNlpSparql] = useState("");
+  const [nlpIsGenerating, setNlpIsGenerating] = useState(false);
+  const [nlpGenError, setNlpGenError] = useState<string | null>(null);
+
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const fetchBookmarks = useCallback(async () => {
@@ -257,15 +262,43 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
     }
   }
 
-  async function handleRun() {
-    if (!query.trim()) return;
+  async function handleGenerate() {
+    if (!nlpInput.trim() || nlpIsGenerating) return;
+    setNlpIsGenerating(true);
+    setNlpGenError(null);
+    setNlpSparql("");
+    setResults(null);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/nlp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: nlpInput }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as { error?: string })?.error ?? `HTTP ${res.status}`);
+      }
+      const data = await res.json() as { sparql?: string };
+      setNlpSparql(data.sparql ?? "");
+    } catch (e) {
+      setNlpGenError(e instanceof Error ? e.message : "Unknown error");
+    } finally {
+      setNlpIsGenerating(false);
+    }
+  }
+
+  async function handleRun(overrideQuery?: string) {
+    const sparqlToRun = overrideQuery ?? query;
+    if (!sparqlToRun.trim()) return;
     setIsLoading(true);
     setError(null);
     setResults(null);
     setPage(1);
     setViewMode("table");
 
-    const finalQuery = applySourceFilter(query, source);
+    const finalQuery = applySourceFilter(sparqlToRun, source);
 
     try {
       const res = await fetch("/api/sparql", {
@@ -325,7 +358,7 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
 
       <section className="flex-1 overflow-auto">
         {queryMode === "nlp" ? (
-          <NLPPlaceholder isDark={isDark} />
+          <NLPQueryView isDark={isDark} />
         ) : (
           <ManualQueryView isDark={isDark} />
         )}
@@ -409,6 +442,168 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
     </div>
   );
 
+  function NLPQueryView({ isDark }: { isDark: boolean }) {
+    const card = isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-200";
+    const muted = isDark ? "text-slate-400" : "text-gray-500";
+    const subtle = isDark ? "text-slate-300" : "text-gray-700";
+    const heading = isDark ? "text-slate-100" : "text-gray-900";
+    const inputCls = isDark
+      ? "bg-slate-900 border-slate-700 text-slate-100 placeholder:text-slate-500"
+      : "bg-white border-gray-300 text-gray-900 placeholder:text-gray-400";
+    const readOnlyBg = isDark
+      ? "bg-slate-950 border-slate-800 text-slate-400"
+      : "bg-gray-50 border-gray-200 text-gray-600";
+
+    return (
+      <div className="flex flex-col h-full gap-4 p-6 overflow-auto">
+        <div className="flex items-center gap-2">
+          <Sparkles size={18} className="text-blue-600" />
+          <h2 className={`text-base font-bold ${heading}`}>Ask in Natural Language</h2>
+          <span className={`ml-auto text-[10px] px-2 py-0.5 rounded-full border ${isDark ? "border-slate-700 text-slate-400" : "border-gray-300 text-gray-500"}`}>
+            chain-of-thought · Gemini
+          </span>
+        </div>
+
+        {/* Input */}
+        <div className={`flex flex-col gap-2 rounded-lg border p-3 ${card}`}>
+          <label className={`text-xs font-semibold ${subtle}`}>Your question</label>
+          <textarea
+            rows={3}
+            value={nlpInput}
+            onChange={(e) => setNlpInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                handleGenerate();
+              }
+            }}
+            placeholder="e.g. ยา Aspirin มาจากบริษัทไหนและมีรหัส UNII คืออะไร? / List all substances with Amoxicillin"
+            className={`resize-y min-h-[80px] px-3 py-2 rounded border text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-blue-500 ${inputCls}`}
+          />
+          <div className="flex items-center justify-between gap-2">
+            <p className={`text-[10px] ${muted}`}>Ctrl+Enter to generate</p>
+            <button
+              onClick={handleGenerate}
+              disabled={nlpIsGenerating || !nlpInput.trim()}
+              className="flex items-center gap-2 px-4 py-2 rounded text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {nlpIsGenerating ? <Loader2 size={14} className="animate-spin" /> : <Wand2 size={14} />}
+              <span>{nlpIsGenerating ? "Generating..." : "Generate SPARQL"}</span>
+            </button>
+          </div>
+          {nlpGenError && (
+            <p className="text-xs text-red-500 mt-1">{nlpGenError}</p>
+          )}
+        </div>
+
+        {/* Generated SPARQL */}
+        <div className={`flex flex-col gap-2 rounded-lg border p-3 ${card}`}>
+          <label className={`text-xs font-semibold ${subtle}`}>Generated SPARQL</label>
+          <pre className={`min-h-[160px] max-h-72 overflow-auto px-3 py-2 rounded border text-xs font-mono leading-relaxed whitespace-pre-wrap break-words ${readOnlyBg}`}>
+            {nlpSparql || "# Generated SPARQL will appear here."}
+          </pre>
+          <div className="flex items-center justify-between gap-2">
+            <button
+              onClick={() => {
+                if (!nlpSparql.trim()) return;
+                setQuery(nlpSparql);
+                setQueryMode("manual");
+              }}
+              disabled={!nlpSparql.trim()}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium border disabled:opacity-40 disabled:cursor-not-allowed ${
+                isDark
+                  ? "border-slate-700 text-slate-300 hover:bg-slate-700"
+                  : "border-gray-300 text-gray-700 hover:bg-gray-100"
+              }`}
+            >
+              <FileCode2 size={12} />
+              Edit in SPARQL Editor
+            </button>
+            <button
+              onClick={() => handleRun(nlpSparql)}
+              disabled={isLoading || !nlpSparql.trim()}
+              className="flex items-center gap-2 px-4 py-2 rounded text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
+              <span>{isLoading ? "Running..." : "Run"}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Results */}
+        <div ref={resultsRef} className={`flex-1 rounded-lg border overflow-hidden ${card}`}>
+          {error && (
+            <div className="flex flex-col items-center justify-center h-32 gap-2 px-6 text-red-500">
+              <p className="text-sm font-semibold">Query failed</p>
+              <p className={`text-xs text-center max-w-md ${muted}`}>{error}</p>
+            </div>
+          )}
+          {isLoading && (
+            <div className="flex flex-col items-center justify-center h-32 gap-2 text-blue-500">
+              <Loader2 size={28} className="animate-spin" />
+              <p className={`text-xs ${muted}`}>Executing query...</p>
+            </div>
+          )}
+          {!isLoading && !error && !results && (
+            <div className={`flex flex-col items-center justify-center h-32 gap-2 ${muted}`}>
+              <p className="text-sm">Generate and run a query to see results here</p>
+            </div>
+          )}
+          {!isLoading && !error && results && bindings.length === 0 && (
+            <div className={`flex flex-col items-center justify-center h-32 gap-2 ${muted}`}>
+              <p className="text-sm">Query returned 0 rows</p>
+            </div>
+          )}
+          {!isLoading && !error && results && bindings.length > 0 && (
+            <div className="flex flex-col h-full">
+              <div className={`flex items-center px-4 py-2 border-b ${isDark ? "border-slate-700 bg-slate-900/50" : "border-gray-200 bg-gray-50"}`}>
+                <span className={`text-xs font-semibold ${subtle}`}>
+                  {bindings.length.toLocaleString()} result{bindings.length !== 1 ? "s" : ""}
+                </span>
+              </div>
+              <div className="overflow-auto max-h-80">
+                <table className="w-full text-sm border-collapse">
+                  <thead className={`text-xs uppercase ${isDark ? "bg-slate-900 text-slate-400" : "bg-gray-50 text-gray-600"}`}>
+                    <tr>
+                      <th className={`px-3 py-2 text-left font-semibold w-10 border-b ${isDark ? "border-slate-700" : "border-gray-200"}`}>#</th>
+                      {vars.map((v) => (
+                        <th key={v} className={`px-3 py-2 text-left font-semibold border-b ${isDark ? "border-slate-700" : "border-gray-200"}`}>{v}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {bindings.slice(0, 30).map((binding, idx) => (
+                      <tr key={idx} className={isDark ? "border-b border-slate-800 hover:bg-slate-700/40" : "border-b border-gray-100 hover:bg-gray-50"}>
+                        <td className={`px-3 py-2 text-xs font-mono ${muted}`}>{idx + 1}</td>
+                        {vars.map((v) => {
+                          const cell = binding[v];
+                          const isUri = cell?.type === "uri";
+                          return (
+                            <td key={v} className="px-3 py-2 max-w-xs">
+                              {cell ? (
+                                isUri ? (
+                                  <a href={cell.value} target="_blank" rel="noopener noreferrer" className="truncate block text-xs font-mono text-blue-600 hover:underline" title={cell.value}>{cell.value}</a>
+                                ) : (
+                                  <span className={`text-xs truncate block ${subtle}`} title={cell.value}>{cell.value}</span>
+                                )
+                              ) : (
+                                <span className={`text-xs ${muted}`}>—</span>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   function ManualQueryView({ isDark }: { isDark: boolean }) {
     return (
     <div className="flex flex-col h-full gap-4 p-6 overflow-auto">
@@ -442,7 +637,7 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
             ))}
           </select>
           <button
-            onClick={handleRun}
+            onClick={() => handleRun()}
             disabled={isLoading}
             className="flex items-center justify-center gap-2 px-4 py-2 rounded text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
           >
@@ -893,71 +1088,6 @@ function DatabaseInfoPanel({
         </div>
       )}
     </aside>
-  );
-}
-
-function NLPPlaceholder({ isDark }: { isDark: boolean }) {
-  const card = isDark
-    ? "bg-slate-800 border-slate-700"
-    : "bg-white border-gray-200";
-  const muted = isDark ? "text-slate-400" : "text-gray-500";
-  const subtle = isDark ? "text-slate-300" : "text-gray-700";
-  const heading = isDark ? "text-slate-100" : "text-gray-900";
-  const inputCls = isDark
-    ? "bg-slate-900 border-slate-700 text-slate-100 placeholder:text-slate-500"
-    : "bg-white border-gray-300 text-gray-900 placeholder:text-gray-400";
-  const banner = isDark
-    ? "bg-amber-900/30 border-amber-800 text-amber-200"
-    : "bg-amber-50 border-amber-200 text-amber-900";
-  const ghost = isDark
-    ? "bg-slate-700 text-slate-400 border-slate-600 cursor-not-allowed"
-    : "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed";
-  const readOnlyBg = isDark
-    ? "bg-slate-950 border-slate-800 text-slate-500"
-    : "bg-gray-50 border-gray-200 text-gray-400";
-
-  return (
-    <div className="flex flex-col h-full gap-4 p-6 overflow-auto">
-      <div className="flex items-center gap-2">
-        <Sparkles size={18} className="text-blue-600" />
-        <h2 className={`text-base font-bold ${heading}`}>Ask in Natural Language</h2>
-      </div>
-      <div className={`flex flex-col gap-2 rounded-lg border p-3 ${card}`}>
-        <label className={`text-xs font-semibold ${subtle}`}>Your question</label>
-        <textarea
-          rows={3}
-          placeholder="e.g. ยา Aspirin มาจากบริษัทไหนและมีรหัส UNII คืออะไร?"
-          className={`resize-y min-h-[80px] px-3 py-2 rounded border text-sm leading-relaxed focus:outline-none focus:ring-1 focus:ring-blue-500 ${inputCls}`}
-        />
-        <div className="flex justify-end">
-          <button
-            disabled
-            className={`flex items-center gap-2 px-4 py-2 rounded text-sm font-medium border ${ghost}`}
-          >
-            <Wand2 size={14} />
-            Generate SPARQL
-          </button>
-        </div>
-      </div>
-
-      <div className={`flex flex-col gap-2 rounded-lg border p-3 ${card}`}>
-        <label className={`text-xs font-semibold ${subtle}`}>Generated SPARQL</label>
-        <pre
-          className={`min-h-[120px] px-3 py-2 rounded border text-xs font-mono leading-relaxed ${readOnlyBg}`}
-        >
-          {`# Generated SPARQL will appear here.`}
-        </pre>
-        <div className="flex justify-end">
-          <button
-            disabled
-            className={`flex items-center gap-2 px-4 py-2 rounded text-sm font-medium border ${ghost}`}
-          >
-            <Play size={14} />
-            Run
-          </button>
-        </div>
-      </div>
-    </div>
   );
 }
 
