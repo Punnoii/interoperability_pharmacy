@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Bookmark, Code2, Database, FileCode2, Loader2, MoreVertical, Network, Pencil, Play, Sparkles, Table2, Trash2, Wand2, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Bookmark, Code2, Database, FileCode2, FlaskConical, Loader2, MoreVertical, Network, Pencil, Play, Sparkles, Table2, Trash2, Wand2, X } from "lucide-react";
 import ResultsGraph from "@/components/graph/ResultsGraph";
+import { QUERY_TEMPLATES } from "@/lib/queryTemplates";
 import type { SparqlBinding } from "@/components/graph/graphUtils";
 
 type QueryMode = "nlp" | "manual";
@@ -22,6 +23,15 @@ interface BookmarkItem {
   query: string;
   source: string;
   createdAt: string;
+}
+
+interface AcSuggestion {
+  kind: "template" | "substance" | "bookmark";
+  key: string;
+  title: string;
+  subtitle: string;
+  query: string;
+  source: SourceKey;
 }
 
 type ViewMode = "table" | "graph";
@@ -67,6 +77,15 @@ function applySourceFilter(query: string, source: SourceKey): string {
   return query.slice(0, closeIdx) + filterClause + query.slice(closeIdx);
 }
 
+function detectLockedSource(query: string): Exclude<SourceKey, "all"> | null {
+  const m = query.match(/\/substance\/([a-e])\//);
+  if (m) {
+    const k = m[1] as Exclude<SourceKey, "all">;
+    return k;
+  }
+  return null;
+}
+
 const DEFAULT_QUERY = `PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
 PREFIX cmns-id: <https://www.omg.org/spec/Commons/Identifiers/>
 PREFIX cmns-txt: <https://www.omg.org/spec/Commons/TextDatatype/>
@@ -102,6 +121,13 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
   const [editingBookmark, setEditingBookmark] = useState<BookmarkItem | null>(null);
   const [editQueryText, setEditQueryText] = useState("");
   const [editSaving, setEditSaving] = useState(false);
+  const [acOpen, setAcOpen] = useState(false);
+  const [acIdx, setAcIdx] = useState(0);
+  const [acWord, setAcWord] = useState("");
+  const [acSubstances, setAcSubstances] = useState<Array<{ iri: string; preferredName: string; identifier: string; source: string }>>([]);
+  const acDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const acFetchAbort = useRef<AbortController | null>(null);
+  const queryTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const [nlpInput, setNlpInput] = useState("");
   const [nlpSparql, setNlpSparql] = useState("");
@@ -231,7 +257,6 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
       return;
     }
     if (next === editingBookmark.query) {
-      // no change
       setEditingBookmark(null);
       setEditQueryText("");
       return;
@@ -262,6 +287,167 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
     }
   }
 
+  useEffect(() => {
+    const locked = detectLockedSource(query);
+    if (locked && source !== "all" && source !== locked) {
+      setSource(locked);
+    }
+  }, [query, source]);
+
+  useEffect(() => {
+    if (!acOpen || acWord.length < 2) {
+      setAcSubstances([]);
+      return;
+    }
+    if (acDebounceRef.current) clearTimeout(acDebounceRef.current);
+    acFetchAbort.current?.abort();
+    acDebounceRef.current = setTimeout(async () => {
+      const ctrl = new AbortController();
+      acFetchAbort.current = ctrl;
+      try {
+        const res = await fetch(
+          `/api/substances?search=${encodeURIComponent(acWord)}`,
+          { signal: ctrl.signal },
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!ctrl.signal.aborted && Array.isArray(data)) {
+          setAcSubstances(data.slice(0, 4));
+        }
+      } catch {
+      }
+    }, 250);
+    return () => {
+      if (acDebounceRef.current) clearTimeout(acDebounceRef.current);
+    };
+  }, [acOpen, acWord]);
+
+  const acSuggestions: AcSuggestion[] = useMemo(() => {
+    const w = acWord.toLowerCase();
+    if (w.length < 2) return [];
+    const out: AcSuggestion[] = [];
+
+    const seenIri = new Set<string>();
+    acSubstances.forEach((s) => {
+      if (seenIri.has(s.iri)) return;
+      seenIri.add(s.iri);
+      const display = s.preferredName || s.iri.split("/").pop() || s.iri;
+      const tpl = QUERY_TEMPLATES.find((t) => t.id === "tpl-by-substance-iri");
+      if (!tpl) return;
+      const rawSource = s.source.replace("company_", "").toLowerCase();
+      const src: SourceKey =
+        rawSource === "a" || rawSource === "b" || rawSource === "c" || rawSource === "d" || rawSource === "e"
+          ? rawSource
+          : "all";
+      out.push({
+        kind: "substance",
+        key: `s:${s.iri}`,
+        title: display,
+        subtitle: s.identifier ? `${s.identifier} · ${s.source}` : s.source,
+        query: tpl.query.replace("{{IRI}}", s.iri),
+        source: src,
+      });
+    });
+
+    QUERY_TEMPLATES.forEach((t) => {
+      if (
+        t.name.toLowerCase().includes(w) ||
+        t.description.toLowerCase().includes(w) ||
+        t.keywords.some((k) => k.toLowerCase().includes(w))
+      ) {
+        out.push({
+          kind: "template",
+          key: `t:${t.id}`,
+          title: t.name,
+          subtitle: t.description,
+          query: t.query,
+          source: t.source,
+        });
+      }
+    });
+
+    bookmarks.forEach((b) => {
+      if (b.name.toLowerCase().includes(w)) {
+        const rawSource = b.source.toLowerCase();
+        const src: SourceKey =
+          rawSource === "a" || rawSource === "b" || rawSource === "c" || rawSource === "d" || rawSource === "e"
+            ? rawSource
+            : "all";
+        out.push({
+          kind: "bookmark",
+          key: `b:${b.id}`,
+          title: b.name,
+          subtitle: "Your saved query",
+          query: b.query,
+          source: src,
+        });
+      }
+    });
+
+    return out.slice(0, 8);
+  }, [acWord, acSubstances, bookmarks]);
+
+  useEffect(() => {
+    if (acIdx >= acSuggestions.length) setAcIdx(Math.max(0, acSuggestions.length - 1));
+  }, [acSuggestions, acIdx]);
+
+  function getCurrentWord(value: string, caret: number): string {
+    const before = value.slice(0, caret);
+    const m = before.match(/(\S+)$/);
+    return m ? m[1] : "";
+  }
+
+  function handleQueryChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    const v = e.target.value;
+    setQuery(v);
+    const word = getCurrentWord(v, e.target.selectionStart ?? v.length);
+    if (word.length >= 2) {
+      setAcWord(word);
+      setAcOpen(true);
+      setAcIdx(0);
+    } else {
+      setAcOpen(false);
+    }
+  }
+
+  function handleApplySuggestion(idx: number) {
+    const s = acSuggestions[idx];
+    if (!s) return;
+    setQuery(s.query);
+    setSource(s.source);
+    setAcOpen(false);
+    setTimeout(() => {
+      const el = queryTextareaRef.current;
+      if (el) {
+        el.focus();
+        el.setSelectionRange(s.query.length, s.query.length);
+      }
+    }, 0);
+  }
+
+  function handleQueryKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !acOpen) {
+      e.preventDefault();
+      void handleRun();
+      return;
+    }
+    if (!acOpen || acSuggestions.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setAcIdx((i) => Math.min(acSuggestions.length - 1, i + 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setAcIdx((i) => Math.max(0, i - 1));
+    } else if (e.key === "Enter" || e.key === "Tab") {
+      e.preventDefault();
+      handleApplySuggestion(acIdx);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      setAcOpen(false);
+    }
+  }
+
   async function handleGenerate() {
     if (!nlpInput.trim() || nlpIsGenerating) return;
     setNlpIsGenerating(true);
@@ -289,7 +475,7 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
     }
   }
 
-  async function handleRun(overrideQuery?: string) {
+  async function handleRun(overrideQuery?: string, overrideSource?: SourceKey) {
     const sparqlToRun = overrideQuery ?? query;
     if (!sparqlToRun.trim()) return;
     setIsLoading(true);
@@ -298,7 +484,7 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
     setPage(1);
     setViewMode("table");
 
-    const finalQuery = applySourceFilter(sparqlToRun, source);
+    const finalQuery = applySourceFilter(sparqlToRun, overrideSource ?? source);
 
     try {
       const res = await fetch("/api/sparql", {
@@ -357,14 +543,9 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
       />
 
       <section className="flex-1 overflow-auto">
-        {queryMode === "nlp" ? (
-          <NLPQueryView isDark={isDark} />
-        ) : (
-          <ManualQueryView isDark={isDark} />
-        )}
+        {queryMode === "nlp" ? renderNLPView() : renderManualView()}
       </section>
 
-      {/* Edit Query modal — overlays everything, edits the saved query's content. */}
       {editingBookmark && (
         <div
           className="fixed inset-0 z-[9998] flex items-center justify-center p-4 bg-black/60"
@@ -439,10 +620,11 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
           </div>
         </div>
       )}
+
     </div>
   );
 
-  function NLPQueryView({ isDark }: { isDark: boolean }) {
+  function renderNLPView() {
     const card = isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-200";
     const muted = isDark ? "text-slate-400" : "text-gray-500";
     const subtle = isDark ? "text-slate-300" : "text-gray-700";
@@ -464,7 +646,6 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
           </span>
         </div>
 
-        {/* Input */}
         <div className={`flex flex-col gap-2 rounded-lg border p-3 ${card}`}>
           <label className={`text-xs font-semibold ${subtle}`}>Your question</label>
           <textarea
@@ -530,7 +711,6 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
           </div>
         </div>
 
-        {/* Results */}
         <div ref={resultsRef} className={`flex-1 rounded-lg border overflow-hidden ${card}`}>
           {error && (
             <div className="flex flex-col items-center justify-center h-32 gap-2 px-6 text-red-500">
@@ -604,38 +784,119 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
     );
   }
 
-  function ManualQueryView({ isDark }: { isDark: boolean }) {
+  function renderManualView() {
     return (
     <div className="flex flex-col h-full gap-4 p-6 overflow-auto">
       <div className={`flex gap-3 items-stretch rounded-lg border p-3 ${card}`}>
-        <textarea
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-              e.preventDefault();
-              handleRun();
-            }
-          }}
-          rows={6}
-          placeholder="Enter your SPARQL query..."
-          className={`flex-1 resize-y min-h-[140px] px-3 rounded border text-sm font-mono leading-relaxed focus:outline-none focus:ring-1 focus:ring-blue-500 ${inputCls}`}
-        />
+        <div className="flex-1 relative">
+          <textarea
+            ref={queryTextareaRef}
+            value={query}
+            onChange={handleQueryChange}
+            onKeyDown={handleQueryKeyDown}
+            onBlur={() => {
+              setTimeout(() => setAcOpen(false), 150);
+            }}
+            rows={6}
+            placeholder="Enter your SPARQL query for suggestions"
+            className={`w-full resize-y min-h-[140px] px-3 rounded border text-sm font-mono leading-relaxed focus:outline-none focus:ring-1 focus:ring-blue-500 ${inputCls}`}
+          />
+
+          {acOpen && acSuggestions.length > 0 && (
+            <div
+              className={`absolute left-0 right-0 top-full mt-1 z-50 max-h-72 overflow-y-auto rounded-md border shadow-xl ${
+                isDark ? "bg-slate-900 border-slate-700" : "bg-white border-gray-200"
+              }`}
+            >
+              <div className={`px-3 py-1.5 text-[10px] uppercase tracking-wider font-semibold border-b ${
+                isDark ? "text-slate-400 border-slate-700" : "text-gray-500 border-gray-200"
+              }`}>
+                Suggestions for &ldquo;{acWord}&rdquo;
+              </div>
+              {acSuggestions.map((s, i) => {
+                const isActive = acIdx === i;
+                const Icon = s.kind === "substance" ? FlaskConical : s.kind === "bookmark" ? Bookmark : FileCode2;
+                return (
+                  <div
+                    key={s.key}
+                    onMouseEnter={() => setAcIdx(i)}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      handleApplySuggestion(i);
+                    }}
+                    className={`flex items-start gap-2 px-3 py-2 cursor-pointer ${
+                      isActive ? (isDark ? "bg-slate-800" : "bg-blue-50") : ""
+                    }`}
+                  >
+                    <Icon
+                      size={14}
+                      className={`mt-0.5 shrink-0 ${
+                        isActive
+                          ? (isDark ? "text-blue-300" : "text-blue-600")
+                          : (isDark ? "text-slate-400" : "text-gray-500")
+                      }`}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className={`text-xs font-semibold truncate ${
+                        isDark ? "text-slate-100" : "text-gray-900"
+                      }`}>
+                        {s.title}
+                      </div>
+                      <div className={`text-[10px] truncate ${
+                        isDark ? "text-slate-400" : "text-gray-500"
+                      }`}>
+                        {s.subtitle}
+                      </div>
+                    </div>
+                    {isActive && (
+                      <span className={`text-[10px] shrink-0 ${
+                        isDark ? "text-slate-500" : "text-gray-400"
+                      }`}>
+                        ↵ insert
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+              <div className={`px-3 py-1.5 text-[10px] border-t ${
+                isDark ? "text-slate-500 border-slate-700" : "text-gray-400 border-gray-200"
+              }`}>
+                ↑↓ navigate · ↵/Tab insert · Esc close
+              </div>
+            </div>
+          )}
+        </div>
         <div className="flex flex-col gap-2">
-          <select
-            value={source}
-            onChange={(e) => setSource(e.target.value as SourceKey)}
-            disabled={isLoading}
-            title="Inject FILTER(STRSTARTS(?substance, ...)) into the query"
-            className={`px-2 py-2 rounded border text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-60 ${inputCls}`}
-            style={{ minWidth: 240 }}
-          >
-            {SOURCES.map((opt) => (
-              <option key={opt.key} value={opt.key}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+          {(() => {
+            const lockedSource = detectLockedSource(query);
+            return (
+              <>
+                <select
+                  value={source}
+                  onChange={(e) => setSource(e.target.value as SourceKey)}
+                  disabled={isLoading}
+                  title={
+                    lockedSource
+                      ? `This query targets Company ${lockedSource.toUpperCase()} (IRI hardcoded) other sources have no data for it`
+                      : "Inject into the query"
+                  }
+                  className={`px-2 py-2 rounded border text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-60 ${inputCls}`}
+                  style={{ minWidth: 240 }}
+                >
+                  {SOURCES.map((opt) => {
+                    const noData =
+                      lockedSource !== null && opt.key !== "all" && opt.key !== lockedSource;
+                    return (
+                      <option key={opt.key} value={opt.key} disabled={noData}>
+                        {opt.label}
+                        {noData ? " — no data" : ""}
+                      </option>
+                    );
+                  })}
+                </select>
+              </>
+            );
+          })()}
           <button
             onClick={() => handleRun()}
             disabled={isLoading}
@@ -963,7 +1224,6 @@ function DatabaseInfoPanel({
           </button>
         </div>
 
-        {/* Saved bookmarks — bottom-left of QueryPanel */}
         <div className="flex flex-col gap-1 mt-auto pt-2">
           <div className="flex items-center justify-between">
             <span className={sectionLabel}>Saved Queries</span>
@@ -973,7 +1233,7 @@ function DatabaseInfoPanel({
           </div>
           {!bookmarksLoading && bookmarks.length === 0 && (
             <p className={`text-[11px] ${muted} italic px-1 py-2`}>
-              ยังไม่มี bookmark — กดปุ่ม Save ที่ editor เพื่อบันทึก query แรก
+              Don't have any saved queries yet. Run a query and click Save to bookmark it for later
             </p>
           )}
           <ul className="flex flex-col gap-1 max-h-72 overflow-y-auto pr-1">
@@ -1045,7 +1305,6 @@ function DatabaseInfoPanel({
         </div>
       </div>
 
-      {/* Floating kebab dropdown — position: fixed, anchored to clicked kebab. */}
       {openBookmark && menuPos && (
         <div
           role="menu"

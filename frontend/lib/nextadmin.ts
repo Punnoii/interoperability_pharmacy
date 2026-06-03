@@ -11,7 +11,6 @@ export const options: NextAdminOptions = {
         search: ["username", "email"],
       },
       edit: {
-        // passwordHash is intentionally excluded — manage passwords through the auth API
         display: ["username", "email", "role"],
       },
     },
