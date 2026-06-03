@@ -3,8 +3,8 @@ name_row_id,linked_substance_code,display_name,name_category,lang_tag
 9101,E-100,Plavix,Brand,en
 9102,E-200,Epoetin alfa,Preferred,en
 9103,E-200,Eprex,Brand,en
-9104,E-300,Electrolyte Blend,Preferred,en
-9105,E-300,Oral Rehydration Mix,Other,en
+9104,E-300,Clomiphene citrate,Preferred,en
+9105,E-300,Clomid,Brand,en
 9106,E-400,Acetylsalicylic Acid,Preferred,en
 9107,E-400,Aspirin,Brand,en
 9108,E-500,Adalimumab,Preferred,en
@@ -13,5 +13,5 @@ name_row_id,linked_substance_code,display_name,name_category,lang_tag
 9111,E-600,Vitravene,Brand,en
 9112,E-700,Polyethylene glycol,Preferred,en
 9113,E-700,PEG,Other,en
-9114,E-800,Vitamin Blend,Preferred,en
-9115,E-800,Multivitamin Mix,Other,en
+9114,E-800,Amoxicillin,Preferred,en
+9115,E-800,Amoxil,Brand,en

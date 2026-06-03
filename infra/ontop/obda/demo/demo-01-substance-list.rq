@@ -1,8 +1,0 @@
-PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
-
-SELECT ?substance ?substanceType
-WHERE {
-  ?substance a idmp-sub:Substance ;
-             idmp-sub:hasSubstanceType ?substanceType .
-}
-ORDER BY ?substance

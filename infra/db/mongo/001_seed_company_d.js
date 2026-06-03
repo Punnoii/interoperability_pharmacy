@@ -42,7 +42,7 @@ upsertBy(
   {
     substance_code: "D-300",
     substance_kind: "Mixture",
-    status: "investigational",
+    status: "active",
     created_on: new Date("2026-01-01T00:00:00Z"),
   },
   "substance_master"
@@ -90,8 +90,8 @@ upsertBy(
   {
     alias_id: 5003,
     substance_code: "D-300",
-    alias_text: "Vitamin Blend D",
-    alias_kind: "Other",
+    alias_text: "Clomiphene citrate",
+    alias_kind: "Preferred",
     lang: "en",
   },
   "substance_alias"
@@ -114,7 +114,7 @@ upsertBy(
   {
     id_id: 6001,
     substance_code: "D-200",
-    id_value: "UNII-2K9A0X9Q9L",
+    id_value: "UNII-2ZM8CX04RZ",
     id_system: "UNII",
   },
   "substance_id_map"
@@ -125,8 +125,8 @@ upsertBy(
   {
     id_id: 6002,
     substance_code: "D-300",
-    id_value: "MIX-D-0003",
-    id_system: "LOCAL",
+    id_value: "UNII-1B8447E7YI",
+    id_system: "UNII",
   },
   "substance_id_map"
 );
@@ -166,8 +166,8 @@ upsertBy(
 );
 
 // ============================================================
-// Additional substances — covering all 5 types (6 total new)
-// Cross-source match: D-100 Metformin shares UNII-9100L32L2N with Company A (substance_id=4)
+// Additional real substances — extending the source while keeping real identifiers
+// Cross-source match: D-100 Metformin shares UNII-9100L32L2N with Company A
 // ============================================================
 
 // --- substance_master: D-400 to D-800 ---
@@ -208,7 +208,7 @@ upsertBy(
   { substance_code: "D-700" },
   {
     substance_code: "D-700",
-    substance_kind: "Mixture",
+    substance_kind: "Chemical",
     status: "active",
     created_on: new Date("2026-01-15T00:00:00Z"),
   },
@@ -292,7 +292,7 @@ upsertBy(
   {
     alias_id: 5009,
     substance_code: "D-700",
-    alias_text: "Electrolyte Blend",
+    alias_text: "Ibuprofen",
     alias_kind: "Preferred",
     lang: "en",
   },
@@ -362,8 +362,8 @@ upsertBy(
   {
     id_id: 6006,
     substance_code: "D-700",
-    id_value: "MIX-EB002",
-    id_system: "LOCAL",
+    id_value: "UNII-WK2XYI10QM",
+    id_system: "UNII",
   },
   "substance_id_map"
 );

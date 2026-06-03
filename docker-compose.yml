@@ -84,8 +84,8 @@ services:
   ontop-trino:
     image: ontop/ontop:5.3.1
     environment:
-      ONTOP_ONTOLOGY_FILE: /opt/ontop/input/idmp-entry-iso11238-core-lcc.rdf
-      ONTOP_MAPPING_FILE: /opt/ontop/input/iso11238-trino.obda
+      ONTOP_ONTOLOGY_FILE: /opt/ontop/input/idmp-core-entry.rdf
+      ONTOP_MAPPING_FILE: /opt/ontop/input/ontop-mapping.obda
       ONTOP_PROPERTIES_FILE: /opt/ontop/input/regulator-trino.properties
       ONTOP_XML_CATALOG_FILE: /opt/ontop/ontology/catalog-v001.xml
       ONTOP_CORS_ALLOWED_ORIGINS: "*"
@@ -102,7 +102,7 @@ services:
       trino:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/sparql || exit 1"]
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8080/actuator/health >/dev/null 2>&1 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -114,7 +114,7 @@ services:
     ports:
       - "8082:8082"
     environment:
-      ONTOP_ENDPOINT_DEFAULT: http://ontop-trino:8080/sparql
+      ONTOP_ENDPOINT: http://ontop-trino:8080/sparql
     depends_on:
       ontop-trino:
         condition: service_healthy

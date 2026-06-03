@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Automatically built by the EDMC infrastructure -->
-<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog" prefer="public">
+<catalog prefer="public" xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
     <uri name="https://spec.pistoiaalliance.org/idmp/ontology/AboutIDMPProd-ReferenceIndividuals/" uri="./AboutIDMPProd-ReferenceIndividuals.rdf"/>
     <uri name="https://spec.pistoiaalliance.org/idmp/ontology/master/v1.3.0/AboutIDMPProd-ReferenceIndividuals/" uri="./AboutIDMPProd-ReferenceIndividuals.rdf"/>
     <uri name="https://www.omg.org/spec/Commons/AnnotationVocabulary/" uri="./CMNS/AnnotationVocabulary.rdf"/>

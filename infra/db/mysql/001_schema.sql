@@ -28,42 +28,51 @@ CREATE TABLE IF NOT EXISTS substance_id_map (
 );
 
 -- ============================================================
--- Company C: 8 substances covering all 5 types
+-- Company C: 8 real substances covering all 5 core ISO 11238 types
 -- Cross-source match: Ibuprofen (C-100) shares UNII with Company B (B-400)
 -- ============================================================
 INSERT INTO substance_master (substance_code, substance_kind, status) VALUES
   ('C-100', 'Chemical', 'active'),
   ('C-200', 'Protein', 'active'),
-  ('C-300', 'Mixture', 'investigational'),
+  ('C-300', 'Mixture', 'active'),
   ('C-400', 'Chemical', 'active'),
   ('C-500', 'Protein', 'active'),
   ('C-600', 'NucleicAcid', 'active'),
   ('C-700', 'Polymer', 'active'),
-  ('C-800', 'Mixture', 'active')
-ON DUPLICATE KEY UPDATE status = VALUES(status);
+  ('C-800', 'Chemical', 'active')
+ON DUPLICATE KEY UPDATE
+  substance_kind = VALUES(substance_kind),
+  status = VALUES(status);
 
 INSERT INTO substance_alias (alias_id, substance_code, alias_text, alias_kind, lang) VALUES
   (3000, 'C-100', 'Ibuprofen', 'Preferred', 'en'),
   (3001, 'C-100', 'Advil', 'Brand', 'en'),
   (3002, 'C-200', 'Insulin lispro', 'Preferred', 'en'),
-  (3003, 'C-300', 'Caffeine Blend', 'Preferred', 'en'),
+  (3003, 'C-300', 'Clomiphene citrate', 'Preferred', 'en'),
   (3004, 'C-400', 'Acetylsalicylic Acid', 'Preferred', 'en'),
   (3005, 'C-400', 'Aspirin', 'Brand', 'en'),
   (3006, 'C-500', 'Epoetin alfa', 'Preferred', 'en'),
   (3007, 'C-600', 'Fomivirsen', 'Preferred', 'en'),
   (3008, 'C-700', 'Polyethylene glycol', 'Preferred', 'en'),
   (3009, 'C-700', 'PEG', 'Other', 'en'),
-  (3010, 'C-800', 'Vitamin Blend', 'Preferred', 'en')
-ON DUPLICATE KEY UPDATE alias_text = VALUES(alias_text);
+  (3010, 'C-800', 'Amoxicillin', 'Preferred', 'en')
+ON DUPLICATE KEY UPDATE
+  substance_code = VALUES(substance_code),
+  alias_text = VALUES(alias_text),
+  alias_kind = VALUES(alias_kind),
+  lang = VALUES(lang);
 
 INSERT INTO substance_id_map (id_id, substance_code, id_value, id_system) VALUES
   -- Cross-source match: same UNII value as Company B (B-400 Ibuprofen)
   (4000, 'C-100', 'UNII-WK2XYI10QM', 'UNII'),
   (4001, 'C-200', 'UNII-7X99W3T31F', 'UNII'),
-  (4002, 'C-300', 'MIX-C-0003', 'LOCAL'),
+  (4002, 'C-300', 'UNII-1B8447E7YI', 'UNII'),
   (4003, 'C-400', 'UNII-R16CO5Y76E', 'UNII'),
   (4004, 'C-500', 'UNII-64FS3BFH5W', 'UNII'),
   (4005, 'C-600', 'UNII-4V8GXP0V8U', 'UNII'),
   (4006, 'C-700', 'UNII-3WJQ0SDW1A', 'UNII'),
-  (4007, 'C-800', 'MIX-VB001', 'LOCAL')
-ON DUPLICATE KEY UPDATE id_value = VALUES(id_value);
+  (4007, 'C-800', 'UNII-804826J2HU', 'UNII')
+ON DUPLICATE KEY UPDATE
+  substance_code = VALUES(substance_code),
+  id_value = VALUES(id_value),
+  id_system = VALUES(id_system);

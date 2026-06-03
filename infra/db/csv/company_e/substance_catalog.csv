@@ -1,9 +1,9 @@
 record_id,partner_substance_code,substance_class,lifecycle_state,registered_at
 9000,E-100,Chemical,active,2026-01-01T00:00:00Z
 9001,E-200,Protein,active,2026-01-01T00:00:00Z
-9002,E-300,Mixture,investigational,2026-01-01T00:00:00Z
+9002,E-300,Mixture,active,2026-01-01T00:00:00Z
 9003,E-400,Chemical,active,2026-02-01T00:00:00Z
 9004,E-500,Protein,active,2026-02-01T00:00:00Z
 9005,E-600,NucleicAcid,active,2026-02-01T00:00:00Z
 9006,E-700,Polymer,active,2026-02-01T00:00:00Z
-9007,E-800,Mixture,active,2026-02-01T00:00:00Z
+9007,E-800,Chemical,active,2026-02-01T00:00:00Z
