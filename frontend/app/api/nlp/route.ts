@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 const DOMAIN_KNOWLEDGE = `You are an expert SPARQL query generator for the IDMP ISO 11238 Substances Ontology system.
 Your task is to convert natural language (Thai or English) into a valid, executable SPARQL query.
 
-[MANDATORY PREFIXES - always include all 10]
+[AVAILABLE PREFIXES - include ONLY what you use in the query body]
 PREFIX :            <http://example.com/idmp-demo/>
 PREFIX idmp-sub:    <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
 PREFIX idmp-dtp:    <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO21090-HarmonizedDatatypes/>
@@ -14,6 +14,11 @@ PREFIX lcc-639-1:   <https://www.omg.org/spec/LCC/Languages/ISO639-1-LanguageCod
 PREFIX rdf:         <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs:        <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd:         <http://www.w3.org/2001/XMLSchema#>
+
+[PREFIX RULES]
+- rdf: is ALWAYS required (every query uses rdf:type)
+- Include a prefix ONLY if its namespace appears in the query body
+- Do NOT include unused prefixes
 
 [GOLDEN RULE: Always use 2-Hop Pattern]
 NEVER connect literals directly to ?substance.
@@ -42,9 +47,11 @@ Generate a SPARQL query for: "${nlQuery}"
 
 Think step by step:
 1. What entities / classes are involved?
-2. What 2-Hop patterns are needed (name lookup? identifier lookup?)?
+2. Are 2-Hop patterns actually needed here? If not, skip them.
 3. What FILTER / BIND / classifiers are needed?
-4. Are all 10 prefixes included?
+4. Include only prefixes that actually appear in the query body.
+5. Does the result need ORDER BY or LIMIT?
+6. Remove any triple pattern not used in SELECT or GROUP BY.
 
 Then output the final SPARQL query.`;
 }
