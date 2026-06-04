@@ -61,6 +61,36 @@ services:
         psql -v ON_ERROR_STOP=1 -h postgres -U postgres -d postgres -f /work/sql/004_company_e_load.sql
       "
 
+  # NDC text file
+  fda-ndc-loader:
+    image: postgres:16
+    profiles: ["loader"]
+    environment:
+      PGPASSWORD: pgpass
+      PGCLIENTENCODING: WIN1252
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./data/fda-ndc-raw:/data/fda-ndc-raw:ro
+      - ./infra/db/fda_ndc:/work:ro
+    command: ["sh", "/work/load_raw_product.sh"]
+
+  # NDC JSON file
+  openfda-ndc-json-loader:
+    build:
+      context: ./infra/db/fda_ndc/json
+    profiles: ["loader"]
+    environment:
+      PGPASSWORD: pgpass
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./data/fda-ndc:/data/fda-ndc:ro
+      - ./infra/db/fda_ndc/json:/work:ro
+    command: ["sh", "/work/load_raw_openfda_json.sh"]
+
   trino:
     image: trinodb/trino:479
     ports:
