@@ -46,11 +46,12 @@ function buildChainOfThoughtPrompt(nlQuery: string): string {
 Generate a SPARQL query for: "${nlQuery}"
 
 Think step by step:
-1. What entities / classes are involved?
-2. Are 2-Hop patterns actually needed here? If not, skip them.
+1.. What entities / classes are involved?
+2. How many hops are needed? Prefer the shortest path.
+   Each extra triple acts as an implicit filter — add only if required by the schema.
 3. What FILTER / BIND / classifiers are needed?
 4. Include only prefixes that actually appear in the query body.
-5. Does the result need ORDER BY or LIMIT?
+5. Does the resualt need ORDER BY or LIMIT?
 6. Remove any triple pattern not used in SELECT or GROUP BY.
 
 Then output the final SPARQL query.`;
