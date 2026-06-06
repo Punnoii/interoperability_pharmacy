@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Bell, Moon, Sun, User, LogOut } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -18,7 +19,13 @@ export default function Header({ isDark, setIsDark }: HeaderProps) {
         : "bg-white border-gray-200 text-gray-800"
         }`}
     >
-      <span className="text-xl font-bold tracking-tight text-blue-600">RxVKG</span>
+      <Link
+        href="/homepage"
+        aria-label="Go to homepage"
+        className="text-xl font-bold tracking-tight text-blue-600 hover:text-blue-700 transition-colors"
+      >
+        RxVKG
+      </Link>
 
       <div className="flex items-center gap-2">
         <IconButton isDark={isDark} aria-label="Notifications">
@@ -38,12 +45,14 @@ export default function Header({ isDark, setIsDark }: HeaderProps) {
           </span>
         )}
 
-        <button
-          aria-label="User menu"
+        <Link
+          href="/profile"
+          aria-label="My Profile"
+          title="My Profile"
           className="w-9 h-9 flex items-center justify-center rounded-md bg-blue-600 text-white hover:bg-blue-700"
         >
           <User size={18} />
-        </button>
+        </Link>
 
         <IconButton
           isDark={isDark}
