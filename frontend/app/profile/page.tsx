@@ -30,7 +30,6 @@ export default function ProfilePage() {
   const [bookmarks, setBookmarks] = useState<BookmarkRow[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Modal state
   const [editNameOpen, setEditNameOpen] = useState(false);
   const [changePwOpen, setChangePwOpen] = useState(false);
 
@@ -74,7 +73,6 @@ export default function ProfilePage() {
       <Header isDark={isDark} setIsDark={setIsDark} />
 
       <main className="flex-1 px-6 py-8 max-w-6xl w-full mx-auto">
-        {/* Back button — visible nav up to homepage */}
         <Link
           href="/homepage"
           className={`inline-flex items-center gap-2 text-sm font-medium mb-4 transition-colors ${
@@ -98,7 +96,6 @@ export default function ProfilePage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* ── Left: profile card ───────────────────────────────────── */}
             <section className={`rounded-2xl border p-6 ${card} h-fit`}>
               <div className="flex flex-col items-center gap-2 mb-6">
                 <div className={`w-20 h-20 rounded-full flex items-center justify-center ${
@@ -139,9 +136,7 @@ export default function ProfilePage() {
               </button>
             </section>
 
-            {/* ── Right: stats + saved queries ─────────────────────────── */}
             <section className="lg:col-span-2 flex flex-col gap-6">
-              {/* 3 stat boxes */}
               <div className="grid grid-cols-3 gap-4">
                 <StatBox
                   isDark={isDark}
@@ -152,7 +147,6 @@ export default function ProfilePage() {
                 <StatBox isDark={isDark} label="…." value={0} muted />
               </div>
 
-              {/* Saved queries list */}
               <div className={`rounded-2xl border p-6 ${card} min-h-[400px]`}>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className={`text-base font-semibold ${heading}`}>Save Queries</h3>
@@ -187,7 +181,6 @@ export default function ProfilePage() {
         )}
       </main>
 
-      {/* ── Modals ───────────────────────────────────────────────────── */}
       {editNameOpen && user && (
         <EditNameModal
           isDark={isDark}
@@ -210,7 +203,6 @@ export default function ProfilePage() {
   );
 }
 
-// ── StatBox ────────────────────────────────────────────────────────────
 function StatBox({
   isDark,
   label,
@@ -237,7 +229,6 @@ function StatBox({
   );
 }
 
-// ── EditNameModal ──────────────────────────────────────────────────────
 function EditNameModal({
   isDark,
   currentName,
@@ -315,7 +306,6 @@ function EditNameModal({
   );
 }
 
-// ── ChangePasswordModal ────────────────────────────────────────────────
 function ChangePasswordModal({
   isDark,
   onClose,
@@ -409,7 +399,6 @@ function ChangePasswordModal({
   );
 }
 
-// ── ModalShell + ModalFooter (shared chrome) ───────────────────────────
 function ModalShell({
   isDark,
   title,

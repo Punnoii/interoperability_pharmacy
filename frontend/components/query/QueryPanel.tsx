@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Bookmark, Code2, Database, FileCode2, FlaskConical, Loader2, MoreVertical, Network, Pencil, Play, Sparkles, Table2, Trash2, Wand2, X } from "lucide-react";
 import ResultsGraph from "@/components/graph/ResultsGraph";
 import { QUERY_TEMPLATES } from "@/lib/queryTemplates";
+import { popPendingQuery, pushHistory } from "@/lib/queryHistory";
 import type { SparqlBinding } from "@/components/graph/graphUtils";
 
 type QueryMode = "nlp" | "manual";
@@ -295,6 +296,17 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
   }, [query, source]);
 
   useEffect(() => {
+    const pending = popPendingQuery();
+    if (pending) {
+      setQueryMode("manual");
+      setQuery(pending.query);
+      if (pending.source === "all" || pending.source === "a" || pending.source === "b" || pending.source === "c" || pending.source === "d" || pending.source === "e") {
+        setSource(pending.source);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     if (!acOpen || acWord.length < 2) {
       setAcSubstances([]);
       return;
@@ -500,9 +512,21 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
 
       const data = await res.json();
       setResults(data);
+      const rows = Array.isArray(data?.results?.bindings) ? data.results.bindings.length : 0;
+      pushHistory({
+        query: sparqlToRun,
+        source: overrideSource ?? source,
+        resultCount: rows,
+      });
       setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
+      const msg = e instanceof Error ? e.message : "Unknown error";
+      setError(msg);
+      pushHistory({
+        query: sparqlToRun,
+        source: overrideSource ?? source,
+        error: msg,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -677,7 +701,6 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
           )}
         </div>
 
-        {/* Generated SPARQL */}
         <div className={`flex flex-col gap-2 rounded-lg border p-3 ${card}`}>
           <label className={`text-xs font-semibold ${subtle}`}>Generated SPARQL</label>
           <pre className={`min-h-[160px] max-h-72 overflow-auto px-3 py-2 rounded border text-xs font-mono leading-relaxed whitespace-pre-wrap break-words ${readOnlyBg}`}>

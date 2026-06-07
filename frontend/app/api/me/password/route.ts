@@ -3,12 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { hashPassword, verifyPassword } from "@/lib/auth";
 
-/**
- * PATCH /api/me/password
- * Body: { currentPassword: string; newPassword: string }
- * Change the current user's password. Requires the current password to
- * confirm the request actually comes from the account owner.
- */
 export async function PATCH(req: NextRequest) {
   const session = await getSession();
   if (!session) {

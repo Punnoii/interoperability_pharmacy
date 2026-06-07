@@ -2,10 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
-/**
- * GET /api/me
- * Return the current user's profile + counts used on the Profile page.
- */
 export async function GET() {
   const session = await getSession();
   if (!session) {
@@ -39,11 +35,6 @@ export async function GET() {
   });
 }
 
-/**
- * PATCH /api/me
- * Body: { username?: string }
- * Update the current user's display name.
- */
 export async function PATCH(req: NextRequest) {
   const session = await getSession();
   if (!session) {

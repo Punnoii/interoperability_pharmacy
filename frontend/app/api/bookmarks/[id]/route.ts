@@ -2,10 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
-/**
- * Verify the bookmark exists and belongs to the current user.
- * Returns the session payload on success, or a NextResponse error to forward.
- */
 async function authorize(id: string) {
   const session = await getSession();
   if (!session) {
@@ -29,11 +25,6 @@ async function authorize(id: string) {
   return { session };
 }
 
-/**
- * PATCH /api/bookmarks/:id
- * Body: { name?: string; query?: string; source?: string }
- * Update one or more fields on a saved query owned by the current user.
- */
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -103,10 +94,6 @@ export async function PATCH(
   return NextResponse.json({ bookmark });
 }
 
-/**
- * DELETE /api/bookmarks/:id
- * Remove a saved query owned by the current user.
- */
 export async function DELETE(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },

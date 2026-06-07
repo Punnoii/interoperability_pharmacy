@@ -2,10 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
-/**
- * GET /api/me/preferences
- * Return the current user's UI preferences (currently: darkMode).
- */
 export async function GET() {
   const session = await getSession();
   if (!session) {
@@ -24,11 +20,6 @@ export async function GET() {
   return NextResponse.json({ darkMode: user.darkMode });
 }
 
-/**
- * PATCH /api/me/preferences
- * Body: { darkMode?: boolean }
- * Update the current user's UI preferences.
- */
 export async function PATCH(req: NextRequest) {
   const session = await getSession();
   if (!session) {

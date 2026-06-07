@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Clock, Settings, FlaskConical, HelpCircle } from "lucide-react";
 
 interface SidebarProps {
@@ -47,9 +48,16 @@ const navItems = [
   },
 ];
 
-const bottomItems = [
+interface BottomItem {
+  key: string;
+  label: string;
+  icon: React.ReactNode;
+  href?: string;
+}
+
+const bottomItems: BottomItem[] = [
   { key: "help", label: "Help", icon: <HelpCircle size={18} /> },
-  { key: "history", label: "History", icon: <Clock size={18} /> },
+  { key: "history", label: "History", icon: <Clock size={18} />, href: "/history" },
   { key: "settings", label: "Settings", icon: <Settings size={18} /> },
 ];
 
@@ -89,19 +97,25 @@ export default function Sidebar({ activeTab, setActiveTab, isDark }: SidebarProp
           isDark ? "border-slate-800" : "border-gray-200"
         }`}
       >
-        {bottomItems.map((item) => (
-          <button
-            key={item.key}
-            aria-label={item.label}
-            className={`w-full h-9 flex items-center justify-center rounded-md ${
-              isDark
-                ? "text-slate-500 hover:bg-slate-800 hover:text-slate-100"
-                : "text-gray-500 hover:bg-gray-100 hover:text-gray-800"
-            }`}
-          >
-            {item.icon}
-          </button>
-        ))}
+        {bottomItems.map((item) => {
+          const cls = `w-full h-9 flex items-center justify-center rounded-md ${
+            isDark
+              ? "text-slate-500 hover:bg-slate-800 hover:text-slate-100"
+              : "text-gray-500 hover:bg-gray-100 hover:text-gray-800"
+          }`;
+          if (item.href) {
+            return (
+              <Link key={item.key} href={item.href} aria-label={item.label} title={item.label} className={cls}>
+                {item.icon}
+              </Link>
+            );
+          }
+          return (
+            <button key={item.key} aria-label={item.label} title={item.label} className={cls}>
+              {item.icon}
+            </button>
+          );
+        })}
       </div>
     </aside>
   );
