@@ -1,0 +1,263 @@
+[PrefixDeclaration]
+:            http://example.com/idmp-demo/
+idmp-mprd:   https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11615-MedicinalProducts/
+idmp-sub:    https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/
+idmp-dtp:    https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO21090-HarmonizedDatatypes/
+cmns-id:     https://www.omg.org/spec/Commons/Identifiers/
+cmns-dsg:    https://www.omg.org/spec/Commons/Designators/
+cmns-txt:    https://www.omg.org/spec/Commons/TextDatatype/
+cmns-rlcmp:  https://www.omg.org/spec/Commons/RolesAndCompositions/
+lcc-639-1:   https://www.omg.org/spec/LCC/Languages/ISO639-1-LanguageCodes/
+rdf:         http://www.w3.org/1999/02/22-rdf-syntax-ns#
+rdfs:        http://www.w3.org/2000/01/rdf-schema#
+xsd:         http://www.w3.org/2001/XMLSchema#
+
+
+[MappingDeclaration] @collection [[
+
+mappingId SubstanceCompanyA
+target :substance/a/{substance_id} a idmp-sub:Substance .
+source SELECT substance_id
+       FROM postgres.company_a.substance
+
+mappingId SubstanceTypeCompanyA
+target :substance/a/{substance_id} idmp-sub:hasSubstanceType <{substance_type_iri}> .
+source SELECT substance_id,
+       concat('https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceTypeClassifier-', substance_type) AS substance_type_iri
+       FROM postgres.company_a.substance
+
+mappingId SubstanceNameNodeCompanyA
+target :substance-name/a/{name_id} a idmp-sub:SubstanceName ; idmp-sub:hasSubstanceNameValue "{name_value}"^^xsd:string ; idmp-sub:hasSubstanceNameType <{idmp_name_type_iri}> ; idmp-dtp:hasLanguageCode <https://www.omg.org/spec/LCC/Languages/ISO639-1-LanguageCodes/{language_code}> .
+source SELECT name_id,
+       name_value,
+       language_code,
+       m.idmp_name_type_iri
+       FROM postgres.company_a.substance_name n
+       JOIN postgres.regulator.name_type_map m
+         ON m.company_code = 'A'
+        AND m.source_name_type = n.name_type
+
+mappingId SubstanceNameLinkCompanyA
+target :substance/a/{substance_id} idmp-sub:hasSubstanceName :substance-name/a/{name_id} .
+source SELECT substance_id,
+       name_id
+       FROM postgres.company_a.substance_name
+
+mappingId SubstanceIdentifierNodeCompanyA
+target :substance-identifier/a/{identifier_id} a idmp-sub:SubstanceIdentifier ; cmns-txt:hasTextValue "{identifier_value}"^^xsd:string .
+source SELECT identifier_id,
+       identifier_value
+       FROM postgres.company_a.substance_identifier
+
+mappingId SubstanceIdentifierLinkCompanyA
+target :substance/a/{substance_id} cmns-id:isIdentifiedBy :substance-identifier/a/{identifier_id} .
+source SELECT substance_id,
+       identifier_id
+       FROM postgres.company_a.substance_identifier
+
+mappingId SubstanceCompanyB
+target :substance/b/{substance_code} a idmp-sub:Substance .
+source SELECT substance_code
+       FROM postgres.company_b.substance_master
+
+mappingId SubstanceTypeCompanyB
+target :substance/b/{substance_code} idmp-sub:hasSubstanceType <{substance_type_iri}> .
+source SELECT substance_code,
+       concat('https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceTypeClassifier-', substance_kind) AS substance_type_iri
+       FROM postgres.company_b.substance_master
+
+mappingId SubstanceNameNodeCompanyB
+target :substance-name/b/{alias_id} a idmp-sub:SubstanceName ; idmp-sub:hasSubstanceNameValue "{alias_text}"^^xsd:string ; idmp-sub:hasSubstanceNameType <{idmp_name_type_iri}> ; idmp-dtp:hasLanguageCode <https://www.omg.org/spec/LCC/Languages/ISO639-1-LanguageCodes/{lang}> .
+source SELECT alias_id,
+       alias_text,
+       lang,
+       m.idmp_name_type_iri
+       FROM postgres.company_b.substance_alias a
+       JOIN postgres.regulator.name_type_map m
+         ON m.company_code = 'B'
+        AND m.source_name_type = a.alias_kind
+
+mappingId SubstanceNameLinkCompanyB
+target :substance/b/{substance_code} idmp-sub:hasSubstanceName :substance-name/b/{alias_id} .
+source SELECT substance_code,
+       alias_id
+       FROM postgres.company_b.substance_alias
+
+mappingId SubstanceIdentifierNodeCompanyB
+target :substance-identifier/b/{id_id} a idmp-sub:SubstanceIdentifier ; cmns-txt:hasTextValue "{id_value}"^^xsd:string .
+source SELECT id_id,
+       id_value
+       FROM postgres.company_b.substance_id_map
+
+mappingId SubstanceIdentifierLinkCompanyB
+target :substance/b/{substance_code} cmns-id:isIdentifiedBy :substance-identifier/b/{id_id} .
+source SELECT substance_code,
+       id_id
+       FROM postgres.company_b.substance_id_map
+
+mappingId SubstanceCompanyC
+target :substance/c/{substance_code} a idmp-sub:Substance .
+source SELECT substance_code
+       FROM mysql.company_c.substance_master
+
+mappingId SubstanceTypeCompanyC
+target :substance/c/{substance_code} idmp-sub:hasSubstanceType <{substance_type_iri}> .
+source SELECT substance_code,
+       concat('https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceTypeClassifier-', substance_kind) AS substance_type_iri
+       FROM mysql.company_c.substance_master
+
+mappingId SubstanceNameNodeCompanyC
+target :substance-name/c/{alias_id} a idmp-sub:SubstanceName ; idmp-sub:hasSubstanceNameValue "{alias_text}"^^xsd:string ; idmp-sub:hasSubstanceNameType <{idmp_name_type_iri}> ; idmp-dtp:hasLanguageCode <https://www.omg.org/spec/LCC/Languages/ISO639-1-LanguageCodes/{lang}> .
+source SELECT alias_id,
+       alias_text,
+       lang,
+       m.idmp_name_type_iri
+       FROM mysql.company_c.substance_alias a
+       JOIN mysql.company_c.name_type_map m
+         ON m.company_code = 'C'
+        AND m.source_name_type = a.alias_kind
+
+mappingId SubstanceNameLinkCompanyC
+target :substance/c/{substance_code} idmp-sub:hasSubstanceName :substance-name/c/{alias_id} .
+source SELECT substance_code,
+       alias_id
+       FROM mysql.company_c.substance_alias
+
+mappingId SubstanceIdentifierNodeCompanyC
+target :substance-identifier/c/{id_id} a idmp-sub:SubstanceIdentifier ; cmns-txt:hasTextValue "{id_value}"^^xsd:string .
+source SELECT id_id,
+       id_value
+       FROM mysql.company_c.substance_id_map
+
+mappingId SubstanceIdentifierLinkCompanyC
+target :substance/c/{substance_code} cmns-id:isIdentifiedBy :substance-identifier/c/{id_id} .
+source SELECT substance_code,
+       id_id
+       FROM mysql.company_c.substance_id_map
+
+mappingId SubstanceCompanyD
+target :substance/d/{substance_code} a idmp-sub:Substance .
+source SELECT substance_code
+       FROM mongo.company_d.substance_master
+
+mappingId SubstanceTypeCompanyD
+target :substance/d/{substance_code} idmp-sub:hasSubstanceType <{substance_type_iri}> .
+source SELECT substance_code,
+       concat('https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceTypeClassifier-', substance_kind) AS substance_type_iri
+       FROM mongo.company_d.substance_master
+
+mappingId SubstanceNameNodeCompanyD
+target :substance-name/d/{alias_id} a idmp-sub:SubstanceName ; idmp-sub:hasSubstanceNameValue "{alias_text}"^^xsd:string ; idmp-sub:hasSubstanceNameType <{idmp_name_type_iri}> ; idmp-dtp:hasLanguageCode <https://www.omg.org/spec/LCC/Languages/ISO639-1-LanguageCodes/{lang}> .
+source SELECT a.alias_id,
+       a.alias_text,
+       a.lang,
+       n.idmp_name_type_iri
+       FROM mongo.company_d.substance_alias a
+       JOIN mongo.company_d.name_type_map n
+         ON a.alias_kind = n.source_name_type
+        AND n.company_code = 'D'
+
+mappingId SubstanceNameLinkCompanyD
+target :substance/d/{substance_code} idmp-sub:hasSubstanceName :substance-name/d/{alias_id} .
+source SELECT substance_code,
+       alias_id
+       FROM mongo.company_d.substance_alias
+
+mappingId SubstanceIdentifierNodeCompanyD
+target :substance-identifier/d/{id_id} a idmp-sub:SubstanceIdentifier ; cmns-txt:hasTextValue "{id_value}"^^xsd:string .
+source SELECT id_id,
+       id_value
+       FROM mongo.company_d.substance_id_map
+
+mappingId SubstanceIdentifierLinkCompanyD
+target :substance/d/{substance_code} cmns-id:isIdentifiedBy :substance-identifier/d/{id_id} .
+source SELECT substance_code,
+       id_id
+       FROM mongo.company_d.substance_id_map
+
+mappingId fdaMedicinalProduct
+target :fda/product/{product_id} a idmp-mprd:MedicinalProduct .
+source SELECT product_id
+       FROM postgres.fda_ndc_json.ndc_fda_product
+       WHERE finished = true
+
+mappingId fdaMedicinalProductIdentifier
+target :fda/product/{product_id} cmns-id:isIdentifiedBy :fda/mpid/US-{product_ndc} . :fda/mpid/US-{product_ndc} a idmp-mprd:MedicinalProductIdentifier . :fda/mpid/US-{product_ndc} cmns-txt:hasTextValue "US-{product_ndc}"^^xsd:string . :fda/mpid/US-{product_ndc} cmns-id:identifies :fda/product/{product_id} .
+source SELECT product_id,
+              product_ndc
+       FROM postgres.fda_ndc_json.ndc_fda_product
+       WHERE finished = true
+         AND product_ndc IS NOT NULL
+
+mappingId fdaMedicinalProductName
+target :fda/product/{product_id} cmns-dsg:hasName :fda/product-name/{product_id} . :fda/product-name/{product_id} a idmp-mprd:MedicinalProductName . :fda/product-name/{product_id} idmp-mprd:hasFullMedicinalProductName "{product_name}"^^xsd:string .
+source SELECT product_id,
+              COALESCE(brand_name, generic_name) AS product_name
+       FROM postgres.fda_ndc_json.ndc_fda_product
+       WHERE finished = true
+         AND (brand_name IS NOT NULL OR generic_name IS NOT NULL)
+
+mappingId fdaSubstanceCandidate
+target :fda/substance/{product_id}/{ingredient_order} a idmp-sub:Substance . :fda/substance/{product_id}/{ingredient_order} idmp-sub:hasSubstanceName :fda/substance-name/{product_id}/{ingredient_order} . :fda/substance-name/{product_id}/{ingredient_order} a idmp-sub:SubstanceName . :fda/substance-name/{product_id}/{ingredient_order} idmp-sub:hasSubstanceNameValue "{ingredient_name}"^^xsd:string .
+source SELECT product_id,
+              ingredient_order,
+              ingredient_name
+       FROM postgres.fda_ndc_json.ndc_fda_product_ingredient
+       WHERE ingredient_name IS NOT NULL
+
+mappingId fdaActiveIngredient
+target :fda/active-ingredient/{product_id}/{ingredient_order} a idmp-sub:ActiveIngredient . :fda/active-ingredient/{product_id}/{ingredient_order} cmns-rlcmp:isPlayedBy :fda/substance/{product_id}/{ingredient_order} . :fda/product/{product_id} idmp-mprd:hasActiveIngredient :fda/active-ingredient/{product_id}/{ingredient_order} . :fda/active-ingredient/{product_id}/{ingredient_order} :sourceStrengthText "{strength}"^^xsd:string .
+source SELECT product_id,
+              ingredient_order,
+              strength
+       FROM postgres.fda_ndc_json.ndc_fda_product_ingredient
+       WHERE ingredient_name IS NOT NULL
+
+mappingId fdaSubstanceUniiCandidate
+target :fda/substance/{product_id}/{ingredient_order} cmns-id:isIdentifiedBy :fda/unii-candidate/{product_id}/{ingredient_order} . :fda/unii-candidate/{product_id}/{ingredient_order} a idmp-sub:SubstanceIdentifier . :fda/unii-candidate/{product_id}/{ingredient_order} cmns-txt:hasTextValue "{unii}"^^xsd:string .
+source SELECT i.product_id,
+              i.ingredient_order,
+              u.unii
+       FROM postgres.fda_ndc_json.ndc_fda_product_ingredient i
+       JOIN postgres.fda_ndc_json.ndc_fda_product_unii_candidate u
+         ON u.product_id = i.product_id
+        AND u.unii_order = i.ingredient_order
+
+mappingId fdaPackagedMedicinalProduct
+target :fda/package/{package_ndc} a idmp-mprd:PackagedMedicinalProduct . :fda/package/{package_ndc} cmns-dsg:isDefinedIn :fda/product/{product_id} . :fda/package/{package_ndc} rdfs:label "{package_description}"^^xsd:string .
+source SELECT product_id,
+              package_ndc,
+              package_description
+       FROM postgres.fda_ndc_json.ndc_fda_product_package
+       WHERE package_ndc IS NOT NULL
+
+mappingId fdaPackageIdentifier
+target :fda/package/{package_ndc} cmns-id:isIdentifiedBy :fda/pcid/US-{package_ndc} . :fda/pcid/US-{package_ndc} a idmp-mprd:PackageIdentifier . :fda/pcid/US-{package_ndc} cmns-txt:hasTextValue "US-{package_ndc}"^^xsd:string . :fda/pcid/US-{package_ndc} cmns-id:identifies :fda/package/{package_ndc} .
+source SELECT package_ndc
+       FROM postgres.fda_ndc_json.ndc_fda_product_package
+       WHERE package_ndc IS NOT NULL
+
+mappingId GsrsSubstanceNameType
+target :gsrs/substance-name/{name_uuid} a idmp-sub:SubstanceName .
+source SELECT name_uuid
+       FROM postgres.gsrs.substance_name
+       WHERE name_uuid IS NOT NULL
+         AND name_value IS NOT NULL
+         AND unii IS NOT NULL
+
+mappingId GsrsSubstanceNameLink
+target :gsrs/substance/{unii} idmp-sub:hasSubstanceName :gsrs/substance-name/{name_uuid} .
+source SELECT unii, name_uuid
+       FROM postgres.gsrs.substance_name
+       WHERE name_uuid IS NOT NULL
+         AND name_value IS NOT NULL
+         AND unii IS NOT NULL
+
+mappingId GsrsSubstanceNameValue
+target :gsrs/substance-name/{name_uuid} idmp-sub:hasSubstanceNameValue "{name_value}"^^xsd:string .
+source SELECT name_uuid, name_value
+       FROM postgres.gsrs.substance_name
+       WHERE name_uuid IS NOT NULL
+         AND name_value IS NOT NULL
+         AND unii IS NOT NULL
+]]

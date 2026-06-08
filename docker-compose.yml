@@ -1,6 +1,7 @@
 services:
   mongo:
     image: mongo:7
+    profiles: ["demo"]
     environment:
       MONGO_INITDB_DATABASE: company_d
     ports:
@@ -16,6 +17,7 @@ services:
 
   mysql:
     image: mysql:8.0
+    profiles: ["demo"]
     environment:
       MYSQL_ROOT_PASSWORD: rootpass
     ports:
@@ -36,6 +38,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
+      - postgres-data:/var/lib/postgresql/data
       - ./infra/db/postgres:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
@@ -46,6 +49,7 @@ services:
 
   postgres-csv-loader:
     image: postgres:16
+    profiles: ["demo"]
     environment:
       PGPASSWORD: pgpass
     depends_on:
@@ -76,6 +80,20 @@ services:
       - ./infra/db/fda_ndc:/work:ro
     command: ["sh", "/work/load_raw_product.sh"]
 
+  gsrs-loader:
+    build:
+      context: ./infra/db/fda_ndc/json
+    profiles: ["loader"]
+    environment:
+      PGPASSWORD: pgpass
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./data/GSRS:/data/GSRS:ro
+      - ./infra/db/gsrs:/work:ro
+    command: ["sh", "/work/load-raw-gsrs.sh"]
+
   # NDC JSON file
   openfda-ndc-json-loader:
     build:
@@ -99,10 +117,6 @@ services:
       - ./infra/trino/etc/catalog:/etc/trino/catalog
     depends_on:
       postgres:
-        condition: service_healthy
-      mysql:
-        condition: service_healthy
-      mongo:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8080/v1/info || exit 1"]
@@ -154,3 +168,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+
+volumes:
+  postgres-data:

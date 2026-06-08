@@ -9,6 +9,12 @@ psql -v ON_ERROR_STOP=1 \
   -d postgres \
   -f /work/ndc-fda-json-raw.sql
 
+psql -v ON_ERROR_STOP=1 \
+  -h postgres \
+  -U postgres \
+  -d postgres \
+  -f /work/ndc-fda-json-view.sql
+
 jq -r '
   .meta.last_updated as $last_updated
   | .results[]
@@ -22,7 +28,7 @@ jq -r '
     -h postgres \
     -U postgres \
     -d postgres \
-    -c "\copy fda_ndc_json_raw.openfda_ndc_json (
+    -c "\copy fda_ndc_json_raw.fda_ndc_json (
       source_last_updated,
       record
     ) FROM STDIN WITH (FORMAT csv)"

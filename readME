@@ -1,4 +1,4 @@
-Project structure (clean layout)
+Project structure
 --------------------------------
 - backend: Spring Boot API
 - frontend: simple web client
@@ -8,29 +8,7 @@ Project structure (clean layout)
 - infra/db/mysql, infra/db/postgres: database init SQL
 - infra/trino: Trino catalog config
 
-Learning data first
--------------------
-This repository is currently a learning sandbox for IDMP-style data integration.
-The bundled company datasets are small demonstration datasets for practicing:
-
-- how source tables are shaped
-- how source-specific names and identifiers are normalized
-- how Ontop mappings turn tables into RDF/IDMP concepts
-- how SPARQL queries answer business questions
-
-Trusted public sources such as openFDA or GSRS are intentionally not bundled at
-this stage. Add them later one source at a time, after the source fields,
-loading steps, and Ontop mappings are clear.
-
-Recommended learning path:
-1. Add or edit a few rows in one CSV/table.
-2. Load the data into PostgreSQL, MySQL, or MongoDB.
-3. Add one Ontop mapping block for one concept.
-4. Run a small SPARQL query to confirm the triples.
-5. Only then add the next table or relationship.
-
-
-Backend demo (Spring Boot)
+Backend (Spring Boot)
 -------------------------
 Run Ontop stack:
   docker-compose up -d

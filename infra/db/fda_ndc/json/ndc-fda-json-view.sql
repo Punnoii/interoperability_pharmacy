@@ -18,7 +18,7 @@ SELECT
   record ->> 'labeler_name' AS labeler_name,
   record ->> 'spl_id' AS spl_id,
   record
-FROM fda_ndc_json_raw.openfda_ndc_json;
+FROM fda_ndc_json_raw.fda_ndc_json;
 
 DROP VIEW IF EXISTS fda_ndc_json.ndc_fda_product_ingredient;
 
@@ -32,7 +32,7 @@ SELECT
   ingredient.value ->> 'name' AS ingredient_name,
   ingredient.value ->> 'strength' AS strength,
   ingredient.value AS ingredient_record
-FROM fda_ndc_json_raw.openfda_ndc_json r
+FROM fda_ndc_json_raw.fda_ndc_json r
 CROSS JOIN LATERAL jsonb_array_elements(r.record -> 'active_ingredients')
   WITH ORDINALITY AS ingredient(value, ordinality);
 
@@ -51,7 +51,7 @@ SELECT
   package.value ->> 'marketing_end_date' AS package_marketing_end_date,
   (package.value ->> 'sample')::boolean AS sample,
   package.value AS package_record
-FROM fda_ndc_json_raw.openfda_ndc_json r
+FROM fda_ndc_json_raw.fda_ndc_json r
 CROSS JOIN LATERAL jsonb_array_elements(r.record -> 'packaging')
   WITH ORDINALITY AS package(value, ordinality);
 
@@ -66,7 +66,7 @@ SELECT
   r.record ->> 'product_ndc' AS product_ndc,
   route.ordinality AS route_order,
   route.value #>> '{}' AS route_name
-FROM fda_ndc_json_raw.openfda_ndc_json r
+FROM fda_ndc_json_raw.fda_ndc_json r
 CROSS JOIN LATERAL jsonb_array_elements(r.record -> 'route')
   WITH ORDINALITY AS route(value, ordinality);
 
@@ -81,7 +81,7 @@ SELECT
   identifier.identifier_type,
   identifier.identifier_order,
   identifier.identifier_value
-FROM fda_ndc_json_raw.openfda_ndc_json r
+FROM fda_ndc_json_raw.fda_ndc_json r
 CROSS JOIN LATERAL (
   SELECT 'RxCUI' AS identifier_type, value #>> '{}' AS identifier_value, ordinality AS identifier_order
   FROM jsonb_array_elements(r.record -> 'openfda' -> 'rxcui') WITH ORDINALITY AS x(value, ordinality)
@@ -107,6 +107,6 @@ SELECT
   r.record ->> 'product_ndc' AS product_ndc,
   unii.ordinality AS unii_order,
   unii.value #>> '{}' AS unii
-FROM fda_ndc_json_raw.openfda_ndc_json r
+FROM fda_ndc_json_raw.fda_ndc_json r
 CROSS JOIN LATERAL jsonb_array_elements(r.record -> 'openfda' -> 'unii')
   WITH ORDINALITY AS unii(value, ordinality);
