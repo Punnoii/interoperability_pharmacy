@@ -5,6 +5,7 @@ import Header from "@/components/layout/Header";
 import Sidebar from "@/components/layout/Sidebar";
 import QueryPanel from "@/components/query/QueryPanel";
 import SubstancePanel from "@/components/substance/SubstancePanel";
+import SubstanceSimilarity from "@/components/explore/SubstanceSimilarity";
 import { useDarkMode } from "@/lib/useDarkMode";
 
 export default function HomePage() {
@@ -28,7 +29,7 @@ export default function HomePage() {
         <main className="flex-1 overflow-hidden flex flex-col">
           {activeTab === "query" && <QueryPanel isDark={isDark} />}
           {activeTab === "substances" && <SubstancePanel isDark={isDark} />}
-          {activeTab === "explore" && <ComingSoon isDark={isDark} label="Explore" />}
+          {activeTab === "explore" && <SubstanceSimilarity isDark={isDark} />}
           {activeTab === "dashboards" && <ComingSoon isDark={isDark} label="Dashboards" />}
         </main>
       </div>

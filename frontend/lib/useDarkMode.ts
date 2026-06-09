@@ -4,8 +4,19 @@ import { useCallback, useEffect, useState } from "react";
 
 const STORAGE_KEY = "rxvkg.darkMode";
 
+function applyDarkClass(isDark: boolean) {
+  if (typeof document === "undefined") return;
+  const root = document.documentElement;
+  if (isDark) root.classList.add("dark");
+  else root.classList.remove("dark");
+}
+
 export function useDarkMode(): [boolean, (next: boolean) => void] {
   const [isDark, setIsDarkState] = useState<boolean>(false);
+
+  useEffect(() => {
+    applyDarkClass(isDark);
+  }, [isDark]);
 
   useEffect(() => {
     try {
