@@ -154,7 +154,7 @@ export default function ProfilePage() {
                 </div>
                 {bookmarks.length === 0 ? (
                   <p className={`text-sm italic ${muted} py-12 text-center`}>
-                    ยังไม่มี query ที่ save — ไปที่ Manual SPARQL mode แล้วกด Save
+                    Don't have any saved queries go to Manual SPARQL mode and click Save
                   </p>
                 ) : (
                   <ul className="flex flex-col gap-2">

@@ -99,9 +99,6 @@ export default function HistoryPage() {
               <X size={14} />
             </button>
           )}
-          <span className={`text-xs tabular-nums ${muted}`}>
-            {filtered.length} / {entries.length}
-          </span>
           {entries.length > 0 && (
             <button
               onClick={handleClearAll}
@@ -124,7 +121,7 @@ export default function HistoryPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className={`rounded-2xl border p-12 text-center ${card}`}>
-            <p className={`text-sm ${muted}`}>ไม่พบ query ที่ตรงกับ &ldquo;{search}&rdquo;</p>
+            <p className={`text-sm ${muted}`}>Don't Have Query &ldquo;{search}&rdquo;</p>
           </div>
         ) : (
           <ul className="flex flex-col gap-3">
@@ -160,7 +157,7 @@ export default function HistoryPage() {
                     <div className="flex items-center gap-1 shrink-0">
                       <button
                         onClick={() => handleLoad(e)}
-                        title="Load query ลง editor"
+                        title="Load query editor"
                         className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded font-medium ${
                           isDark
                             ? "bg-blue-900/40 text-blue-300 hover:bg-blue-900/60"

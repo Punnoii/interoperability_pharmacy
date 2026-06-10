@@ -356,6 +356,8 @@ function getAttributes(pair: PairScore): AttributeRow[] {
   const b = pair.b;
   const tokensA = tokenize(a.name);
   const tokensB = tokenize(b.name);
+  const sharedWords = [...tokensA].filter((t) => tokensB.has(t));
+  const wordPct = Math.round(jaccard(tokensA, tokensB) * 100);
   const trA = trigrams(a.name);
   const trB = trigrams(b.name);
   const sharedTrigrams = [...trA].filter((t) => trB.has(t));
@@ -389,6 +391,15 @@ function getAttributes(pair: PairScore): AttributeRow[] {
       label: "Word tokens",
       valueA: tokensA.size > 0 ? [...tokensA].join(", ") : "—",
       valueB: tokensB.size > 0 ? [...tokensB].join(", ") : "—",
+      matched: false,
+      mono: true,
+      context: true,
+    },
+    {
+      key: "word-overlap",
+      label: "Word overlap",
+      valueA: sharedWords.length > 0 ? sharedWords.join(", ") : "(none)",
+      valueB: `${sharedWords.length}/${tokensA.size + tokensB.size - sharedWords.length} = ${wordPct}%`,
       matched: false,
       mono: true,
       context: true,
@@ -438,6 +449,9 @@ function SimilarityDetailsModal({
   const subtle = isDark ? "text-slate-300" : "text-gray-700";
   const cardBg = isDark ? "bg-slate-900 border-slate-700" : "bg-white border-gray-200";
   const attrs = getAttributes(pair);
+  const criteria = attrs.filter((r) => !r.context);
+  const matchedCount = criteria.filter((r) => r.matched).length;
+  const totalCriteria = criteria.length;
 
   const diffBg = isDark ? "bg-slate-950/40" : "bg-gray-50/60";
   const colBorder = isDark ? "border-slate-800/60" : "border-gray-200/80";
@@ -449,26 +463,30 @@ function SimilarityDetailsModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className={`w-full max-w-3xl rounded-2xl border shadow-2xl overflow-hidden pb-6 ${cardBg}`}
+        className={`w-full max-w-3xl rounded-2xl border shadow-2xl overflow-hidden ${cardBg}`}
       >
         <div className={`flex items-center justify-between px-6 py-4 border-b ${colBorder}`}>
-          <div className="flex items-center gap-3">
-            <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
               isDark ? "bg-blue-900/40" : "bg-blue-50"
             }`}>
               <Network size={18} className="text-blue-500" />
             </div>
-            <h3 className={`text-base font-bold ${heading}`}>Substance Comparison</h3>
+            <div className="min-w-0">
+              <h3 className={`text-base font-bold ${heading}`}>Substance Comparison</h3>
+            </div>
           </div>
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            className={`p-1.5 rounded ${
-              isDark ? "text-slate-400 hover:bg-slate-800" : "text-gray-500 hover:bg-gray-100"
-            }`}
-          >
-            <X size={16} />
-          </button>
+          <div className="flex items-center gap-3 shrink-0">
+            <button
+              onClick={onClose}
+              aria-label="Close"
+              className={`p-1.5 rounded ${
+                isDark ? "text-slate-400 hover:bg-slate-800" : "text-gray-500 hover:bg-gray-100"
+              }`}
+            >
+              <X size={16} />
+            </button>
+          </div>
         </div>
 
         <div className={`grid grid-cols-[160px_1fr_1fr] border-b ${colBorder}`}>
@@ -522,39 +540,28 @@ function SimilarityDetailsModal({
         <div>
           {attrs.map((row, i) => {
             const isLast = i === attrs.length - 1;
+            const labelColor = row.context ? muted : subtle;
+            const valueCls = `${row.context ? "text-xs" : "text-sm"} break-words ${subtle} ${row.mono ? "font-mono leading-snug" : ""}`;
             return (
               <div
                 key={row.key}
-                className={`grid grid-cols-[150px_1fr_1fr] ${
+                className={`px-5 ${isLast ? "pt-3 pb-7" : "py-3"} ${
                   !isLast ? `border-b ${colBorder}` : ""
                 }`}
               >
-                <div className={`px-5 py-3.5 ${diffBg}`}>
-                  <span className={`text-[11px] tracking-wide ${row.context ? muted : subtle}`}>
-                    {row.label}
-                  </span>
-                </div>
-                <div className={`px-5 py-3.5 border-l min-w-0 ${colBorder}`}>
-                  <p
-                    className={`${row.context ? "text-xs" : "text-sm"} break-words ${subtle} ${row.mono ? "font-mono leading-snug" : ""}`}
-                    title={row.valueA}
-                  >
-                    {row.valueA}
-                  </p>
-                </div>
-                <div className={`px-5 py-3.5 border-l min-w-0 ${colBorder}`}>
-                  <p
-                    className={`${row.context ? "text-xs" : "text-sm"} break-words ${subtle} ${row.mono ? "font-mono leading-snug" : ""}`}
-                    title={row.valueB}
-                  >
-                    {row.valueB}
-                  </p>
-                </div>
+                <p className={`text-[11px] tracking-wide mb-1.5 ${labelColor}`}>
+                  {row.label}
+                </p>
+                <p className={valueCls} title={row.valueA}>
+                  {row.valueA}
+                </p>
+                <p className={valueCls} title={row.valueB}>
+                  {row.valueB}
+                </p>
               </div>
             );
           })}
         </div>
-
       </div>
     </div>
   );
