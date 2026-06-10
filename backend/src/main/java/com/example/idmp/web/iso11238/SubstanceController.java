@@ -16,10 +16,6 @@ import com.example.idmp.web.dto.iso11238.CrossSourceResult;
 import com.example.idmp.web.dto.iso11238.SubstanceDetail;
 import com.example.idmp.web.dto.iso11238.SubstanceSummary;
 
-/**
- * REST controller for ISO 11238 Substance operations.
- * Delegates to {@link SubstanceService} for SPARQL-based queries.
- */
 @RestController
 @RequestMapping("/api/substances")
 @CrossOrigin(origins = "*")
@@ -31,44 +27,28 @@ public class SubstanceController {
         this.substanceService = substanceService;
     }
 
-    /**
-     * List all substances from every data source.
-     */
     @GetMapping
     public List<SubstanceSummary> listAll() {
         return substanceService.listAll();
     }
 
-    /**
-     * Search substances by name (case-insensitive contains).
-     */
     @GetMapping("/search")
     public List<SubstanceSummary> search(@RequestParam("name") String name) {
         validateKeyword(name);
         return substanceService.searchByName(name);
     }
 
-    /**
-     * Get full details for a single substance by IRI.
-     * Wikidata enrichment will be added in Task 11.1.
-     */
     @GetMapping("/details")
     public SubstanceDetail details(@RequestParam("iri") String iri) {
         validateIri(iri);
         return substanceService.getDetails(iri);
     }
 
-    /**
-     * Cross-source matching: find substances across all data sources
-     * that share the given identifier value.
-     */
     @GetMapping("/cross-source")
     public List<CrossSourceResult> crossSource(@RequestParam("identifier") String identifier) {
         validateNotBlank(identifier, "identifier");
         return substanceService.crossSourceLookup(identifier);
     }
-
-    // ── validation helpers ──────────────────────────────────────────────
 
     private static void validateIri(String value) {
         if (value == null || value.isBlank()) {

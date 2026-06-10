@@ -20,7 +20,5 @@ const { run } = createHandler({
   },
 });
 
-// next-admin's RequestContext uses required string[] but Next.js optional catch-all uses string[] | undefined
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const handler = (req: Request, ctx: any) => run(req, ctx);
 export { handler as GET, handler as POST, handler as PUT, handler as DELETE };

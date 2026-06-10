@@ -5,6 +5,9 @@ import Link from "next/link";
 import { ArrowLeft, Key, Loader2, Pencil, User as UserIcon, X } from "lucide-react";
 import Header from "@/components/layout/Header";
 import { useDarkMode } from "@/lib/useDarkMode";
+import { getHistory, type HistoryEntry } from "@/lib/queryHistory";
+
+type ProfileTab = "bookmarks" | "history";
 
 interface UserInfo {
   id: string;
@@ -28,6 +31,8 @@ export default function ProfilePage() {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [bookmarks, setBookmarks] = useState<BookmarkRow[]>([]);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [activeTab, setActiveTab] = useState<ProfileTab>("bookmarks");
   const [loading, setLoading] = useState(true);
 
   const [editNameOpen, setEditNameOpen] = useState(false);
@@ -56,6 +61,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     loadAll();
+    setHistory(getHistory());
   }, [loadAll]);
 
   const bg = isDark
@@ -137,43 +143,102 @@ export default function ProfilePage() {
             </section>
 
             <section className="lg:col-span-2 flex flex-col gap-6">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <StatBox
                   isDark={isDark}
-                  label="Total Save Query"
+                  label="Total Query"
                   value={stats?.totalSavedQueries ?? 0}
+                  active={activeTab === "bookmarks"}
+                  onClick={() => setActiveTab("bookmarks")}
                 />
-                <StatBox isDark={isDark} label="…" value={0} muted />
-                <StatBox isDark={isDark} label="…." value={0} muted />
+                <StatBox
+                  isDark={isDark}
+                  label="Query History"
+                  value={history.length}
+                  active={activeTab === "history"}
+                  onClick={() => setActiveTab("history")}
+                />
               </div>
 
               <div className={`rounded-2xl border p-6 ${card} min-h-[400px]`}>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className={`text-base font-semibold ${heading}`}>Save Queries</h3>
-                  <span className={`text-sm tabular-nums ${muted}`}>{bookmarks.length}</span>
-                </div>
-                {bookmarks.length === 0 ? (
-                  <p className={`text-sm italic ${muted} py-12 text-center`}>
-                    Don't have any saved queries go to Manual SPARQL mode and click Save
-                  </p>
+                {activeTab === "bookmarks" ? (
+                  <>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className={`text-base font-semibold ${heading}`}>Save Queries</h3>
+                      <span className={`text-sm tabular-nums ${muted}`}>{bookmarks.length}</span>
+                    </div>
+                    {bookmarks.length === 0 ? (
+                      <p className={`text-sm italic ${muted} py-12 text-center`}>
+                        Don't have any saved queries go to Manual SPARQL mode and click Save
+                      </p>
+                    ) : (
+                      <ul className="flex flex-col gap-2">
+                        {bookmarks.map((b) => (
+                          <li
+                            key={b.id}
+                            className={`px-4 py-3 rounded-lg ${
+                              isDark ? "bg-slate-800/50" : "bg-gray-100"
+                            }`}
+                          >
+                            <div className={`text-sm font-medium ${subtle}`}>{b.name}</div>
+                            <div className={`text-xs mt-0.5 ${muted}`}>
+                              {new Date(b.createdAt).toLocaleDateString("en-GB")}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </>
                 ) : (
-                  <ul className="flex flex-col gap-2">
-                    {bookmarks.map((b) => (
-                      <li
-                        key={b.id}
-                        className={`px-4 py-3 rounded-lg ${
-                          isDark
-                            ? "bg-slate-800/50"
-                            : "bg-gray-100"
-                        }`}
-                      >
-                        <div className={`text-sm font-medium ${subtle}`}>{b.name}</div>
-                        <div className={`text-xs mt-0.5 ${muted}`}>
-                          {new Date(b.createdAt).toLocaleDateString("en-GB")}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+                  <>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className={`text-base font-semibold ${heading}`}>Query History</h3>
+                      <span className={`text-sm tabular-nums ${muted}`}>{history.length}</span>
+                    </div>
+                    {history.length === 0 ? (
+                      <p className={`text-sm italic ${muted} py-12 text-center`}>
+                        Don't have any history yet. Run some queries on the homepage to see them here.
+                      </p>
+                    ) : (
+                      <ul className="flex flex-col gap-2 max-h-[520px] overflow-auto">
+                        {history.map((h) => (
+                          <li
+                            key={h.id}
+                            className={`px-4 py-3 rounded-lg ${
+                              isDark ? "bg-slate-800/50" : "bg-gray-100"
+                            }`}
+                          >
+                            <div className={`text-xs flex items-center gap-2 flex-wrap mb-1 ${muted}`}>
+                              <span>{new Date(h.timestamp).toLocaleString("en-GB")}</span>
+                              {typeof h.resultCount === "number" && (
+                                <>
+                                  <span>·</span>
+                                  <span className={isDark ? "text-emerald-400" : "text-emerald-600"}>
+                                    {h.resultCount} row{h.resultCount === 1 ? "" : "s"}
+                                  </span>
+                                </>
+                              )}
+                              {h.error && (
+                                <>
+                                  <span>·</span>
+                                  <span className={isDark ? "text-red-400" : "text-red-600"}>
+                                    error
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                            <pre
+                              className={`text-xs font-mono leading-relaxed overflow-x-auto max-h-24 ${
+                                isDark ? "text-slate-300" : "text-gray-700"
+                              }`}
+                            >
+                              {h.query.length > 240 ? h.query.slice(0, 240) + "\n..." : h.query}
+                            </pre>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </>
                 )}
               </div>
             </section>
@@ -207,25 +272,35 @@ function StatBox({
   isDark,
   label,
   value,
-  muted: isMuted,
+  active,
+  onClick,
 }: {
   isDark: boolean;
   label: string;
   value: number;
-  muted?: boolean;
+  active: boolean;
+  onClick: () => void;
 }) {
-  const card = isDark
-    ? "bg-slate-900 border-slate-800"
-    : "bg-white border-gray-200";
-  const headingCls = isDark ? "text-slate-200" : "text-gray-700";
-  const valueCls = isMuted
-    ? (isDark ? "text-slate-600" : "text-gray-400")
-    : (isDark ? "text-slate-100" : "text-gray-900");
+  const baseCard = isDark ? "bg-slate-900 border-slate-800" : "bg-white border-gray-200";
+  const activeCard = isDark
+    ? "bg-blue-900/20 border-blue-700"
+    : "bg-blue-50 border-blue-400";
+  const card = active ? activeCard : baseCard;
+  const headingCls = active
+    ? (isDark ? "text-blue-300" : "text-blue-700")
+    : (isDark ? "text-slate-200" : "text-gray-700");
+  const valueCls = isDark ? "text-slate-100" : "text-gray-900";
+  const hover = !active
+    ? (isDark ? "hover:bg-slate-800" : "hover:bg-gray-50")
+    : "";
   return (
-    <div className={`rounded-2xl border p-5 ${card}`}>
+    <button
+      onClick={onClick}
+      className={`rounded-2xl border p-5 transition-colors text-left w-full cursor-pointer ${card} ${hover}`}
+    >
       <p className={`text-sm font-medium mb-3 ${headingCls}`}>{label}</p>
       <p className={`text-3xl font-semibold text-right tabular-nums ${valueCls}`}>{value}</p>
-    </div>
+    </button>
   );
 }
 

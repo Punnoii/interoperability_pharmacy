@@ -98,7 +98,6 @@ public class SourceProfileService {
         }
         }
     } catch (Exception ex) {
-        // Some complex columns, like JSON, may not cast cleanly. Keep profiling usable.
         return List.of();
     }
 

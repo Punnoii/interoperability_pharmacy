@@ -10,9 +10,7 @@ interface SubstanceSimilarityProps {
 interface Concept {
   iri: string;
   name: string;
-  type?: string;
   identifier?: string;
-  source?: string;
 }
 
 interface PairScore {
@@ -32,19 +30,19 @@ interface SparqlResults {
   results: { bindings: SparqlBinding[] };
 }
 
-const DEFAULT_QUERY = `PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
+const DEFAULT_QUERY = `PREFIX idmp-mprd: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11615-MedicinalProducts/>
+PREFIX cmns-dsg: <https://www.omg.org/spec/Commons/Designators/>
 PREFIX cmns-id: <https://www.omg.org/spec/Commons/Identifiers/>
 PREFIX cmns-txt: <https://www.omg.org/spec/Commons/TextDatatype/>
 
-SELECT ?substance ?name ?identifier ?type WHERE {
-  ?substance a idmp-sub:Substance ;
-             idmp-sub:hasSubstanceName ?n ;
-             idmp-sub:hasSubstanceType ?type ;
+SELECT ?substance ?name ?identifier WHERE {
+  ?substance a idmp-mprd:MedicinalProduct ;
+             cmns-dsg:hasName ?n ;
              cmns-id:isIdentifiedBy ?i .
-  ?n idmp-sub:hasSubstanceNameValue ?name .
+  ?n idmp-mprd:hasFullMedicinalProductName ?name .
   ?i cmns-txt:hasTextValue ?identifier .
 }
-LIMIT 20
+LIMIT 150
 `;
 
 function tokenize(s: string): Set<string> {
@@ -84,11 +82,6 @@ function shortIri(iri: string): string {
   return iri.split("/").pop() ?? iri.split("#").pop() ?? iri;
 }
 
-function detectSource(iri: string): string {
-  const m = iri.match(/\/substance\/([a-e])\//);
-  return m ? m[1].toUpperCase() : "?";
-}
-
 function bindingsToConcepts(bindings: SparqlBinding[]): Concept[] {
   const seen = new Set<string>();
   const out: Concept[] = [];
@@ -101,9 +94,7 @@ function bindingsToConcepts(bindings: SparqlBinding[]): Concept[] {
     out.push({
       iri: iriKey,
       name: nameKey ?? shortIri(iriKey),
-      type: b.type?.value ?? b.substanceType?.value,
       identifier: b.identifier?.value ?? b.identifierValue?.value,
-      source: detectSource(iriKey),
     });
   }
   return out;
@@ -139,15 +130,6 @@ function computePairs(items: Concept[]): PairScore[] {
           score = ns * 0.6;
           reasons.push(`Name similarity ${Math.round(ns * 100)}%`);
         }
-
-        if (score > 0 && a.type && b.type && a.type === b.type) {
-          score = Math.min(1, score + 0.08);
-          reasons.push("Same type");
-        }
-      }
-
-      if (a.source && b.source && a.source !== b.source) {
-        reasons.push("Cross-source");
       }
 
       if (score > 0.05) {
@@ -272,7 +254,10 @@ export default function SubstanceSimilarity({ isDark }: SubstanceSimilarityProps
             </span>
           </div>
 
-          <div className={`flex-1 min-h-[220px] max-h-[320px] overflow-y-auto rounded-md ${codeBg}`}>
+          <div
+            style={{ height: 320 }}
+            className={`overflow-y-auto rounded-md ${codeBg}`}
+          >
             {visible.length === 0 ? (
               <p className={`text-xs italic p-4 ${muted}`}>
                 {pairs.length === 0
@@ -281,7 +266,7 @@ export default function SubstanceSimilarity({ isDark }: SubstanceSimilarityProps
               </p>
             ) : (
               <ul className="divide-y divide-current/10">
-                {visible.slice(0, 50).map((p, i) => (
+                {visible.map((p, i) => (
                   <li key={`${p.a.iri}-${p.b.iri}-${i}`}>
                     <button
                       onClick={() => setPicked(p)}
@@ -372,13 +357,6 @@ function getAttributes(pair: PairScore): AttributeRow[] {
       matched: a.name.trim().toLowerCase() === b.name.trim().toLowerCase(),
     },
     {
-      key: "type",
-      label: "Type",
-      valueA: a.type ? shortIri(a.type) : "—",
-      valueB: b.type ? shortIri(b.type) : "—",
-      matched: !!a.type && !!b.type && a.type === b.type,
-    },
-    {
       key: "identifier",
       label: "Identifier",
       valueA: a.identifier ?? "—",
@@ -413,14 +391,6 @@ function getAttributes(pair: PairScore): AttributeRow[] {
       valueB: `${sharedTrigrams.length}/${trA.size + trB.size - sharedTrigrams.length} = ${charPct}%`,
       matched: false,
       mono: true,
-      context: true,
-    },
-    {
-      key: "source",
-      label: "Source",
-      valueA: a.source ? `Company ${a.source}` : "—",
-      valueB: b.source ? `Company ${b.source}` : "—",
-      matched: !!a.source && !!b.source && a.source === b.source,
       context: true,
     },
     {
@@ -503,14 +473,12 @@ function SimilarityDetailsModal({
                 <FlaskConical size={14} />
               </div>
               <div className="min-w-0">
-                <p className={`text-[10px] uppercase tracking-wider ${muted}`}>
-                  Company {pair.a.source ?? "?"}
-                </p>
+                <p className={`text-[10px] uppercase tracking-wider ${muted}`}>Substance A</p>
                 <p className={`text-sm font-bold truncate ${heading}`} title={pair.a.name}>
                   {pair.a.name}
                 </p>
                 <p className={`text-[10px] font-mono truncate ${muted}`} title={pair.a.iri}>
-                  /{pair.a.source?.toLowerCase() ?? "?"}/{shortIri(pair.a.iri)}
+                  {shortIri(pair.a.iri)}
                 </p>
               </div>
             </div>
@@ -523,14 +491,12 @@ function SimilarityDetailsModal({
                 <FlaskConical size={14} />
               </div>
               <div className="min-w-0">
-                <p className={`text-[10px] uppercase tracking-wider ${muted}`}>
-                  Company {pair.b.source ?? "?"}
-                </p>
+                <p className={`text-[10px] uppercase tracking-wider ${muted}`}>Substance B</p>
                 <p className={`text-sm font-bold truncate ${heading}`} title={pair.b.name}>
                   {pair.b.name}
                 </p>
                 <p className={`text-[10px] font-mono truncate ${muted}`} title={pair.b.iri}>
-                  /{pair.b.source?.toLowerCase() ?? "?"}/{shortIri(pair.b.iri)}
+                  {shortIri(pair.b.iri)}
                 </p>
               </div>
             </div>

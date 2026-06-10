@@ -1,5 +1,9 @@
 FROM maven:3.9.9-eclipse-temurin-17 AS dev
 WORKDIR /app
+
+COPY pom.xml .
+RUN mvn -B -q dependency:go-offline -DskipTests || true
+
 CMD ["mvn", "spring-boot:run"]
 
 FROM maven:3.9.9-eclipse-temurin-17 AS build

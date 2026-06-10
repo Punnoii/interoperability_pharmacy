@@ -29,8 +29,6 @@ public class SparqlCacheService {
     public SparqlCacheService(CacheConfig config) {
         this.ttl = config.getTtl();
         this.maxEntries = config.getMaxEntries();
-        // LinkedHashMap with accessOrder=true gives LRU behavior;
-        // removeEldestEntry enforces the max size.
         this.cache = Collections.synchronizedMap(
                 new LinkedHashMap<>(16, 0.75f, true) {
                     @Override
@@ -41,9 +39,7 @@ public class SparqlCacheService {
         );
     }
 
-    /**
-     * Returns the cached result if present and not expired.
-     */
+    
     public Optional<String> get(String queryHash) {
         CacheEntry entry = cache.get(queryHash);
         if (entry == null) {
@@ -56,31 +52,22 @@ public class SparqlCacheService {
         return Optional.of(entry.result());
     }
 
-    /**
-     * Stores a result in the cache. LRU eviction happens automatically
-     * when the cache exceeds maxEntries.
-     */
+    
     public void put(String queryHash, String result) {
         cache.put(queryHash, new CacheEntry(result, Instant.now()));
     }
 
-    /**
-     * Clears the entire cache.
-     */
+    
     public void clearAll() {
         cache.clear();
     }
 
-    /**
-     * Returns the current number of entries in the cache (including potentially expired ones).
-     */
+    
     public int size() {
         return cache.size();
     }
 
-    /**
-     * Computes a SHA-256 hash of the SPARQL query + accept header to use as cache key.
-     */
+    
     public static String computeHash(String query, String accept) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -92,7 +79,6 @@ public class SparqlCacheService {
             }
             return hex.toString();
         } catch (NoSuchAlgorithmException e) {
-            // SHA-256 is guaranteed to be available in every JVM
             throw new RuntimeException("SHA-256 not available", e);
         }
     }

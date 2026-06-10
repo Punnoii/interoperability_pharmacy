@@ -21,11 +21,6 @@ import com.example.idmp.web.dto.iso11238.WikidataEnrichment;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-/**
- * Implementation of {@link SubstanceService} that sends SPARQL queries
- * to the single Ontop-Trino endpoint via {@link OntopClient} and parses
- * the JSON results into typed DTOs.
- */
 @Service
 public class SubstanceServiceImpl implements SubstanceService {
 
@@ -115,7 +110,6 @@ public class SubstanceServiceImpl implements SubstanceService {
             }
         }
 
-        // Wikidata enrichment: use preferred name as search keyword
         WikidataEnrichment wikidata = enrichFromWikidata(names);
 
         return new SubstanceDetail(substanceIri, substanceType, names, identifiers, wikidata);
@@ -140,13 +134,6 @@ public class SubstanceServiceImpl implements SubstanceService {
         return results;
     }
 
-    // ── helpers ──────────────────────────────────────────────────────────
-
-    /**
-     * Search Wikidata using the preferred name from the substance's name list.
-     * Returns {@code wikidataAvailable: false} when the API is unreachable or
-     * no preferred name exists.
-     */
     private WikidataEnrichment enrichFromWikidata(List<NameEntry> names) {
         String preferredName = names.stream()
                 .filter(n -> "PreferredName".equals(n.type()))
@@ -182,10 +169,6 @@ public class SubstanceServiceImpl implements SubstanceService {
         }
     }
 
-    /**
-     * Extract the text value from a SPARQL JSON binding variable.
-     * Each variable is represented as {@code {"value": "..."}}.
-     */
     private static String textValue(JsonNode row, String variable) {
         JsonNode node = row.path(variable);
         if (node.isMissingNode() || node.isNull()) {
@@ -194,10 +177,6 @@ public class SubstanceServiceImpl implements SubstanceService {
         return node.path("value").asText(null);
     }
 
-    /**
-     * Extract the local name (fragment after last '/' or '#') from a full IRI.
-     * For example {@code ".../SubstanceTypeClassifier-Chemical"} → {@code "Chemical"}.
-     */
     static String extractLocalName(String iri) {
         if (iri == null || iri.isEmpty()) {
             return null;
@@ -217,10 +196,6 @@ public class SubstanceServiceImpl implements SubstanceService {
         return iri;
     }
 
-    /**
-     * Derive the data source label from a substance IRI.
-     * Pattern: {@code .../substance/{letter}/...} → {@code "Company A"} etc.
-     */
     static String deriveSource(String substanceIri) {
         if (substanceIri == null) {
             return "Unknown";

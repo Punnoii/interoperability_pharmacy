@@ -111,6 +111,7 @@ services:
 
   trino:
     image: trinodb/trino:479
+    restart: unless-stopped
     ports:
       - "8090:8080"
     volumes:
@@ -127,6 +128,7 @@ services:
 
   ontop-trino:
     image: ontop/ontop:5.3.1
+    restart: unless-stopped
     environment:
       ONTOP_ONTOLOGY_FILE: /opt/ontop/input/idmp-core-entry.rdf
       ONTOP_MAPPING_FILE: /opt/ontop/input/ontop-mapping.obda
@@ -172,8 +174,8 @@ services:
       test: [ "CMD-SHELL", "curl -f http://localhost:8082/api/health || exit 1" ]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 180s
+      retries: 5
+      start_period: 600s
 
   frontend:
     build:

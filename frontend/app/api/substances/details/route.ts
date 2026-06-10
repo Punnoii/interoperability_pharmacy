@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8082";
 
-// GET /api/substances/details?iri=...
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const iri = searchParams.get("iri");

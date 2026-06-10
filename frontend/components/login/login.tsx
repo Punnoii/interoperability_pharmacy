@@ -51,19 +51,19 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-[#f4f7fe] flex items-center justify-center p-4 sm:p-8 font-sans">
 
-      {/* Main Split Container */}
+      {}
       <div className="flex w-full max-w-5xl bg-white rounded-[2rem] shadow-xl overflow-hidden min-h-[700px]">
 
-        {/* Left Side - Empty Card Placeholder */}
+        {}
         <div className="hidden lg:flex lg:w-1/2 bg-[#f8faff] items-center justify-center border-l border-gray-100">
 
         </div>
 
-        {/* Right Side - Login Form */}
+        {}
         <div className="w-full lg:w-1/2 p-8 sm:p-12 lg:p-16 flex flex-col justify-center">
           <div className="max-w-[400px] w-full mx-auto">
 
-            {/* Logo Placeholder */}
+            {}
             <div className="flex justify-center mb-8">
               <div className="w-14 h-14 bg-[#f0f4ff] text-[#365bce] rounded-full flex items-center justify-center">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -72,7 +72,7 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Header */}
+            {}
             <div className="text-center mb-10">
               <h1 className="text-3xl font-bold text-gray-800 mb-3 tracking-tight">
                 {isRegistering ? 'Create an Account' : 'Welcome Back'}
@@ -84,7 +84,7 @@ export default function Login() {
               </p>
             </div>
 
-            {/* Form */}
+            {}
             <form onSubmit={handleSubmit} className="space-y-5">
               {error && (
                 <div className="bg-red-50 text-red-500 text-sm px-4 py-3 rounded-xl mb-4 text-center">
@@ -92,7 +92,7 @@ export default function Login() {
                 </div>
               )}
 
-              {/* Username Input (Only in Register mode) */}
+              {}
               {isRegistering && (
                 <div className="relative">
                   <input
@@ -109,7 +109,7 @@ export default function Login() {
                 </div>
               )}
 
-              {/* Email Input */}
+              {}
               <div className="relative">
                 <input
                   type="email"
@@ -124,7 +124,7 @@ export default function Login() {
                 </div>
               </div>
 
-              {/* Password Input */}
+              {}
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -143,7 +143,7 @@ export default function Login() {
                 </button>
               </div>
 
-              {/* Confirm Password Input (Register only) */}
+              {}
               {isRegistering && (
                 <div className="relative">
                   <input
@@ -164,7 +164,7 @@ export default function Login() {
                 </div>
               )}
 
-              {/* Remember Me & Forgot Password */}
+              {}
               {!isRegistering && (
                 <div className="flex items-center justify-between text-[13px] py-1 mt-2">
                   <label className="flex items-center gap-2.5 cursor-pointer text-gray-500 hover:text-gray-700 transition-colors">
@@ -185,7 +185,7 @@ export default function Login() {
                 </div>
               )}
 
-              {/* Login/Register Button */}
+              {}
               <button
                 type="submit"
                 disabled={loading}
@@ -196,7 +196,7 @@ export default function Login() {
                   : (isRegistering ? 'Sign Up' : 'Login')}
               </button>
 
-              {/* Google Login Button */}
+              {}
               <button
                 type="button"
                 className="w-full bg-white text-gray-600 font-semibold py-4 rounded-2xl border border-gray-200 hover:bg-gray-50 transition-colors flex items-center justify-center gap-3 mt-4"
@@ -211,7 +211,7 @@ export default function Login() {
               </button>
             </form>
 
-            {/* Footer Sign Up / Sign In Toggle */}
+            {}
             <p className="text-center mt-10 text-gray-500 text-[13px] font-medium">
               {isRegistering ? 'Already have an account?' : "Don't have an account yet?"}{' '}
               <button

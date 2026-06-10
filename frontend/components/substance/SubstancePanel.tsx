@@ -87,7 +87,6 @@ function sourceColor(source: string, dark: boolean) {
   return map[key] ?? (dark ? "bg-slate-700 text-slate-300" : "bg-gray-100 text-gray-700");
 }
 
-// ── SubstancePanel Main ────────────────────────────────────────────────────────
 export default function SubstancePanel({ isDark }: SubstancePanelProps) {
   const [substances, setSubstances] = useState<SubstanceSummary[]>([]);
   const [filtered, setFiltered] = useState<SubstanceSummary[]>([]);
@@ -162,7 +161,6 @@ export default function SubstancePanel({ isDark }: SubstancePanelProps) {
         );
         if (res.ok) setCrossResults(await res.json());
       } catch {
-        // ignore
       } finally {
         setCrossLoading(false);
       }

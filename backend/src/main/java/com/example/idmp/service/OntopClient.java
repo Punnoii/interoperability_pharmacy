@@ -49,7 +49,6 @@ public class OntopClient {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Accept header: " + acceptValue);
     }
 
-    // Check cache before querying Ontop
     String cacheKey = SparqlCacheService.computeHash(query, acceptValue);
     Optional<String> cached = cacheService.get(cacheKey);
     if (cached.isPresent()) {
@@ -59,7 +58,6 @@ public class OntopClient {
           .body(cached.get());
     }
 
-    // Cache miss — query Ontop
     MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
     form.add("query", query);
 
@@ -77,7 +75,6 @@ public class OntopClient {
         responseType = acceptType;
       }
 
-      // Store result in cache
       String responseBody = response.getBody();
       if (responseBody != null) {
         cacheService.put(cacheKey, responseBody);

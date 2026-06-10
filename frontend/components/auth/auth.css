@@ -1,4 +1,4 @@
-/* Auth pages (login/register) — extracted from app/page.tsx */
+
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
 
 .auth-main * {
@@ -321,7 +321,6 @@
     transform: translateX(20%);
 }
 
-/* Tablet */
 @media (max-width: 1024px) {
     .auth-main .container {
         max-width: 700px;
@@ -339,7 +338,6 @@
     }
 }
 
-/* Mobile */
 @media (max-width: 768px) {
     .auth-main {
         padding: 10px;
@@ -406,7 +404,6 @@
     }
 }
 
-/* Small mobile */
 @media (max-width: 480px) {
     .auth-main .container {
         min-height: 400px;

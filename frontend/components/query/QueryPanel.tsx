@@ -87,21 +87,20 @@ function detectLockedSource(query: string): Exclude<SourceKey, "all"> | null {
   return null;
 }
 
-const DEFAULT_QUERY = `PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
+const DEFAULT_QUERY = `PREFIX idmp-mprd: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11615-MedicinalProducts/>
+PREFIX cmns-dsg: <https://www.omg.org/spec/Commons/Designators/>
 PREFIX cmns-id: <https://www.omg.org/spec/Commons/Identifiers/>
 PREFIX cmns-txt: <https://www.omg.org/spec/Commons/TextDatatype/>
 
-SELECT ?substance ?substanceType ?nameValue ?identifierValue
+SELECT ?product ?productName ?ndcCode
 WHERE {
-  ?substance a idmp-sub:Substance ;
-             idmp-sub:hasSubstanceType ?substanceType ;
-             idmp-sub:hasSubstanceName ?n ;
-             cmns-id:isIdentifiedBy ?i .
-  ?n idmp-sub:hasSubstanceNameValue ?nameValue .
-  ?i cmns-txt:hasTextValue ?identifierValue .
+  ?product a idmp-mprd:MedicinalProduct ;
+           cmns-dsg:hasName ?n ;
+           cmns-id:isIdentifiedBy ?i .
+  ?n idmp-mprd:hasFullMedicinalProductName ?productName .
+  ?i cmns-txt:hasTextValue ?ndcCode .
 }
-ORDER BY ?substance
-LIMIT 50
+LIMIT 100
 `;
 const PAGE_SIZE = 10;
 
@@ -890,36 +889,6 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
           )}
         </div>
         <div className="flex flex-col gap-2">
-          {(() => {
-            const lockedSource = detectLockedSource(query);
-            return (
-              <>
-                <select
-                  value={source}
-                  onChange={(e) => setSource(e.target.value as SourceKey)}
-                  disabled={isLoading}
-                  title={
-                    lockedSource
-                      ? `This query targets Company ${lockedSource.toUpperCase()} (IRI hardcoded) other sources have no data for it`
-                      : "Inject into the query"
-                  }
-                  className={`px-2 py-2 rounded border text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-60 ${inputCls}`}
-                  style={{ minWidth: 240 }}
-                >
-                  {SOURCES.map((opt) => {
-                    const noData =
-                      lockedSource !== null && opt.key !== "all" && opt.key !== lockedSource;
-                    return (
-                      <option key={opt.key} value={opt.key} disabled={noData}>
-                        {opt.label}
-                        {noData ? " — no data" : ""}
-                      </option>
-                    );
-                  })}
-                </select>
-              </>
-            );
-          })()}
           <button
             onClick={() => handleRun()}
             disabled={isLoading}

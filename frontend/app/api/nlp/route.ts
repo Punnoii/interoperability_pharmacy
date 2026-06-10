@@ -58,11 +58,9 @@ Then output the final SPARQL query.`;
 }
 
 function extractSparql(text: string): string {
-  // Try ```sparql ... ``` or ``` ... ``` fence first
   const fenceMatch = text.match(/```(?:sparql)?\n?([\s\S]+?)```/i);
   if (fenceMatch) return fenceMatch[1].trim();
 
-  // Find earliest keyword: PREFIX / SELECT / ASK / CONSTRUCT / DESCRIBE
   const indices: number[] = [];
   for (const kw of ["PREFIX", "SELECT", "ASK", "CONSTRUCT", "DESCRIBE"]) {
     const idx = text.toUpperCase().indexOf(kw);
@@ -75,7 +73,6 @@ function extractSparql(text: string): string {
   return text.trim();
 }
 
-// Model fallback chain — tries each model in order on 429/quota errors
 const MODEL_CHAIN = [
   "gemini-2.5-flash",
   "gemini-2.5-flash-lite",

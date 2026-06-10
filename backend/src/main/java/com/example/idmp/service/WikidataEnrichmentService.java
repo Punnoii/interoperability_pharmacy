@@ -22,8 +22,8 @@ public class WikidataEnrichmentService {
 
   public WikidataEnrichmentService(
       RestClient restClient,
-      @Value("${wikidata.api-url}") String apiUrl,
-      @Value("${wikidata.language}") String language){
+      @Value("${wikidata.api-url:https://www.wikidata.org/w/api.php}") String apiUrl,
+      @Value("${wikidata.language:en}") String language){
     this.restClient = restClient;
     this.apiUrl = apiUrl;
     this.language = language;
@@ -46,7 +46,6 @@ public class WikidataEnrichmentService {
         .header("Accept", "application/json")
         .retrieve()
         .body(JsonNode.class);
-
 
     List<WikidataSearchItem> items = new ArrayList<>();
     if (root != null) {
