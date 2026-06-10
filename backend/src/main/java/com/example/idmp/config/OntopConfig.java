@@ -6,7 +6,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 
 @Configuration
-@EnableConfigurationProperties({OntopProperties.class, CacheConfig.class})
+@EnableConfigurationProperties({
+    OntopProperties.class,
+    CacheConfig.class,
+    TrinoProperties.class
+})
+
 public class OntopConfig {
   @Bean
   public RestClient restClient(RestClient.Builder builder) {

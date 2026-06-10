@@ -18,20 +18,16 @@ Run backend:
 
 Endpoints:
   POST http://localhost:8082/api/sparql
-  GET  http://localhost:8082/api/entity?iri=...&limit=100
-  GET  http://localhost:8082/api/navigate?iri=...&predicate=...&direction=out&limit=100
   GET  http://localhost:8082/api/health
+  GET  http://localhost:8082/api/health/ontop
 
 Examples:
   curl -X POST http://localhost:8082/api/sparql     -H 'Content-Type: application/json'     -d '{"query":"SELECT * WHERE { ?s ?p ?o } LIMIT 10"}'
 
-  curl "http://localhost:8082/api/entity?iri=https://example.org/resource/123&limit=50"
-
-  curl "http://localhost:8082/api/navigate?iri=https://example.org/resource/123&predicate=https://example.org/vocab/relatedTo&direction=out&limit=50"
+  curl "http://localhost:8082/api/health/ontop"
 
 Notes:
-  - Use endpoint=default or endpoint=mysql to select Ontop instance.
-  - Override Ontop URLs with ONTOP_ENDPOINT_DEFAULT / ONTOP_ENDPOINT_MYSQL.
+  - Override the Ontop URL with ONTOP_ENDPOINT.
   - For RDF output, use CONSTRUCT or DESCRIBE query with Accept e.g. text/turtle.
 
 Frontend demo (separate folder)
@@ -43,4 +39,5 @@ Open:
   http://localhost:5173
 
 Note:
-  - Frontend calls backend API URL (default http://localhost:8082/api/sparql).
+  - The main page is now a Mapping Assistant shell.
+  - The SPARQL editor calls the backend API URL (default http://localhost:8082/api/sparql).

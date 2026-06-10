@@ -10,6 +10,6 @@ ontop:
   endpoint: ${ONTOP_ENDPOINT:http://localhost:8080/sparql}
   default-accept: application/sparql-results+json
 
-wikidata:
-  api-url: ${WIKIDATA_API_URL:https://www.wikidata.org/w/api.php}
-  language: ${WIKIDATA_LANGUAGE:en}
+trino:
+  jdbc-url: ${TRINO_JDBC_URL:jdbc:trino://localhost:8090}
+  user: ${TRINO_USER:mapping-assistant}

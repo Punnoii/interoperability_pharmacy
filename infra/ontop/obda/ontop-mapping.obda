@@ -1,5 +1,6 @@
 [PrefixDeclaration] 
 :               http://example.com/idmp-demo/
+obda:           https://w3id.org/obda/vocabulary#
 idmp-mprd:      https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11615-MedicinalProducts/
 idmp-sub:       https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/
 idmp-dtp:       https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO21090-HarmonizedDatatypes/
@@ -7,6 +8,8 @@ cmns-id:        https://www.omg.org/spec/Commons/Identifiers/
 cmns-dsg:       https://www.omg.org/spec/Commons/Designators/
 cmns-txt:       https://www.omg.org/spec/Commons/TextDatatype/
 cmns-rlcmp:     https://www.omg.org/spec/Commons/RolesAndCompositions/
+cmns-col:       https://www.omg.org/spec/Commons/Collections/
+cmns-qtu:      https://www.omg.org/spec/Commons/QuantitiesAndUnits/
 lcc-639-1:      https://www.omg.org/spec/LCC/Languages/ISO639-1-LanguageCodes/
 rdf:            http://www.w3.org/1999/02/22-rdf-syntax-ns#
 rdfs:           http://www.w3.org/2000/01/rdf-schema#
@@ -255,4 +258,366 @@ source SELECT unii
        FROM postgres.gsrs.substance
        WHERE unii IS NOT NULL
          AND status = 'approved' 
+
+mappingId GsrsSubstanceNameType
+target :gsrs/substance-name/{name_uuid} a idmp-sub:SubstanceName .
+source SELECT name_uuid
+       FROM postgres.gsrs.substance_name
+       WHERE unii IS NOT NULL
+         AND name_uuid IS NOT NULL
+         AND name_value IS NOT NULL
+
+mappingId GsrsSubstanceNameLink
+target  :gsrs/substance/{unii} idmp-sub:hasSubstanceName :gsrs/substance-name/{name_uuid} .
+source  SELECT unii,name_uuid
+        FROM postgres.gsrs.substance_name
+        WHERE unii IS NOT NULL
+            AND name_uuid IS NOT NULL
+            AND name_value IS NOT NULL
+
+mappingId GsrsSubstanceNameValue
+target  :gsrs/substance-name/{name_uuid} idmp-sub:hasSubstanceNameValue "{name_value}"^^xsd:string .
+source  SELECT name_uuid, name_value
+        FROM postgres.gsrs.substance_name
+        WHERE unii IS NOT NULL
+            AND name_uuid IS NOT NULL
+            AND name_value IS NOT NULL
+
+mappingId GsrsPreferredSubstanceNameType
+target :gsrs/substance-name/{name_uuid} idmp-sub:hasSubstanceNameType idmp-sub:SubstanceNameClassifier-PreferredName .
+source SELECT name_uuid
+       FROM postgres.gsrs.substance_name
+       WHERE name_uuid IS NOT NULL
+         AND name_value IS NOT NULL
+         AND preferred = true
+
+mappingId GsrsDisplaySubstanceNameType
+target :gsrs/substance-name/{name_uuid} idmp-sub:hasSubstanceNameType idmp-sub:SubstanceNameClassifier-DisplayName .
+source SELECT name_uuid
+       FROM postgres.gsrs.substance_name
+       WHERE name_uuid IS NOT NULL
+         AND name_value IS NOT NULL
+         AND display_name = true
+
+mappingId GsrsSubstanceNameDomainType
+target :gsrs/substance-name-domain/{domain_key} a idmp-sub:SubstanceNameDomain .
+source SELECT DISTINCT domain_key
+       FROM postgres.gsrs.substance_name_domain
+       WHERE domain_key IS NOT NULL
+         AND domain_key <> ''
+
+mappingId GsrsSubstanceNameDomainLabel
+target :gsrs/substance-name-domain/{domain_key} rdfs:label "{domain_value}"^^xsd:string .
+source SELECT DISTINCT domain_key,
+              domain_value
+       FROM postgres.gsrs.substance_name_domain
+       WHERE domain_key IS NOT NULL
+         AND domain_key <> ''
+         AND domain_value IS NOT NULL
+
+mappingId GsrsSubstanceNameDomainLink
+target :gsrs/substance-name/{name_uuid} idmp-sub:hasSubstanceNameDomain :gsrs/substance-name-domain/{domain_key} .
+source SELECT name_uuid,
+              domain_key
+       FROM postgres.gsrs.substance_name_domain
+       WHERE name_uuid IS NOT NULL
+         AND domain_key IS NOT NULL
+         AND domain_key <> ''
+
+mappingId GsrsSubstanceCodeType
+target :gsrs/substance-code/{code_uuid} a idmp-sub:SubstanceCode .
+source SELECT c.code_uuid
+       FROM postgres.gsrs.substance_code c
+       JOIN postgres.gsrs.substance s
+         ON s.unii = c.unii
+       WHERE s.status = 'approved'
+         AND c.unii IS NOT NULL
+         AND c.code_uuid IS NOT NULL
+         AND c.code_value IS NOT NULL
+         AND c.code_system IS NOT NULL
+
+mappingId GsrsSubstanceCodeValue
+target :gsrs/substance-code/{code_uuid} cmns-txt:hasTextValue "{code_value}"^^xsd:string .
+source SELECT c.code_uuid,
+              c.code_value
+       FROM postgres.gsrs.substance_code c
+       JOIN postgres.gsrs.substance s
+         ON s.unii = c.unii
+       WHERE s.status = 'approved'
+         AND c.unii IS NOT NULL
+         AND c.code_uuid IS NOT NULL
+         AND c.code_value IS NOT NULL
+         AND c.code_system IS NOT NULL
+
+mappingId GsrsSubstanceCodeLink
+target :gsrs/substance/{unii} cmns-id:isIdentifiedBy :gsrs/substance-code/{code_uuid} .
+source SELECT c.unii,
+              c.code_uuid
+       FROM postgres.gsrs.substance_code c
+       JOIN postgres.gsrs.substance s
+         ON s.unii = c.unii
+       WHERE s.status = 'approved'
+         AND c.unii IS NOT NULL
+         AND c.code_uuid IS NOT NULL
+         AND c.code_value IS NOT NULL
+         AND c.code_system IS NOT NULL
+
+mappingId GsrsSubstanceCodeIdentifies
+target :gsrs/substance-code/{code_uuid} cmns-id:identifies :gsrs/substance/{unii} .
+source SELECT c.unii,
+              c.code_uuid
+       FROM postgres.gsrs.substance_code c
+       JOIN postgres.gsrs.substance s
+         ON s.unii = c.unii
+       WHERE s.status = 'approved'
+         AND c.unii IS NOT NULL
+         AND c.code_uuid IS NOT NULL
+         AND c.code_value IS NOT NULL
+         AND c.code_system IS NOT NULL
+
+mappingId GsrsCodeSystemType
+target :gsrs/code-system/{code_system} a idmp-dtp:CodeSystem .
+source SELECT DISTINCT code_system
+       FROM postgres.gsrs.substance_code
+       WHERE code_system IS NOT NULL
+
+mappingId GsrsSubstanceCodeSystemLink
+target :gsrs/substance-code/{code_uuid} cmns-col:isMemberOf :gsrs/code-system/{code_system} .
+source SELECT code_uuid,
+              code_system
+       FROM postgres.gsrs.substance_code
+       WHERE code_uuid IS NOT NULL
+         AND code_system IS NOT NULL
+
+mappingId GsrsCodeSystemName
+target :gsrs/code-system/{code_system} rdfs:label "{code_system}"^^xsd:string .
+source SELECT DISTINCT code_system
+       FROM postgres.gsrs.substance_code
+       WHERE code_system IS NOT NULL
+
+mappingId GsrsSubstanceNameLanguageLink
+target :gsrs/substance-name/{name_uuid} idmp-dtp:hasLanguageCode lcc-639-1:{language_key} .
+source SELECT name_uuid,
+              language_key
+       FROM postgres.gsrs.substance_name_language
+       WHERE name_uuid IS NOT NULL
+         AND language_key IS NOT NULL
+         AND language_key <> ''
+
+mappingId GsrsMolecularFormulaType
+target :gsrs/molecular-formula/{unii} a idmp-sub:MolecularFormula .
+source SELECT unii
+       FROM postgres.gsrs.substance
+       WHERE status = 'approved'
+         AND unii IS NOT NULL
+         AND molecular_formula IS NOT NULL
+         AND molecular_formula <> ''
+
+mappingId GsrsMolecularFormulaValue
+target :gsrs/molecular-formula/{unii} cmns-txt:hasTextValue "{molecular_formula}"^^xsd:string .
+source SELECT unii,
+              molecular_formula
+       FROM postgres.gsrs.substance
+       WHERE status = 'approved'
+         AND unii IS NOT NULL
+         AND molecular_formula IS NOT NULL
+         AND molecular_formula <> ''
+
+mappingId GsrsSubstanceDefiningMolecularFormulaLink
+target :gsrs/substance/{unii} idmp-sub:hasDefiningMolecularFormula :gsrs/molecular-formula/{unii} .
+source SELECT unii
+       FROM postgres.gsrs.substance
+       WHERE status = 'approved'
+         AND unii IS NOT NULL
+         AND molecular_formula IS NOT NULL
+         AND molecular_formula <> ''
+
+mappingId GsrsSmilesType
+target :gsrs/smiles/{unii} a idmp-sub:SMILES .
+source SELECT unii
+       FROM postgres.gsrs.substance
+       WHERE status = 'approved'
+         AND unii IS NOT NULL
+         AND smiles IS NOT NULL
+         AND smiles <> ''
+
+mappingId GsrsSmilesValue
+target :gsrs/smiles/{unii} idmp-sub:hasSMILESValue "{smiles}"^^xsd:string .
+source SELECT unii,
+              smiles
+       FROM postgres.gsrs.substance
+       WHERE status = 'approved'
+         AND unii IS NOT NULL
+         AND smiles IS NOT NULL
+         AND smiles <> ''
+
+mappingId GsrsSubstanceSmilesLink
+target :gsrs/substance/{unii} idmp-sub:hasSMILES :gsrs/smiles/{unii} .
+source SELECT unii
+       FROM postgres.gsrs.substance
+       WHERE status = 'approved'
+         AND unii IS NOT NULL
+         AND smiles IS NOT NULL
+         AND smiles <> ''
+
+mappingId GsrsMolecularWeightType
+target :gsrs/molecular-weight/{unii} a idmp-sub:MolecularWeight .
+source SELECT unii
+       FROM postgres.gsrs.substance
+       WHERE status = 'approved'
+         AND unii IS NOT NULL
+         AND molecular_weight IS NOT NULL
+         AND molecular_weight <> ''
+
+mappingId GsrsMolecularWeightValue
+target :gsrs/molecular-weight/{unii} cmns-qtu:hasNumericValue "{molecular_weight}"^^xsd:decimal .
+source SELECT unii,
+              molecular_weight
+       FROM postgres.gsrs.substance
+       WHERE status = 'approved'
+         AND unii IS NOT NULL
+         AND molecular_weight IS NOT NULL
+         AND molecular_weight <> ''
+
+mappingId GsrsSubstanceDefiningMolecularWeightLink
+target :gsrs/substance/{unii} idmp-sub:hasDefiningMolecularWeight :gsrs/molecular-weight/{unii} .
+source SELECT unii
+       FROM postgres.gsrs.substance
+       WHERE status = 'approved'
+         AND unii IS NOT NULL
+         AND molecular_weight IS NOT NULL
+         AND molecular_weight <> ''
+
+mappingId GsrsSubstanceCanonicalIri
+target :substance/{unii} obda:isCanonicalIRIOf :gsrs/substance/{unii} .
+source SELECT unii
+       FROM postgres.gsrs.substance
+       WHERE status = 'approved'
+         AND unii IS NOT NULL
+
+mappingId FdaSubstanceCanonicalIri
+target :substance/{unii} obda:isCanonicalIRIOf :fda/substance/{product_id}/{ingredient_order} .
+source SELECT i.product_id,
+              i.ingredient_order,
+              u.unii
+       FROM postgres.fda_ndc_json.ndc_fda_product_ingredient i
+       JOIN postgres.fda_ndc_json.ndc_fda_product_unii_candidate u
+         ON u.product_id = i.product_id
+        AND u.unii_order = i.ingredient_order
+       JOIN postgres.fda_ndc_json.ndc_fda_product p
+         ON p.product_id = i.product_id
+       JOIN postgres.gsrs.substance s
+         ON s.unii = u.unii
+       WHERE p.finished = true
+         AND s.status = 'approved'
+         AND i.ingredient_name IS NOT NULL
+         AND u.unii IS NOT NULL
+
+mappingId FdaActiveIngredientPlayedByExactNameCandidate
+target :fda/active-ingredient/{product_id}/{ingredient_order} cmns-rlcmp:isPlayedBy :substance/{matched_unii} .
+source SELECT product_id,
+              ingredient_order,
+              matched_unii
+       FROM postgres.fda_ndc_json.ndc_fda_ingredient_name_match_candidate
+       WHERE matched_unii IS NOT NULL
+         AND match_method = 'EXACT_NAME'
+         AND match_status = 'candidate'
+
+mappingId FdaUnmatchedSubstanceType
+target :fda/unmatched-substance/{product_id}/{ingredient_order} a idmp-sub:Substance .
+source SELECT u.product_id,
+              u.ingredient_order
+       FROM postgres.fda_ndc_json.ndc_fda_unmatched_ingredient u
+       LEFT JOIN postgres.fda_ndc_json.ndc_fda_ingredient_name_match_candidate c
+         ON c.product_id = u.product_id
+        AND c.ingredient_order = u.ingredient_order
+       WHERE c.product_id IS NULL
+
+mappingId FdaUnmatchedSubstanceNameType
+target :fda/unmatched-substance-name/{product_id}/{ingredient_order} a idmp-sub:SubstanceName .
+source SELECT u.product_id,
+              u.ingredient_order
+       FROM postgres.fda_ndc_json.ndc_fda_unmatched_ingredient u
+       LEFT JOIN postgres.fda_ndc_json.ndc_fda_ingredient_name_match_candidate c
+         ON c.product_id = u.product_id
+        AND c.ingredient_order = u.ingredient_order
+       WHERE c.product_id IS NULL
+
+mappingId FdaUnmatchedSubstanceNameLink
+target :fda/unmatched-substance/{product_id}/{ingredient_order} idmp-sub:hasSubstanceName :fda/unmatched-substance-name/{product_id}/{ingredient_order} .
+source SELECT u.product_id,
+              u.ingredient_order
+       FROM postgres.fda_ndc_json.ndc_fda_unmatched_ingredient u
+       LEFT JOIN postgres.fda_ndc_json.ndc_fda_ingredient_name_match_candidate c
+         ON c.product_id = u.product_id
+        AND c.ingredient_order = u.ingredient_order
+       WHERE c.product_id IS NULL
+
+mappingId FdaUnmatchedSubstanceNameValue
+target :fda/unmatched-substance-name/{product_id}/{ingredient_order} idmp-sub:hasSubstanceNameValue "{ingredient_name}"^^xsd:string .
+source SELECT u.product_id,
+              u.ingredient_order,
+              u.ingredient_name
+       FROM postgres.fda_ndc_json.ndc_fda_unmatched_ingredient u
+       LEFT JOIN postgres.fda_ndc_json.ndc_fda_ingredient_name_match_candidate c
+         ON c.product_id = u.product_id
+        AND c.ingredient_order = u.ingredient_order
+       WHERE c.product_id IS NULL
+
+mappingId FdaActiveIngredientPlayedByUnmatchedSubstance
+target :fda/active-ingredient/{product_id}/{ingredient_order} cmns-rlcmp:isPlayedBy :fda/unmatched-substance/{product_id}/{ingredient_order} .
+source SELECT u.product_id,
+              u.ingredient_order
+       FROM postgres.fda_ndc_json.ndc_fda_unmatched_ingredient u
+       LEFT JOIN postgres.fda_ndc_json.ndc_fda_ingredient_name_match_candidate c
+         ON c.product_id = u.product_id
+        AND c.ingredient_order = u.ingredient_order
+       WHERE c.product_id IS NULL
+
+mappingId GsrsSubstanceRelationshipType
+target :gsrs/substance-relationship/{relationship_uuid} a idmp-sub:SubstanceRelationship .
+source SELECT relationship_uuid
+       FROM postgres.gsrs.substance_relationship
+       WHERE relationship_uuid IS NOT NULL
+         AND source_unii IS NOT NULL
+         AND related_unii IS NOT NULL
+
+mappingId GsrsSubstanceRelationshipSubject
+target :gsrs/substance-relationship/{relationship_uuid} idmp-sub:hasSubjectSubstance :substance/{source_unii} .
+source SELECT relationship_uuid, source_unii
+       FROM postgres.gsrs.substance_relationship
+       WHERE relationship_uuid IS NOT NULL
+         AND source_unii IS NOT NULL
+         AND related_unii IS NOT NULL
+
+mappingId GsrsSubstanceRelationshipRelated
+target :gsrs/substance-relationship/{relationship_uuid} idmp-sub:hasRelatedSubstance :substance/{related_unii} .
+source SELECT relationship_uuid, related_unii
+       FROM postgres.gsrs.substance_relationship
+       WHERE relationship_uuid IS NOT NULL
+         AND source_unii IS NOT NULL
+         AND related_unii IS NOT NULL
+
+mappingId GsrsSubstanceRelationshipCodeType
+target :gsrs/substance-relationship-code/{relationship_type_key} a idmp-sub:SubstanceRelationshipCode .
+source SELECT DISTINCT relationship_type_key
+       FROM postgres.gsrs.substance_relationship
+       WHERE relationship_type_key IS NOT NULL
+         AND relationship_type IS NOT NULL
+
+mappingId GsrsSubstanceRelationshipCodeValue
+target :gsrs/substance-relationship-code/{relationship_type_key} cmns-txt:hasTextValue "{relationship_type}"^^xsd:string .
+source SELECT DISTINCT relationship_type_key, relationship_type
+       FROM postgres.gsrs.substance_relationship
+       WHERE relationship_type_key IS NOT NULL
+         AND relationship_type IS NOT NULL
+
+mappingId GsrsSubstanceRelationshipCodeLink
+target :gsrs/substance-relationship/{relationship_uuid} cmns-dsg:isSignifiedBy :gsrs/substance-relationship-code/{relationship_type_key} .
+source SELECT relationship_uuid, relationship_type_key
+       FROM postgres.gsrs.substance_relationship
+       WHERE relationship_uuid IS NOT NULL
+         AND relationship_type_key IS NOT NULL
+         AND source_unii IS NOT NULL
+         AND related_unii IS NOT NULL
 ]]

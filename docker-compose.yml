@@ -159,6 +159,8 @@ services:
       - "8082:8082"
     environment:
       ONTOP_ENDPOINT: http://ontop-trino:8080/sparql
+      TRINO_JDBC_URL: jdbc:trino://trino:8080
+      TRINO_USER: mapping-assistant
     depends_on:
       ontop-trino:
         condition: service_healthy

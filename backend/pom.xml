@@ -49,6 +49,13 @@
       <scope>test</scope>
     </dependency>
 
+    <!-- Trino JDBC Driver -->
+    <dependency>
+      <groupId>io.trino</groupId>
+      <artifactId>trino-jdbc</artifactId>
+      <version>479</version>
+    </dependency>
+
     <!-- Property-Based Testing -->
     <dependency>
       <groupId>net.jqwik</groupId>
