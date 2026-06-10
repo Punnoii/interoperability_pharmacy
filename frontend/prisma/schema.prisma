@@ -1,0 +1,38 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+generator nextAdmin {
+  provider = "node node_modules/@premieroctet/next-admin-generator-prisma/dist/index.js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String          @id @default(cuid())
+  username      String?
+  email         String?         @unique
+  passwordHash  String?
+  role          String          @default("USER")
+  darkMode      Boolean         @default(false)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  bookmarks     QueryBookmark[]
+}
+
+model QueryBookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  query     String
+  source    String   @default("all")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
