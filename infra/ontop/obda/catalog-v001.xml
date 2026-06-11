@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<catalog prefer="public" xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
+    <uri id="User Entered Import Resolution" name="file:/opt/ontop/ontology/LCC/Languages/ISO639-1-LanguageCodes.rdf" uri="file:/Users/pun/Desktop/interoperability_pharmacy/infra/ontop/idmp/ontology/master/v1.3.0/LCC/Languages/ISO639-1-LanguageCodes.rdf"/>
+    <uri id="User Entered Import Resolution" name="file:/opt/ontop/ontology/CMNS/Classifiers.rdf" uri="file:/Users/pun/Desktop/interoperability_pharmacy/infra/ontop/idmp/ontology/master/v1.3.0/CMNS/Classifiers.rdf"/>
+    <uri id="User Entered Import Resolution" name="file:/opt/ontop/ontology/CMNS/Designators.rdf" uri="file:/Users/pun/Desktop/interoperability_pharmacy/infra/ontop/idmp/ontology/master/v1.3.0/CMNS/Designators.rdf"/>
+    <uri id="User Entered Import Resolution" name="file:/opt/ontop/ontology/CMNS/TextDatatype.rdf" uri="file:/Users/pun/Desktop/interoperability_pharmacy/infra/ontop/idmp/ontology/master/v1.3.0/CMNS/TextDatatype.rdf"/>
+    <uri id="User Entered Import Resolution" name="file:/opt/ontop/ontology/CMNS/Identifiers.rdf" uri="file:/Users/pun/Desktop/interoperability_pharmacy/infra/ontop/idmp/ontology/master/v1.3.0/CMNS/Identifiers.rdf"/>
+    <uri id="User Entered Import Resolution" name="file:/opt/ontop/ontology/ISO/ISO21090-HarmonizedDatatypes.rdf" uri="file:/Users/pun/Desktop/interoperability_pharmacy/infra/ontop/idmp/ontology/master/v1.3.0/ISO/ISO21090-HarmonizedDatatypes.rdf"/>
+    <uri id="User Entered Import Resolution" name="https://www.omg.org/spec/Commons/StatisticalMeasures/" uri="file:/Users/pun/Desktop/interoperability_pharmacy/infra/ontop/idmp/ontology/master/v1.3.0/CMNS/StatisticalMeasures.rdf"/>
+    <uri id="User Entered Import Resolution" name="file:/opt/ontop/ontology/ISO/ISO11615-MedicinalProducts.rdf" uri="file:/Users/pun/Desktop/interoperability_pharmacy/infra/ontop/idmp/ontology/master/v1.3.0/ISO/ISO11615-MedicinalProducts.rdf"/>
+    <uri id="User Entered Import Resolution" name="https://www.omg.org/spec/Commons/ProductsAndServices/" uri="file:/Users/pun/Desktop/interoperability_pharmacy/infra/ontop/idmp/ontology/master/v1.3.0/CMNS/ProductsAndServices.rdf"/>
+    <uri id="User Entered Import Resolution" name="file:/opt/ontop/ontology/ISO/ISO11238-Substances.rdf" uri="file:/Users/pun/Desktop/interoperability_pharmacy/infra/ontop/idmp/ontology/master/v1.3.0/ISO/ISO11238-Substances.rdf"/>
+    <nextCatalog catalog="file:/Users/pun/Desktop/interoperability_pharmacy/infra/ontop/idmp/ontology/master/v1.3.0/catalog-v001.xml"/>
+    <group id="Folder Repository, directory=, recursive=true, Auto-Update=true, version=2" prefer="public" xml:base=""/>
+</catalog>

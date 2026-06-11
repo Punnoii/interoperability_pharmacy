@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+    xmlns:owl="http://www.w3.org/2002/07/owl#">
+
+  <!--
+    Local Protege load file for the core IDMP ontology modules used by Ontop.
+
+    Open this file from Protege. It imports the same ontology modules as
+    infra/ontop/obda/idmp-core-entry.rdf, but uses ontology IRIs that resolve
+    through catalog-v001.xml in this directory.
+  -->
+  <owl:Ontology rdf:about="https://example.org/idmp-demo/ontology/idmp-core-protege-entrypoint/">
+    <rdfs:label>IDMP-O core local Protege entrypoint</rdfs:label>
+
+    <owl:imports rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/"/>
+    <owl:imports rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11615-MedicinalProducts/"/>
+    <owl:imports rdf:resource="https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO21090-HarmonizedDatatypes/"/>
+    <owl:imports rdf:resource="https://www.omg.org/spec/Commons/Identifiers/"/>
+    <owl:imports rdf:resource="https://www.omg.org/spec/Commons/TextDatatype/"/>
+    <owl:imports rdf:resource="https://www.omg.org/spec/Commons/Designators/"/>
+    <owl:imports rdf:resource="https://www.omg.org/spec/Commons/Classifiers/"/>
+    <owl:imports rdf:resource="https://www.omg.org/spec/LCC/Languages/ISO639-1-LanguageCodes/"/>
+  </owl:Ontology>
+</rdf:RDF>
