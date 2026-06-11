@@ -29,6 +29,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
   }
 
+  const userExists = await prisma.user.findUnique({
+    where: { id: session.sub },
+    select: { id: true },
+  });
+  if (!userExists) {
+    return NextResponse.json(
+      { error: "session user no longer exists — please logout and re-register" },
+      { status: 401 },
+    );
+  }
+
   let body: { name?: unknown; query?: unknown; source?: unknown };
   try {
     body = await req.json();

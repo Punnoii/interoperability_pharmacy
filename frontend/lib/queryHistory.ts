@@ -8,7 +8,7 @@ const COOKIE_NAME = "rxvkg_qh";
 const COOKIE_PATH = "/history";
 const COOKIE_MAX = 10;
 const COOKIE_QUERY_LIMIT = 200;
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
+const COOKIE_MAX_AGE = 2592000;
 
 export interface HistoryEntry {
   id: string;

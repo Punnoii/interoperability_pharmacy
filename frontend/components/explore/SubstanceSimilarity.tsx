@@ -74,7 +74,7 @@ function jaccard(a: Set<string>, b: Set<string>): number {
 function nameSimilarity(a: string, b: string, tokensA: Set<string>, tokensB: Set<string>): number {
   const word = jaccard(tokensA, tokensB);
   const char = jaccard(trigrams(a), trigrams(b));
-  return Math.max(word, char * 0.85);
+  return Math.max(word, char);
 }
 
 function shortIri(iri: string): string {
@@ -123,11 +123,8 @@ function computePairs(items: Concept[]): PairScore[] {
         if (sameName) {
           score = 0.9;
           reasons.push("Same name");
-        } else if (ns >= 0.5) {
-          score = 0.5 + ns * 0.3;
-          reasons.push(`Name similarity ${Math.round(ns * 100)}%`);
         } else if (ns > 0) {
-          score = ns * 0.6;
+          score = ns;
           reasons.push(`Name similarity ${Math.round(ns * 100)}%`);
         }
       }
@@ -223,7 +220,7 @@ export default function SubstanceSimilarity({ isDark }: SubstanceSimilarityProps
           <button
             onClick={runQuery}
             disabled={running || !sparql.trim()}
-            className="self-start flex items-center gap-2 px-4 py-2 rounded text-sm font-bold text-white bg-teal-500 hover:bg-teal-600 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="self-start flex items-center gap-2 px-4 py-2 rounded text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {running ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
             <span>{running ? "Running..." : "SEND QUERY"}</span>
@@ -474,10 +471,10 @@ function SimilarityDetailsModal({
               </div>
               <div className="min-w-0">
                 <p className={`text-[10px] uppercase tracking-wider ${muted}`}>Substance A</p>
-                <p className={`text-sm font-bold truncate ${heading}`} title={pair.a.name}>
+                <p className={`text-sm font-bold break-words leading-snug ${heading}`} title={pair.a.name}>
                   {pair.a.name}
                 </p>
-                <p className={`text-[10px] font-mono truncate ${muted}`} title={pair.a.iri}>
+                <p className={`text-[10px] font-mono break-all leading-snug ${muted}`} title={pair.a.iri}>
                   {shortIri(pair.a.iri)}
                 </p>
               </div>
@@ -492,10 +489,10 @@ function SimilarityDetailsModal({
               </div>
               <div className="min-w-0">
                 <p className={`text-[10px] uppercase tracking-wider ${muted}`}>Substance B</p>
-                <p className={`text-sm font-bold truncate ${heading}`} title={pair.b.name}>
+                <p className={`text-sm font-bold break-words leading-snug ${heading}`} title={pair.b.name}>
                   {pair.b.name}
                 </p>
-                <p className={`text-[10px] font-mono truncate ${muted}`} title={pair.b.iri}>
+                <p className={`text-[10px] font-mono break-all leading-snug ${muted}`} title={pair.b.iri}>
                   {shortIri(pair.b.iri)}
                 </p>
               </div>
