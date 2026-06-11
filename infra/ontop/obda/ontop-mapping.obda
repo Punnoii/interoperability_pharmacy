@@ -211,46 +211,28 @@ source SELECT i.product_id,
 
 mappingId FdaSubstanceUniiIdentifierType
 target :fda/unii/{product_id}/{ingredient_order} a idmp-sub:SubstanceIdentifier .
-source SELECT i.product_id,
-              i.ingredient_order
-       FROM postgres.fda_ndc_json.ndc_fda_product_ingredient i
-       JOIN postgres.fda_ndc_json.ndc_fda_product_unii_candidate u
-         ON u.product_id = i.product_id
-        AND u.unii_order = i.ingredient_order
-       JOIN postgres.fda_ndc_json.ndc_fda_product p
-         ON p.product_id = i.product_id
-       WHERE p.finished = true
-         AND i.ingredient_name IS NOT NULL
-         AND u.unii IS NOT NULL
+source SELECT product_id,
+              ingredient_order
+       FROM postgres.fda_ndc_json.ndc_fda_ingredient_unii_match
+       WHERE unii IS NOT NULL
+         AND match_status = 'verified'
 
 mappingId FdaSubstanceUniiIdentifierValue
 target :fda/unii/{product_id}/{ingredient_order} cmns-txt:hasTextValue "{unii}"^^xsd:string .
-source SELECT i.product_id,
-              i.ingredient_order,
-              u.unii
-       FROM postgres.fda_ndc_json.ndc_fda_product_ingredient i
-       JOIN postgres.fda_ndc_json.ndc_fda_product_unii_candidate u
-         ON u.product_id = i.product_id
-        AND u.unii_order = i.ingredient_order
-       JOIN postgres.fda_ndc_json.ndc_fda_product p
-         ON p.product_id = i.product_id
-       WHERE p.finished = true
-         AND i.ingredient_name IS NOT NULL
-         AND u.unii IS NOT NULL
+source SELECT product_id,
+              ingredient_order,
+              unii
+       FROM postgres.fda_ndc_json.ndc_fda_ingredient_unii_match
+       WHERE unii IS NOT NULL
+         AND match_status = 'verified'
 
 mappingId FdaSubstanceUniiIdentifierLink
 target :fda/substance/{product_id}/{ingredient_order} cmns-id:isIdentifiedBy :fda/unii/{product_id}/{ingredient_order} .
-source SELECT i.product_id,
-              i.ingredient_order
-       FROM postgres.fda_ndc_json.ndc_fda_product_ingredient i
-       JOIN postgres.fda_ndc_json.ndc_fda_product_unii_candidate u
-         ON u.product_id = i.product_id
-        AND u.unii_order = i.ingredient_order
-       JOIN postgres.fda_ndc_json.ndc_fda_product p
-         ON p.product_id = i.product_id
-       WHERE p.finished = true
-         AND i.ingredient_name IS NOT NULL
-         AND u.unii IS NOT NULL    
+source SELECT product_id,
+              ingredient_order
+       FROM postgres.fda_ndc_json.ndc_fda_ingredient_unii_match
+       WHERE unii IS NOT NULL
+         AND match_status = 'verified'
 
 mappingId GsrsSubstanceType
 target :gsrs/substance/{unii} a idmp-sub:Substance .
@@ -497,31 +479,21 @@ source SELECT unii
 
 mappingId FdaSubstanceCanonicalIri
 target :substance/{unii} obda:isCanonicalIRIOf :fda/substance/{product_id}/{ingredient_order} .
-source SELECT i.product_id,
-              i.ingredient_order,
-              u.unii
-       FROM postgres.fda_ndc_json.ndc_fda_product_ingredient i
-       JOIN postgres.fda_ndc_json.ndc_fda_product_unii_candidate u
-         ON u.product_id = i.product_id
-        AND u.unii_order = i.ingredient_order
-       JOIN postgres.fda_ndc_json.ndc_fda_product p
-         ON p.product_id = i.product_id
-       JOIN postgres.gsrs.substance s
-         ON s.unii = u.unii
-       WHERE p.finished = true
-         AND s.status = 'approved'
-         AND i.ingredient_name IS NOT NULL
-         AND u.unii IS NOT NULL
-
-mappingId FdaActiveIngredientPlayedByExactNameCandidate
-target :fda/active-ingredient/{product_id}/{ingredient_order} cmns-rlcmp:isPlayedBy :substance/{matched_unii} .
 source SELECT product_id,
               ingredient_order,
-              matched_unii
-       FROM postgres.fda_ndc_json.ndc_fda_ingredient_name_match_candidate
-       WHERE matched_unii IS NOT NULL
-         AND match_method = 'EXACT_NAME'
-         AND match_status = 'candidate'
+              unii
+       FROM postgres.fda_ndc_json.ndc_fda_ingredient_unii_match
+       WHERE unii IS NOT NULL
+         AND match_status = 'verified'
+
+mappingId FdaActiveIngredientPlayedByVerifiedUniiMatch
+target :fda/active-ingredient/{product_id}/{ingredient_order} cmns-rlcmp:isPlayedBy :substance/{unii} .
+source SELECT product_id,
+              ingredient_order,
+              unii
+       FROM postgres.fda_ndc_json.ndc_fda_ingredient_unii_match
+       WHERE unii IS NOT NULL
+         AND match_status = 'verified'
 
 mappingId FdaUnmatchedSubstanceType
 target :fda/unmatched-substance/{product_id}/{ingredient_order} a idmp-sub:Substance .

@@ -1,6 +1,9 @@
 CREATE SCHEMA IF NOT EXISTS gsrs;
 
 DROP VIEW IF EXISTS fda_ndc_json.ndc_fda_ingredient_name_match_candidate;
+DROP VIEW IF EXISTS fda_ndc_json.ndc_fda_unmatched_ingredient;
+DROP VIEW IF EXISTS fda_ndc_json.ndc_fda_ingredient_unii_match;
+DROP MATERIALIZED VIEW IF EXISTS gsrs.unique_substance_name_lookup;
 DROP MATERIALIZED VIEW IF EXISTS gsrs.substance_name_lookup;
 DROP VIEW IF EXISTS gsrs.substance_relationship;
 DROP VIEW IF EXISTS gsrs.substance_name_domain;
@@ -113,6 +116,20 @@ WHERE name_value IS NOT NULL
 
 CREATE INDEX IF NOT EXISTS idx_gsrs_substance_name_lookup_name_key
 ON gsrs.substance_name_lookup (name_key);
+
+CREATE MATERIALIZED VIEW gsrs.unique_substance_name_lookup AS
+SELECT
+  name_key,
+  min(unii) AS unii
+FROM gsrs.substance_name_lookup
+GROUP BY name_key
+HAVING count(DISTINCT unii) = 1;
+
+CREATE INDEX IF NOT EXISTS idx_gsrs_unique_substance_name_lookup_name_key
+ON gsrs.unique_substance_name_lookup (name_key);
+
+CREATE INDEX IF NOT EXISTS idx_gsrs_unique_substance_name_lookup_unii
+ON gsrs.unique_substance_name_lookup (unii);
 
 CREATE VIEW gsrs.substance_relationship AS
 SELECT

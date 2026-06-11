@@ -2,6 +2,8 @@ CREATE SCHEMA IF NOT EXISTS fda_ndc_json;
 
 DROP VIEW IF EXISTS fda_ndc_json.ndc_fda_ingredient_name_match_candidate;
 DROP VIEW IF EXISTS fda_ndc_json.ndc_fda_unmatched_ingredient;
+DROP VIEW IF EXISTS fda_ndc_json.ndc_fda_ingredient_unii_match;
+DROP VIEW IF EXISTS fda_ndc_json.ndc_fda_product_unii_candidate;
 DROP VIEW IF EXISTS fda_ndc_json.ndc_fda_product;
 
 CREATE VIEW fda_ndc_json.ndc_fda_product AS
@@ -113,6 +115,37 @@ FROM fda_ndc_json_raw.fda_ndc_json r
 CROSS JOIN LATERAL jsonb_array_elements(r.record -> 'openfda' -> 'unii')
   WITH ORDINALITY AS unii(value, ordinality);
 
+DROP VIEW IF EXISTS fda_ndc_json.ndc_fda_ingredient_unii_match;
+
+-- OpenFDA exposes UNIIs at product level; do not align them to ingredients by array order.
+CREATE VIEW fda_ndc_json.ndc_fda_ingredient_unii_match AS
+SELECT DISTINCT
+  i.raw_record_id,
+  i.source_last_updated,
+  i.product_id,
+  i.product_ndc,
+  i.ingredient_order,
+  i.ingredient_name,
+  upper(regexp_replace(trim(i.ingredient_name), '\s+', ' ', 'g')) AS ingredient_name_key,
+  m.unii,
+  'OPENFDA_UNII_EXACT_NAME' AS match_method,
+  1.00::numeric AS confidence,
+  'verified' AS match_status
+FROM fda_ndc_json.ndc_fda_product_ingredient i
+  JOIN fda_ndc_json.ndc_fda_product p
+    ON p.product_id = i.product_id
+  JOIN gsrs.unique_substance_name_lookup m
+    ON m.name_key = upper(regexp_replace(trim(i.ingredient_name), '\s+', ' ', 'g'))
+  JOIN fda_ndc_json.ndc_fda_product_unii_candidate u
+    ON u.product_id = i.product_id
+    AND u.unii = m.unii
+  JOIN gsrs.substance s
+    ON s.unii = m.unii
+WHERE p.finished = true
+  AND s.status = 'approved'
+  AND i.ingredient_name IS NOT NULL
+  AND m.unii IS NOT NULL;
+
 DROP VIEW IF EXISTS fda_ndc_json.ndc_fda_unmatched_ingredient;
 
 CREATE VIEW fda_ndc_json.ndc_fda_unmatched_ingredient AS
@@ -124,37 +157,26 @@ SELECT DISTINCT
 FROM fda_ndc_json.ndc_fda_product_ingredient i
 JOIN fda_ndc_json.ndc_fda_product p
   ON p.product_id = i.product_id
-LEFT JOIN fda_ndc_json.ndc_fda_product_unii_candidate u
-  ON u.product_id = i.product_id
- AND u.unii_order = i.ingredient_order
- AND u.unii IS NOT NULL
+LEFT JOIN fda_ndc_json.ndc_fda_ingredient_unii_match m
+  ON m.product_id = i.product_id
+ AND m.ingredient_order = i.ingredient_order
 WHERE p.finished = true
   AND i.ingredient_name IS NOT NULL
-  AND u.unii IS NULL;
+  AND m.unii IS NULL;
 
 DROP VIEW IF EXISTS fda_ndc_json.ndc_fda_ingredient_name_match_candidate;
 
 CREATE VIEW fda_ndc_json.ndc_fda_ingredient_name_match_candidate AS
-WITH unique_name_match AS (
-  SELECT
-    u.ingredient_name_key,
-    min(g.unii) AS matched_unii
-  FROM fda_ndc_json.ndc_fda_unmatched_ingredient u
-  JOIN gsrs.substance_name_lookup g
-    ON g.name_key = u.ingredient_name_key
-  GROUP BY u.ingredient_name_key
-  HAVING count(DISTINCT g.unii) = 1
-)
 SELECT
   u.product_id,
   u.ingredient_order,
   u.ingredient_name,
   u.ingredient_name_key,
-  m.matched_unii,
+  m.unii AS matched_unii,
   'EXACT_NAME' AS match_method,
-  0.95::numeric AS confidence,
+  0.85::numeric AS confidence,
   'candidate' AS match_status
 
 FROM fda_ndc_json.ndc_fda_unmatched_ingredient u
-JOIN unique_name_match m
-  ON m.ingredient_name_key = u.ingredient_name_key;
+JOIN gsrs.unique_substance_name_lookup m
+  ON m.name_key = u.ingredient_name_key;
