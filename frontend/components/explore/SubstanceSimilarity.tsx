@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { FlaskConical, Loader2, Network, Play, Sparkles, X } from "lucide-react";
+import { Atom, FlaskConical, GitCompare, Loader2, Network, Play, Sparkles, Tags, X } from "lucide-react";
 
 interface SubstanceSimilarityProps {
   isDark: boolean;
@@ -138,6 +138,21 @@ function computePairs(items: Concept[]): PairScore[] {
   return out;
 }
 
+type SimMode = "name-id" | "substance";
+
+const SIM_MODES: { value: SimMode; label: string; description: string }[] = [
+  {
+    value: "name-id",
+    label: "Name + ID Similarity",
+    description: "Compare substance names and UNII identifiers (Jaccard)",
+  },
+  {
+    value: "substance",
+    label: "Substance Similarity",
+    description: "Semantic similarity using ELH ontology (coming soon)",
+  },
+];
+
 export default function SubstanceSimilarity({ isDark }: SubstanceSimilarityProps) {
   const [sparql, setSparql] = useState(DEFAULT_QUERY);
   const [results, setResults] = useState<SparqlResults | null>(null);
@@ -145,6 +160,7 @@ export default function SubstanceSimilarity({ isDark }: SubstanceSimilarityProps
   const [error, setError] = useState<string | null>(null);
   const [threshold, setThreshold] = useState(0.5);
   const [picked, setPicked] = useState<PairScore | null>(null);
+  const [simMode, setSimMode] = useState<SimMode>("name-id");
 
   async function runQuery() {
     if (!sparql.trim() || running) return;
@@ -192,7 +208,14 @@ export default function SubstanceSimilarity({ isDark }: SubstanceSimilarityProps
     : "bg-white border-gray-300 text-gray-900";
 
   return (
-    <div className="flex flex-col h-full p-6 overflow-auto gap-5">
+    <div className="flex h-full overflow-hidden">
+      <SimilarityInfoPanel
+        isDark={isDark}
+        mode={simMode}
+        onModeChange={setSimMode}
+      />
+
+      <section className="flex-1 overflow-auto flex flex-col p-6 gap-5">
       <div className="flex items-center gap-3">
         <div>
           <h2 className={`text-xl font-bold ${heading}`} style={{ fontFamily: "Georgia, serif" }}>
@@ -201,35 +224,72 @@ export default function SubstanceSimilarity({ isDark }: SubstanceSimilarityProps
         </div>
       </div>
 
+      <div className={`rounded-2xl border p-4 ${card} flex flex-col gap-3`}>
+        <label className={`text-sm font-semibold ${subtle}`}>Enter SPARQL Query</label>
+        <textarea
+          value={sparql}
+          onChange={(e) => setSparql(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+              e.preventDefault();
+              runQuery();
+            }
+          }}
+          rows={10}
+          spellCheck={false}
+          className={`w-full px-3 py-2 rounded border text-xs font-mono leading-relaxed focus:outline-none focus:ring-1 focus:ring-blue-500 ${codeBg}`}
+        />
+        <button
+          onClick={runQuery}
+          disabled={running || !sparql.trim()}
+          className="self-start flex items-center gap-2 px-4 py-2 rounded text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {running ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
+          <span>{running ? "Running..." : "SEND QUERY"}</span>
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className={`rounded-2xl border p-4 ${card} flex flex-col gap-3`}>
-          <label className={`text-sm font-semibold ${subtle}`}>Enter SPARQL Query</label>
-          <textarea
-            value={sparql}
-            onChange={(e) => setSparql(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                e.preventDefault();
-                runQuery();
-              }
-            }}
-            rows={12}
-            spellCheck={false}
-            className={`w-full px-3 py-2 rounded border text-xs font-mono leading-relaxed focus:outline-none focus:ring-1 focus:ring-blue-500 ${codeBg}`}
-          />
-          <button
-            onClick={runQuery}
-            disabled={running || !sparql.trim()}
-            className="self-start flex items-center gap-2 px-4 py-2 rounded text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {running ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
-            <span>{running ? "Running..." : "SEND QUERY"}</span>
-          </button>
+        <div className={`rounded-2xl border p-4 ${card} flex flex-col gap-2`}>
+          <div className="flex items-center justify-between mb-1">
+            <label className={`text-sm font-semibold ${subtle}`}>Query Result</label>
+            {results && (
+              <span className={`text-[10px] ${muted}`}>
+                {results.results?.bindings?.length ?? 0} bindings · {concepts.length} unique concepts
+              </span>
+            )}
+          </div>
+
+          {error && (
+            <div className={`text-xs ${isDark ? "text-red-300" : "text-red-600"} mb-2 font-mono`}>
+              {error}
+            </div>
+          )}
+
+          {!results && !error && (
+            <p className={`text-xs italic ${muted}`}>SEND QUERY FOR WATCHING RESULTS</p>
+          )}
+
+          {results && concepts.length > 0 && (
+            <pre className={`text-xs font-mono leading-relaxed overflow-auto p-2 rounded ${codeBg}`} style={{ height: 380 }}>
+              {`Output: ${results.head.vars.join(", ")}\n`}
+              {concepts.map((c) => `Output: ${c.iri}${c.name ? ` (${c.name})` : ""}\n`).join("")}
+            </pre>
+          )}
         </div>
 
         <div className={`rounded-2xl border p-4 ${card} flex flex-col gap-3`}>
           <div className="flex items-center justify-between">
-            <label className={`text-sm font-semibold ${subtle}`}>Explanation Section</label>
+            <div className="flex items-center gap-2">
+              <label className={`text-sm font-semibold ${subtle}`}>Explanation Section</label>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full ${
+                simMode === "name-id"
+                  ? isDark ? "bg-blue-900/40 text-blue-300" : "bg-blue-50 text-blue-700"
+                  : isDark ? "bg-purple-900/40 text-purple-300" : "bg-purple-50 text-purple-700"
+              }`}>
+                {simMode === "name-id" ? "Name + ID" : "Substance"}
+              </span>
+            </div>
             <span className={`text-[10px] ${muted}`}>
               {visible.length} / {pairs.length} pairs
             </span>
@@ -255,7 +315,23 @@ export default function SubstanceSimilarity({ isDark }: SubstanceSimilarityProps
             style={{ height: 320 }}
             className={`overflow-y-auto rounded-md ${codeBg}`}
           >
-            {visible.length === 0 ? (
+            {simMode === "substance" ? (
+              <div className={`p-4 text-xs ${muted} flex flex-col gap-2`}>
+                <p className="font-semibold not-italic text-purple-500">
+                  🚧 Substance Similarity mode — coming soon
+                </p>
+                <p className="italic leading-relaxed">
+                  This mode will use ELH ontology-based semantic similarity
+                  (JSimELHExplainer) instead of string matching. It will detect
+                  cases like:
+                </p>
+                <ul className="list-disc list-inside ml-1 italic">
+                  <li>Aspirin ↔ Ibuprofen (both NSAIDs)</li>
+                  <li>Tylenol ↔ Acetaminophen (brand vs generic)</li>
+                </ul>
+                <p className="italic">Switch back to Name + ID mode to use current Jaccard scoring.</p>
+              </div>
+            ) : visible.length === 0 ? (
               <p className={`text-xs italic p-4 ${muted}`}>
                 {pairs.length === 0
                   ? "Run a query to fetch multiple substances first"
@@ -288,38 +364,94 @@ export default function SubstanceSimilarity({ isDark }: SubstanceSimilarityProps
         </div>
       </div>
 
-      <div className={`rounded-2xl border p-4 ${card}`}>
-        <div className="flex items-center justify-between mb-2">
-          <label className={`text-sm font-semibold ${subtle}`}>Query Result</label>
-          {results && (
-            <span className={`text-[10px] ${muted}`}>
-              {results.results?.bindings?.length ?? 0} bindings · {concepts.length} unique concepts
-            </span>
-          )}
-        </div>
-
-        {error && (
-          <div className={`text-xs ${isDark ? "text-red-300" : "text-red-600"} mb-2 font-mono`}>
-            {error}
-          </div>
-        )}
-
-        {!results && !error && (
-          <p className={`text-xs italic ${muted}`}>SEND QUERY FOR WATCHING RESULTS</p>
-        )}
-
-        {results && concepts.length > 0 && (
-          <pre className={`text-xs font-mono leading-relaxed overflow-auto p-2 rounded max-h-[480px] ${codeBg}`}>
-            {`Output: ${results.head.vars.join(", ")}\n`}
-            {concepts.map((c) => `Output: ${c.iri}${c.name ? ` (${c.name})` : ""}\n`).join("")}
-          </pre>
-        )}
-      </div>
-
       {picked && (
         <SimilarityDetailsModal pair={picked} onClose={() => setPicked(null)} isDark={isDark} />
       )}
+      </section>
     </div>
+  );
+}
+
+function SimilarityInfoPanel({
+  isDark,
+  mode,
+  onModeChange,
+}: {
+  isDark: boolean;
+  mode: SimMode;
+  onModeChange: (m: SimMode) => void;
+}) {
+  const bg = isDark ? "bg-slate-900" : "bg-white";
+  const border = isDark ? "border-slate-800" : "border-gray-200";
+  const heading = isDark ? "text-slate-100" : "text-gray-900";
+  const muted = isDark ? "text-slate-400" : "text-gray-500";
+  const sectionLabel = `text-[11px] uppercase tracking-wider font-semibold ${muted}`;
+  const tabActive = "bg-blue-600 text-white border-blue-600";
+  const tabInactive = isDark
+    ? "border-slate-700 text-slate-300 hover:bg-slate-800"
+    : "border-gray-200 text-gray-700 hover:bg-gray-50";
+
+  return (
+    <aside className={`w-72 shrink-0 border-r overflow-y-auto ${bg} ${border}`}>
+      <div className="flex flex-col gap-4 p-4">
+        <div className="flex items-center gap-2">
+          <GitCompare size={16} className="text-blue-600" />
+          <h2 className={`text-sm font-bold ${heading}`}>Similarity Information</h2>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <span className={sectionLabel}>Similarity Mode</span>
+          <button
+            onClick={() => onModeChange("name-id")}
+            className={`flex items-start gap-2 px-3 py-2 rounded border text-left text-xs transition-colors ${
+              mode === "name-id" ? tabActive : tabInactive
+            }`}
+          >
+            <Tags size={14} className="mt-0.5 shrink-0" />
+            <div className="flex flex-col gap-0.5">
+              <span className="font-semibold">Query Name Sim</span>
+              <span className={mode === "name-id" ? "text-blue-100" : muted}>
+                Compare names + UNII (Jaccard)
+              </span>
+            </div>
+          </button>
+          <button
+            onClick={() => onModeChange("substance")}
+            className={`flex items-start gap-2 px-3 py-2 rounded border text-left text-xs transition-colors ${
+              mode === "substance" ? tabActive : tabInactive
+            }`}
+          >
+            <Atom size={14} className="mt-0.5 shrink-0" />
+            <div className="flex flex-col gap-0.5">
+              <span className="font-semibold">Substance Sim (ELH)</span>
+              <span className={mode === "substance" ? "text-blue-100" : muted}>
+                Semantic similarity via ontology
+              </span>
+            </div>
+          </button>
+        </div>
+
+        <div className={`mt-2 rounded border p-3 ${
+          isDark ? "bg-slate-950/50 border-slate-800" : "bg-gray-50 border-gray-200"
+        }`}>
+          <p className={`text-[10px] uppercase tracking-wider font-semibold mb-1.5 ${muted}`}>
+            About this mode
+          </p>
+          {mode === "name-id" ? (
+            <p className={`text-[11px] leading-relaxed ${muted}`}>
+              Compares substance pairs by name (word + trigram Jaccard) and
+              UNII identifier. Returns a list of pairs ranked by similarity.
+            </p>
+          ) : (
+            <p className={`text-[11px] leading-relaxed ${muted}`}>
+              Uses JSimELHExplainer to compute semantic similarity from an
+              ELH ontology. Returns similar concepts via query expansion
+              (coming soon).
+            </p>
+          )}
+        </div>
+      </div>
+    </aside>
   );
 }
 

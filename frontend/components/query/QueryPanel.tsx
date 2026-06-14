@@ -5,6 +5,10 @@ import { Bookmark, Code2, Database, FileCode2, FlaskConical, Loader2, MoreVertic
 import ResultsGraph from "@/components/graph/ResultsGraph";
 import { QUERY_TEMPLATES } from "@/lib/queryTemplates";
 import { popPendingQuery, pushHistory } from "@/lib/queryHistory";
+import { hybridScore } from "@/lib/textSimilarity";
+
+const AC_THRESHOLD = 0.2;
+const AC_MAX_RESULTS = 8;
 import type { SparqlBinding } from "@/components/graph/graphUtils";
 
 type QueryMode = "nlp" | "manual";
@@ -336,9 +340,10 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
   const acSuggestions: AcSuggestion[] = useMemo(() => {
     const w = acWord.toLowerCase();
     if (w.length < 2) return [];
-    const out: AcSuggestion[] = [];
 
+    const scored: Array<{ item: AcSuggestion; score: number }> = [];
     const seenIri = new Set<string>();
+
     acSubstances.forEach((s) => {
       if (seenIri.has(s.iri)) return;
       seenIri.add(s.iri);
@@ -350,52 +355,68 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
         rawSource === "a" || rawSource === "b" || rawSource === "c" || rawSource === "d" || rawSource === "e"
           ? rawSource
           : "all";
-      out.push({
-        kind: "substance",
-        key: `s:${s.iri}`,
-        title: display,
-        subtitle: s.identifier ? `${s.identifier} · ${s.source}` : s.source,
-        query: tpl.query.replace("{{IRI}}", s.iri),
-        source: src,
+      const nameScore = hybridScore(w, display);
+      const idScore = s.identifier ? hybridScore(w, s.identifier) : 0;
+      const score = Math.max(nameScore, idScore);
+      if (score < AC_THRESHOLD) return;
+      scored.push({
+        item: {
+          kind: "substance",
+          key: `s:${s.iri}`,
+          title: display,
+          subtitle: s.identifier ? `${s.identifier} · ${s.source}` : s.source,
+          query: tpl.query.replace("{{IRI}}", s.iri),
+          source: src,
+        },
+        score,
       });
     });
 
     QUERY_TEMPLATES.forEach((t) => {
-      if (
-        t.name.toLowerCase().includes(w) ||
-        t.description.toLowerCase().includes(w) ||
-        t.keywords.some((k) => k.toLowerCase().includes(w))
-      ) {
-        out.push({
+      const nameScore = hybridScore(w, t.name);
+      const descScore = hybridScore(w, t.description);
+      const keywordScore = Math.max(
+        0,
+        ...t.keywords.map((k) => hybridScore(w, k)),
+      );
+      const score = Math.max(nameScore, descScore, keywordScore);
+      if (score < AC_THRESHOLD) return;
+      scored.push({
+        item: {
           kind: "template",
           key: `t:${t.id}`,
           title: t.name,
           subtitle: t.description,
           query: t.query,
           source: t.source,
-        });
-      }
+        },
+        score,
+      });
     });
 
     bookmarks.forEach((b) => {
-      if (b.name.toLowerCase().includes(w)) {
-        const rawSource = b.source.toLowerCase();
-        const src: SourceKey =
-          rawSource === "a" || rawSource === "b" || rawSource === "c" || rawSource === "d" || rawSource === "e"
-            ? rawSource
-            : "all";
-        out.push({
+      const score = hybridScore(w, b.name);
+      if (score < AC_THRESHOLD) return;
+      const rawSource = b.source.toLowerCase();
+      const src: SourceKey =
+        rawSource === "a" || rawSource === "b" || rawSource === "c" || rawSource === "d" || rawSource === "e"
+          ? rawSource
+          : "all";
+      scored.push({
+        item: {
           kind: "bookmark",
           key: `b:${b.id}`,
           title: b.name,
           subtitle: "Your saved query",
           query: b.query,
           source: src,
-        });
-      }
+        },
+        score,
+      });
     });
 
-    return out.slice(0, 8);
+    scored.sort((a, b) => b.score - a.score);
+    return scored.slice(0, AC_MAX_RESULTS).map((s) => s.item);
   }, [acWord, acSubstances, bookmarks]);
 
   useEffect(() => {
