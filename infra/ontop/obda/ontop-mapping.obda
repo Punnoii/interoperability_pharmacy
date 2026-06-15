@@ -23,6 +23,13 @@ source  SELECT product_id
         FROM postgres.fda_ndc_json.ndc_fda_product
         WHERE finished = true
 
+mappingId FdaMedicinalProductIdentifierType
+target :fda/mpid/US-NDC-{product_ndc} a idmp-mprd:MedicinalProductIdentifier .
+source SELECT product_ndc
+       FROM postgres.fda_ndc_json.ndc_fda_product
+       WHERE finished = true
+         AND product_ndc IS NOT NULL
+
 mappingId FdaMedicinalProductIdentifierIdentifies
 target :fda/mpid/US-NDC-{product_ndc} cmns-id:identifies :fda/product/{product_id} .
 source  SELECT product_id , product_ndc
@@ -32,13 +39,6 @@ source  SELECT product_id , product_ndc
 
 mappingId FdaMedicinalProductIdentifierValue
 target :fda/mpid/US-NDC-{product_ndc} cmns-txt:hasTextValue "{product_ndc}"^^xsd:string .
-source SELECT product_ndc
-       FROM postgres.fda_ndc_json.ndc_fda_product
-       WHERE finished = true
-         AND product_ndc IS NOT NULL
-
-mappingId FdaMedicinalProductIdentifierType
-target :fda/mpid/US-NDC-{product_ndc} a idmp-mprd:MedicinalProductIdentifier .
 source SELECT product_ndc
        FROM postgres.fda_ndc_json.ndc_fda_product
        WHERE finished = true
@@ -72,6 +72,48 @@ source  SELECT product_id,COALESCE(brand_name, generic_name) AS product_name
         FROM postgres.fda_ndc_json.ndc_fda_product
         WHERE finished = true
          AND (brand_name IS NOT NULL OR generic_name IS NOT NULL)
+
+mappingId FdaProductCompositionType
+target :fda/product-composition/{product_id} a idmp-mprd:ProductComposition .
+source SELECT product_id
+       FROM postgres.fda_ndc_json.ndc_fda_product
+       WHERE finished = true
+
+mappingId FdaPharmaceuticalProductType
+target :fda/pharmaceutical-product/{product_id} a idmp-mprd:PharmaceuticalProduct .
+source SELECT product_id
+       FROM postgres.fda_ndc_json.ndc_fda_product
+       WHERE finished = true
+
+mappingId FdaMedicinalProductComprisesPharmaceuticalProduct
+target :fda/product/{product_id} cmns-col:comprises :fda/pharmaceutical-product/{product_id} .
+source SELECT product_id
+       FROM postgres.fda_ndc_json.ndc_fda_product
+       WHERE finished = true
+
+mappingId FdaMedicinalProductDefinedInProductComposition
+target :fda/product/{product_id} cmns-dsg:isDefinedIn :fda/product-composition/{product_id} .
+source SELECT product_id
+       FROM postgres.fda_ndc_json.ndc_fda_product
+       WHERE finished = true
+
+mappingId FdaProductCompositionDefinesMedicinalProduct
+target :fda/product-composition/{product_id} cmns-dsg:defines :fda/product/{product_id} .
+source SELECT product_id
+       FROM postgres.fda_ndc_json.ndc_fda_product
+       WHERE finished = true
+
+mappingId FdaPharmaceuticalProductDefinedInProductComposition
+target :fda/pharmaceutical-product/{product_id} cmns-dsg:isDefinedIn :fda/product-composition/{product_id} .
+source SELECT product_id
+       FROM postgres.fda_ndc_json.ndc_fda_product
+       WHERE finished = true
+
+mappingId FdaProductCompositionDefinesPharmaceuticalProduct
+target :fda/product-composition/{product_id} cmns-dsg:defines :fda/pharmaceutical-product/{product_id} .
+source SELECT product_id
+       FROM postgres.fda_ndc_json.ndc_fda_product
+       WHERE finished = true
 
 mappingId FdaPackagedMedicinalProductType
 target  :fda/package/{package_ndc} a idmp-mprd:PackagedMedicinalProduct .
@@ -199,8 +241,18 @@ source SELECT i.product_id,
        WHERE p.finished = true
          AND i.ingredient_name IS NOT NULL
 
-mappingId FdaMedicinalProductHasActiveIngredient
-target :fda/product/{product_id} idmp-mprd:hasActiveIngredient :fda/active-ingredient/{product_id}/{ingredient_order} .
+mappingId FdaProductCompositionHasActiveIngredient
+target :fda/product-composition/{product_id} idmp-mprd:hasActiveIngredient :fda/active-ingredient/{product_id}/{ingredient_order} .
+source SELECT i.product_id,
+              i.ingredient_order
+       FROM postgres.fda_ndc_json.ndc_fda_product_ingredient i
+       JOIN postgres.fda_ndc_json.ndc_fda_product p
+         ON p.product_id = i.product_id
+       WHERE p.finished = true
+         AND i.ingredient_name IS NOT NULL
+
+mappingId FdaPharmaceuticalProductComprisesSubstance
+target :fda/pharmaceutical-product/{product_id} cmns-col:comprises :fda/substance/{product_id}/{ingredient_order} .
 source SELECT i.product_id,
               i.ingredient_order
        FROM postgres.fda_ndc_json.ndc_fda_product_ingredient i

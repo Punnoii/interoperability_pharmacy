@@ -105,7 +105,6 @@ WHERE n.languages IS NOT NULL
   AND language.value <> '';
 
 
-
 CREATE MATERIALIZED VIEW gsrs.substance_name_lookup AS
 SELECT DISTINCT
   upper(regexp_replace(trim(name_value), '\s+', ' ', 'g')) AS name_key,
@@ -152,3 +151,4 @@ CROSS JOIN LATERAL jsonb_array_elements(r.record -> 'relationships')
   WITH ORDINALITY AS rel(value, ordinality)
 WHERE r.record -> 'relationships' IS NOT NULL
   AND jsonb_typeof(r.record -> 'relationships') = 'array';
+
