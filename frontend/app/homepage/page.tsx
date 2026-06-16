@@ -5,7 +5,7 @@ import Header from "@/components/layout/Header";
 import Sidebar from "@/components/layout/Sidebar";
 import QueryPanel from "@/components/query/QueryPanel";
 import SubstancePanel from "@/components/substance/SubstancePanel";
-import SubstanceSimilarity from "@/components/explore/SubstanceSimilarity";
+import SubstanceSimilarity from "@/components/similarity/SubstanceSimilarity";
 import { useDarkMode } from "@/lib/useDarkMode";
 
 export default function HomePage() {

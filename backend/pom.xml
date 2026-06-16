@@ -49,14 +49,34 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- Trino JDBC Driver -->
     <dependency>
       <groupId>io.trino</groupId>
       <artifactId>trino-jdbc</artifactId>
       <version>479</version>
     </dependency>
 
-    <!-- Property-Based Testing -->
+    <dependency>
+      <groupId>sim.explainer</groupId>
+      <artifactId>library</artifactId>
+      <version>0.0.1</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-devtools</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-test</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <version>2.5.0</version>
+    </dependency>
+
     <dependency>
       <groupId>net.jqwik</groupId>
       <artifactId>jqwik</artifactId>
@@ -64,7 +84,6 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- Testcontainers (for integration tests) -->
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>testcontainers</artifactId>
