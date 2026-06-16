@@ -30,7 +30,7 @@ export default function HomePage() {
           {activeTab === "query" && <QueryPanel isDark={isDark} />}
           {activeTab === "substances" && <SubstancePanel isDark={isDark} />}
           {activeTab === "explore" && <SubstanceSimilarity isDark={isDark} />}
-          {activeTab === "dashboards" && <ComingSoon isDark={isDark} label="Dashboards" />}
+          {activeTab === "upload" && <ComingSoon isDark={isDark} label="Upload" />}
         </main>
       </div>
     </div>

@@ -178,7 +178,7 @@ export default function SubstanceSimilarity({ isDark }: SubstanceSimilarityProps
       });
       if (!res.ok) {
         const text = await res.text().catch(() => "");
-        setError(`HTTP ${res.status} ${res.statusText}${text ? ` — ${text.slice(0, 200)}` : ""}`);
+        setError(`HTTP ${res.status} ${res.statusText}${text ? ` - ${text.slice(0, 200)}` : ""}`);
         return;
       }
       const data: SparqlResults = await res.json();
@@ -259,7 +259,7 @@ export default function SubstanceSimilarity({ isDark }: SubstanceSimilarityProps
             <label className={`text-sm font-semibold ${subtle}`}>Query Result</label>
             {results && (
               <span className={`text-[10px] ${muted}`}>
-                {results.results?.bindings?.length ?? 0} bindings · {concepts.length} unique concepts
+                {results.results?.bindings?.length ?? 0} bindings | {concepts.length} unique concepts
               </span>
             )}
           </div>
@@ -386,36 +386,36 @@ const SCOPE_LABELS: { value: number; label: string; description: string }[] = [
   { value: 1, label: "L1 anat.",   description: "Same anatomical group (1-char prefix)" },
   { value: 2, label: "L2 ther.",   description: "Same therapeutic main group (3-char)" },
   { value: 3, label: "L3 sub.",    description: "Same therapeutic subgroup (4-char)" },
-  { value: 4, label: "L4 chem.",   description: "Same chemical subgroup (5-char) — fastest" },
+  { value: 4, label: "L4 chem.",   description: "Same chemical subgroup (5-char) - fastest" },
 ];
 
 function tierFromScore(s: number): { label: string; tone: string; description: string } {
   if (s >= 0.80)
     return {
-      label: "Tier 1 — Sibling (5th-level)",
+      label: "Tier 1 - Sibling (5th-level)",
       tone: "emerald",
-      description: "Same lowest ATC subgroup — clinically near-identical class",
+      description: "Same lowest ATC subgroup - clinically near-identical class",
     };
   if (s >= 0.60)
     return {
-      label: "Tier 2 — Same therapeutic subgroup",
+      label: "Tier 2 - Same therapeutic subgroup",
       tone: "teal",
-      description: "Share 3rd / 4th-level — same general mechanism",
+      description: "Share 3rd / 4th-level - same general mechanism",
     };
   if (s >= 0.40)
     return {
-      label: "Tier 3 — Same anatomical class",
+      label: "Tier 3 - Same anatomical class",
       tone: "sky",
-      description: "Share 2nd-level — same body system",
+      description: "Share 2nd-level - same body system",
     };
   if (s >= 0.20)
     return {
-      label: "Tier 4 — Distant relation",
+      label: "Tier 4 - Distant relation",
       tone: "amber",
       description: "Different subclasses but share a top-level anatomy",
     };
   return {
-    label: "Tier 5 — Cross-system",
+    label: "Tier 5 - Cross-system",
     tone: "rose",
     description: "Different anatomical systems entirely",
   };
@@ -511,7 +511,7 @@ function SubstanceElhMode({ isDark }: { isDark: boolean }) {
       });
       if (!res.ok) {
         const text = await res.text().catch(() => "");
-        setExError(`HTTP ${res.status} ${res.statusText}${text ? ` — ${text.slice(0, 250)}` : ""}`);
+        setExError(`HTTP ${res.status} ${res.statusText}${text ? ` - ${text.slice(0, 250)}` : ""}`);
         return;
       }
       const data: ElhExpandResponse = await res.json();
@@ -536,7 +536,7 @@ function SubstanceElhMode({ isDark }: { isDark: boolean }) {
       });
       if (!res.ok) {
         const text = await res.text().catch(() => "");
-        setTkError(`HTTP ${res.status} ${res.statusText}${text ? ` — ${text.slice(0, 250)}` : ""}`);
+        setTkError(`HTTP ${res.status} ${res.statusText}${text ? ` - ${text.slice(0, 250)}` : ""}`);
         return;
       }
       const data: ElhTopKResponse = await res.json();
@@ -558,7 +558,7 @@ function SubstanceElhMode({ isDark }: { isDark: boolean }) {
       const res = await fetch(url);
       if (!res.ok) {
         const text = await res.text().catch(() => "");
-        setExplainError(`HTTP ${res.status} ${res.statusText}${text ? ` — ${text.slice(0, 250)}` : ""}`);
+        setExplainError(`HTTP ${res.status} ${res.statusText}${text ? ` - ${text.slice(0, 250)}` : ""}`);
         return;
       }
       const data: ElhExplainResponse = await res.json();
@@ -585,7 +585,7 @@ function SubstanceElhMode({ isDark }: { isDark: boolean }) {
       });
       if (!res.ok) {
         const text = await res.text().catch(() => "");
-        setError(`HTTP ${res.status} ${res.statusText}${text ? ` — ${text.slice(0, 250)}` : ""}`);
+        setError(`HTTP ${res.status} ${res.statusText}${text ? ` - ${text.slice(0, 250)}` : ""}`);
         return;
       }
       const data: ElhPairResponse = await res.json();
@@ -725,14 +725,14 @@ function SubstanceElhMode({ isDark }: { isDark: boolean }) {
                 <div className={`rounded border p-3 ${codeBg}`}>
                   <div className="flex items-center justify-between mb-2">
                     <span className={`text-xs font-bold ${heading}`}>Forward</span>
-                    <span className={`text-[10px] ${muted}`}>{explanation.conceptA} ⇒ {explanation.conceptB}</span>
+                    <span className={`text-[10px] ${muted}`}>{explanation.conceptA} to {explanation.conceptB}</span>
                   </div>
                   <TreeView node={explanation.forward} isDark={isDark} defaultExpanded={1} />
                 </div>
                 <div className={`rounded border p-3 ${codeBg}`}>
                   <div className="flex items-center justify-between mb-2">
                     <span className={`text-xs font-bold ${heading}`}>Backward</span>
-                    <span className={`text-[10px] ${muted}`}>{explanation.conceptB} ⇒ {explanation.conceptA}</span>
+                    <span className={`text-[10px] ${muted}`}>{explanation.conceptB} to {explanation.conceptA}</span>
                   </div>
                   <TreeView node={explanation.backward} isDark={isDark} defaultExpanded={1} />
                 </div>
@@ -792,8 +792,8 @@ function SubstanceElhMode({ isDark }: { isDark: boolean }) {
                         {exp.variable}
                       </span>
                       <span className={`text-[10px] ${muted}`}>
-                        seed=<b>{exp.seedConcept}</b> · k={exp.k} · scope={exp.scope}
-                        {exp.iriPrefix ? ` · iri=${exp.iriPrefix}` : ""}
+                        seed=<b>{exp.seedConcept}</b> | k={exp.k} | scope={exp.scope}
+                        {exp.iriPrefix ? ` | iri=${exp.iriPrefix}` : ""}
                       </span>
                     </div>
                     <ul className="flex flex-col">
@@ -883,7 +883,7 @@ function SubstanceElhMode({ isDark }: { isDark: boolean }) {
             <label className={`text-sm font-semibold ${subtle}`}>Ranked Neighbours</label>
             {tkResult && (
               <span className={`text-[10px] ${muted}`}>
-                {tkResult.results.length} of top {tkResult.k} · scope=&quot;{tkResult.scopePrefix}&quot; · {tkResult.elapsedMs} ms
+                {tkResult.results.length} of top {tkResult.k} | scope=&quot;{tkResult.scopePrefix}&quot; | {tkResult.elapsedMs} ms
               </span>
             )}
           </div>
@@ -923,7 +923,7 @@ function SubstanceElhMode({ isDark }: { isDark: boolean }) {
                         {n.score.toFixed(3)}
                       </span>
                       <button
-                        title={`Compare ${tkResult.concept} ↔ ${n.concept}`}
+                        title={`Compare ${tkResult.concept} vs ${n.concept}`}
                         onClick={() => {
                           setConceptA(tkResult.concept);
                           setConceptB(n.concept);
@@ -1195,16 +1195,16 @@ function getAttributes(pair: PairScore): AttributeRow[] {
     {
       key: "identifier",
       label: "Identifier",
-      valueA: a.identifier ?? "—",
-      valueB: b.identifier ?? "—",
+      valueA: a.identifier ?? "-",
+      valueB: b.identifier ?? "-",
       matched: !!a.identifier && !!b.identifier && a.identifier === b.identifier,
       mono: true,
     },
     {
       key: "word-tokens",
       label: "Word tokens",
-      valueA: tokensA.size > 0 ? [...tokensA].join(", ") : "—",
-      valueB: tokensB.size > 0 ? [...tokensB].join(", ") : "—",
+      valueA: tokensA.size > 0 ? [...tokensA].join(", ") : "-",
+      valueB: tokensB.size > 0 ? [...tokensB].join(", ") : "-",
       matched: false,
       mono: true,
       context: true,

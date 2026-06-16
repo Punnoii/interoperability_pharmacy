@@ -61,7 +61,7 @@ public class SparqlExpansionService {
         continue;
       }
       if (topK == null) {
-        log.warn("Unknown concept '{}' — skipping expansion annotation for variable {}", seed, var);
+        log.warn("Unknown concept '{}' - skipping expansion annotation for variable {}", seed, var);
         continue;
       }
 

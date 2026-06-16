@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Clock, Settings, FlaskConical, HelpCircle, GitCompare } from "lucide-react";
+import { Clock, Settings, FlaskConical, HelpCircle, GitCompare, Upload } from "lucide-react";
 
 interface SidebarProps {
   activeTab: string;
@@ -30,16 +30,9 @@ const navItems = [
     icon: <GitCompare size={18} />,
   },
   {
-    key: "dashboards",
-    label: "Dashboards",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <rect x="3" y="3" width="7" height="7" />
-        <rect x="14" y="3" width="7" height="7" />
-        <rect x="14" y="14" width="7" height="7" />
-        <rect x="3" y="14" width="7" height="7" />
-      </svg>
-    ),
+    key: "upload",
+    label: "Upload",
+    icon: <Upload size={18} />,
   },
 ];
 

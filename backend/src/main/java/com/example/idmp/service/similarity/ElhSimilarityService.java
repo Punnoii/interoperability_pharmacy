@@ -83,7 +83,7 @@ public class ElhSimilarityService {
       log.info("ElhSimilarityService ready: loaded {} concepts ({} labels) in {} ms from {}",
           concepts.size(), conceptLabels.size(), loadDurationMs, ontologyDir);
     } catch (Exception ex) {
-      log.error("Failed to initialise ElhSimilarityService — similarity endpoints will return 503", ex);
+      log.error("Failed to initialise ElhSimilarityService - similarity endpoints will return 503", ex);
       explainerRef.set(null);
       lastError = ex.getMessage();
       lastErrorEpochMs = System.currentTimeMillis();
@@ -225,7 +225,7 @@ public class ElhSimilarityService {
     results.sort(Comparator
         .comparing((Neighbor n) -> n.score, Comparator.reverseOrder())
         .thenComparing(Neighbor::concept));
-    log.info("topK precompute for {} (scope={}) → {} neighbours", target, scope, results.size());
+    log.info("topK precompute for {} (scope={}) -> {} neighbours", target, scope, results.size());
     return List.copyOf(results);
   }
 
@@ -282,7 +282,7 @@ public class ElhSimilarityService {
       try (InputStream in = res.getInputStream()) {
         Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
       }
-      log.debug("Copied ontology resource {} → {}", filename, target);
+      log.debug("Copied ontology resource {} -> {}", filename, target);
     }
   }
 
