@@ -5,6 +5,12 @@ spring:
   jackson:
     serialization:
       indent_output: true
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 250MB
+      file-size-threshold: 2MB
 
 ontop:
   endpoint: ${ONTOP_ENDPOINT:http://localhost:8080/sparql}

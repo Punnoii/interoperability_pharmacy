@@ -6,6 +6,7 @@ import Sidebar from "@/components/layout/Sidebar";
 import QueryPanel from "@/components/query/QueryPanel";
 import SubstancePanel from "@/components/substance/SubstancePanel";
 import SubstanceSimilarity from "@/components/similarity/SubstanceSimilarity";
+import UploadPanel from "@/components/upload/UploadPanel";
 import { useDarkMode } from "@/lib/useDarkMode";
 
 export default function HomePage() {
@@ -30,7 +31,7 @@ export default function HomePage() {
           {activeTab === "query" && <QueryPanel isDark={isDark} />}
           {activeTab === "substances" && <SubstancePanel isDark={isDark} />}
           {activeTab === "explore" && <SubstanceSimilarity isDark={isDark} />}
-          {activeTab === "upload" && <ComingSoon isDark={isDark} label="Upload" />}
+          {activeTab === "upload" && <UploadPanel isDark={isDark} />}
         </main>
       </div>
     </div>
