@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
 
     if (res.status === 429 || res.status === 503) {
       lastError = `${model}: quota/rate-limit (${res.status})`;
-      continue; // try next model
+      continue;
     }
 
     if (!res.ok) {

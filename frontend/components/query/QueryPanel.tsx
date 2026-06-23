@@ -18,8 +18,14 @@ interface SparqlResults {
   results: { bindings: SparqlBinding[] };
 }
 
+import type { QueryTemplate as ImportedTemplate } from "@/lib/queryTemplates";
+
 interface QueryPanelProps {
   isDark: boolean;
+  sparqlEndpoint?: string;
+  requestShape?: "default" | "sandbox";
+  initialQuery?: string;
+  templatesOverride?: ImportedTemplate[];
 }
 
 interface BookmarkItem {
@@ -108,9 +114,16 @@ LIMIT 100
 `;
 const PAGE_SIZE = 10;
 
-export default function QueryPanel({ isDark }: QueryPanelProps) {
+export default function QueryPanel({
+  isDark,
+  sparqlEndpoint = "/api/sparql",
+  requestShape = "default",
+  initialQuery,
+  templatesOverride,
+}: QueryPanelProps) {
+  const templates = templatesOverride ?? QUERY_TEMPLATES;
   const [queryMode, setQueryMode] = useState<QueryMode>("manual");
-  const [query, setQuery] = useState(DEFAULT_QUERY);
+  const [query, setQuery] = useState(initialQuery ?? DEFAULT_QUERY);
   const [source, setSource] = useState<SourceKey>("all");
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<SparqlResults | null>(null);
@@ -348,7 +361,7 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
       if (seenIri.has(s.iri)) return;
       seenIri.add(s.iri);
       const display = s.preferredName || s.iri.split("/").pop() || s.iri;
-      const tpl = QUERY_TEMPLATES.find((t) => t.id === "tpl-by-substance-iri");
+      const tpl = templates.find((t) => t.id === "tpl-by-substance-iri");
       if (!tpl) return;
       const rawSource = s.source.replace("company_", "").toLowerCase();
       const src: SourceKey =
@@ -372,7 +385,7 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
       });
     });
 
-    QUERY_TEMPLATES.forEach((t) => {
+    templates.forEach((t) => {
       const nameScore = hybridScore(w, t.name);
       const descScore = hybridScore(w, t.description);
       const keywordScore = Math.max(
@@ -417,7 +430,7 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
 
     scored.sort((a, b) => b.score - a.score);
     return scored.slice(0, AC_MAX_RESULTS).map((s) => s.item);
-  }, [acWord, acSubstances, bookmarks]);
+  }, [acWord, acSubstances, bookmarks, templates]);
 
   useEffect(() => {
     if (acIdx >= acSuggestions.length) setAcIdx(Math.max(0, acSuggestions.length - 1));
@@ -519,13 +532,13 @@ export default function QueryPanel({ isDark }: QueryPanelProps) {
     const finalQuery = applySourceFilter(sparqlToRun, overrideSource ?? source);
 
     try {
-      const res = await fetch("/api/sparql", {
+      const body = requestShape === "sandbox"
+        ? { sparql: finalQuery, accept: "application/sparql-results+json" }
+        : { query: finalQuery, accept: "application/sparql-results+json" };
+      const res = await fetch(sparqlEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: finalQuery,
-          accept: "application/sparql-results+json",
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);

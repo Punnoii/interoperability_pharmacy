@@ -1,7 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { Upload, X, Play, Database } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Upload, X, Database, Save, Trash2 } from "lucide-react";
+import QueryPanel from "@/components/query/QueryPanel";
+import { SANDBOX_DEFAULT_QUERY, SANDBOX_TEMPLATES } from "@/lib/sandboxTemplates";
 
 interface UploadPanelProps {
   isDark: boolean;
@@ -22,49 +24,24 @@ const EMPTY: SlotState = {
   ontology: null, database: null, mapping: null, properties: null, catalog: null,
 };
 
-const SAMPLE_SPARQL = `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-
-SELECT ?s ?p ?o
-WHERE { ?s ?p ?o }
-LIMIT 10`;
-
 function fmtSize(n: number): string {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
   return `${(n / 1024 / 1024).toFixed(2)} MB`;
 }
 
-interface UploadResult {
-  stagingId: string;
-  stagingDir: string;
-  message: string;
+interface SandboxState {
   fileCount: number;
-}
-
-interface SparqlBinding {
-  type: string;
-  value: string;
-  datatype?: string;
-  "xml:lang"?: string;
-}
-
-interface SparqlResults {
-  head: { vars: string[] };
-  results: { bindings: Record<string, SparqlBinding>[] };
+  triples: number;
 }
 
 export default function UploadPanel({ isDark }: UploadPanelProps) {
   const [files, setFiles] = useState<SlotState>(EMPTY);
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ kind: "info" | "ok" | "err"; msg: string } | null>(null);
-  const [uploaded, setUploaded] = useState<UploadResult | null>(null);
-
-  const [sparql, setSparql] = useState<string>(SAMPLE_SPARQL);
-  const [running, setRunning] = useState(false);
-  const [queryError, setQueryError] = useState<string | null>(null);
-  const [results, setResults] = useState<SparqlResults | null>(null);
-  const [elapsedMs, setElapsedMs] = useState<number | null>(null);
+  const [sandbox, setSandbox] = useState<SandboxState | null>(null);
+  const [hasSavedProfile, setHasSavedProfile] = useState(false);
 
   const inputs = useRef<Record<SlotKey, HTMLInputElement | null>>({
     ontology: null, database: null, mapping: null, properties: null, catalog: null,
@@ -79,9 +56,22 @@ export default function UploadPanel({ isDark }: UploadPanelProps) {
     ? "bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700"
     : "bg-white border-gray-300 text-gray-800 hover:bg-gray-50";
   const inputBg  = isDark ? "bg-slate-950 border-slate-800" : "bg-white border-gray-200";
-  const codeBg   = isDark ? "bg-slate-950 border-slate-800 text-slate-100" : "bg-gray-50 border-gray-200 text-gray-900";
-  const tableHd  = isDark ? "bg-slate-800 text-slate-200 border-slate-700" : "bg-gray-100 text-gray-800 border-gray-300";
-  const tableRow = isDark ? "border-slate-800 hover:bg-slate-900" : "border-gray-200 hover:bg-gray-50";
+
+  useEffect(() => {
+    fetch("/api/sandbox/status").then(async (r) => {
+      if (!r.ok) return;
+      const data = await r.json();
+      if (!data?.empty) {
+        setSandbox({ fileCount: data.fileCount ?? 0, triples: data.triples ?? 0 });
+      }
+    }).catch(() => {});
+
+    fetch("/api/profile/config").then(async (r) => {
+      if (!r.ok) return;
+      const data = await r.json();
+      setHasSavedProfile(Boolean(data?.exists));
+    }).catch(() => {});
+  }, []);
 
   function pick(key: SlotKey) { inputs.current[key]?.click(); }
 
@@ -97,13 +87,13 @@ export default function UploadPanel({ isDark }: UploadPanelProps) {
     setStatus(null);
   }
 
-  function clearAll() {
+  async function clearAll() {
     setFiles(EMPTY);
     setStatus(null);
-    setUploaded(null);
-    setResults(null);
-    setQueryError(null);
-    setElapsedMs(null);
+    try {
+      await fetch("/api/sandbox/status", { method: "DELETE" });
+    } catch {}
+    setSandbox(null);
   }
 
   const selected = Object.values(files).filter((f) => f !== null).length;
@@ -121,25 +111,18 @@ export default function UploadPanel({ isDark }: UploadPanelProps) {
         const f = files[s.key];
         if (f) form.append(s.key, f, f.name);
       }
-      const res = await fetch("/api/upload/ontop-config", { method: "POST", body: form });
+      const res = await fetch("/api/sandbox/upload", { method: "POST", body: form });
       if (!res.ok) {
         const t = await res.text().catch(() => "");
-        setStatus({ kind: "err", msg: `Upload failed (HTTP ${res.status}). ${t.slice(0, 180)}` });
+        setStatus({ kind: "err", msg: `Upload failed (HTTP ${res.status}). ${t.slice(0, 200)}` });
         return;
       }
-      const data = await res.json().catch(() => ({}));
-      const stagingId: string | undefined = data?.stagingId;
-      if (!stagingId) {
-        setStatus({ kind: "err", msg: "Server response missing stagingId." });
-        return;
-      }
-      setUploaded({
-        stagingId,
-        stagingDir: data?.stagingDir ?? "",
-        message: data?.message ?? `Uploaded ${selected} file(s) successfully.`,
-        fileCount: selected,
+      const data = await res.json();
+      setSandbox({ fileCount: data.fileCount ?? selected, triples: data.triples ?? 0 });
+      setStatus({
+        kind: "ok",
+        msg: `Loaded ${data.fileCount ?? selected} file(s) into sandbox. ${data.triples ?? 0} triples ready for query.`,
       });
-      setStatus({ kind: "ok", msg: data?.message ?? `Uploaded ${selected} file(s) successfully.` });
     } catch (e) {
       setStatus({ kind: "err", msg: e instanceof Error ? e.message : "Network error" });
     } finally {
@@ -147,51 +130,25 @@ export default function UploadPanel({ isDark }: UploadPanelProps) {
     }
   }
 
-  async function runQuery() {
-    if (!uploaded || running) return;
-    setRunning(true);
-    setQueryError(null);
-    setResults(null);
-    setElapsedMs(null);
-    const t0 = performance.now();
+  async function saveProfile() {
+    if (!sandbox || saving) return;
+    setSaving(true);
+    setStatus({ kind: "info", msg: "Saving to your profile..." });
     try {
-      const res = await fetch(
-        `/api/upload/ontop-config/${uploaded.stagingId}/query`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            sparql,
-            accept: "application/sparql-results+json",
-          }),
-        }
-      );
-      const elapsed = Math.round(performance.now() - t0);
-      setElapsedMs(elapsed);
-      const txt = await res.text();
+      const res = await fetch("/api/sandbox/save", { method: "POST" });
       if (!res.ok) {
-        setQueryError(`HTTP ${res.status} - ${txt.slice(0, 300)}`);
+        const t = await res.text();
+        setStatus({ kind: "err", msg: `Save failed: ${t.slice(0, 200)}` });
         return;
       }
-      try {
-        const json = JSON.parse(txt);
-        if (json?.results?.bindings) {
-          setResults(json as SparqlResults);
-        } else {
-          setQueryError("Unexpected response shape (no results.bindings).");
-        }
-      } catch {
-        setQueryError("Failed to parse JSON response.");
-      }
+      setHasSavedProfile(true);
+      setStatus({ kind: "ok", msg: "Saved to your profile. View it in the Profile tab." });
     } catch (e) {
-      setQueryError(e instanceof Error ? e.message : "Network error");
+      setStatus({ kind: "err", msg: e instanceof Error ? e.message : "Network error" });
     } finally {
-      setRunning(false);
+      setSaving(false);
     }
   }
-
-  const vars = results?.head?.vars ?? [];
-  const rows = results?.results?.bindings ?? [];
 
   return (
     <section className="flex-1 overflow-auto p-6">
@@ -199,8 +156,8 @@ export default function UploadPanel({ isDark }: UploadPanelProps) {
         <div>
           <h2 className={`text-xl font-bold ${text}`}>Upload Configuration</h2>
           <p className={`text-sm mt-1 ${muted}`}>
-            Provide the files for the Ontop / Trino setup. Fields can be filled in any order;
-            only the slots that contain a file are sent to the server.
+            Files are loaded into a temporary in-memory sandbox tied to your browser session.
+            They disappear after 30 minutes idle, unless you save them as your profile.
           </p>
         </div>
 
@@ -261,22 +218,36 @@ export default function UploadPanel({ isDark }: UploadPanelProps) {
           })}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <button
             onClick={upload}
             disabled={uploading || selected === 0}
             className="flex items-center gap-2 px-4 py-2 rounded text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <Upload size={14} />
-            <span>{uploading ? "Uploading..." : "Upload Files"}</span>
+            <span>{uploading ? "Uploading..." : "Upload to Sandbox"}</span>
           </button>
+
+          {sandbox && (
+            <button
+              onClick={saveProfile}
+              disabled={saving}
+              className="flex items-center gap-2 px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <Save size={14} />
+              <span>{saving ? "Saving..." : hasSavedProfile ? "Update Profile" : "Save as My Profile"}</span>
+            </button>
+          )}
+
           <button
             onClick={clearAll}
-            disabled={uploading || (selected === 0 && !uploaded)}
-            className={`text-xs px-3 py-2 rounded border ${btnBase} disabled:opacity-50`}
+            disabled={uploading || (selected === 0 && !sandbox)}
+            className={`flex items-center gap-2 text-xs px-3 py-2 rounded border ${btnBase} disabled:opacity-50`}
           >
-            Clear
+            <Trash2 size={12} />
+            <span>Clear</span>
           </button>
+
           <span className={`text-xs ${muted}`}>
             {selected} of {SLOTS.length} files chosen
           </span>
@@ -296,120 +267,27 @@ export default function UploadPanel({ isDark }: UploadPanelProps) {
           </div>
         )}
 
-        {uploaded && (
-          <div className={`rounded-lg border ${card} flex flex-col gap-4 p-4`}>
-            <div className="flex items-center justify-between gap-3">
+        {sandbox && (
+          <div className="flex flex-col gap-3">
+            <div className={`flex items-center justify-between rounded-lg border px-4 py-3 ${card}`}>
               <div className="flex items-center gap-2">
                 <Database size={16} className={subtle} />
-                <h3 className={`text-base font-semibold ${text}`}>
-                  Query against uploaded config
-                </h3>
+                <h3 className={`text-base font-semibold ${text}`}>Sandbox query</h3>
               </div>
               <div className={`text-[11px] font-mono ${muted}`}>
-                staging id: {uploaded.stagingId} - {uploaded.fileCount} files
+                {sandbox.fileCount} files | {sandbox.triples.toLocaleString()} triples in memory
               </div>
             </div>
 
-            <p className={`text-xs ${muted}`}>
-              Run a SPARQL query against the deployed Ontop endpoint. The staged config above is
-              recorded; the active mapping is the one currently loaded by Ontop.
-            </p>
-
-            <textarea
-              value={sparql}
-              onChange={(e) => setSparql(e.target.value)}
-              spellCheck={false}
-              rows={9}
-              className={`w-full text-[13px] font-mono rounded border px-3 py-2 ${codeBg}`}
-            />
-
-            <div className="flex items-center gap-3">
-              <button
-                onClick={runQuery}
-                disabled={running || sparql.trim().length === 0}
-                className="flex items-center gap-2 px-4 py-2 rounded text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                <Play size={13} />
-                <span>{running ? "Running..." : "Run Query"}</span>
-              </button>
-              <button
-                onClick={() => setSparql(SAMPLE_SPARQL)}
-                disabled={running}
-                className={`text-xs px-3 py-2 rounded border ${btnBase} disabled:opacity-50`}
-              >
-                Sample query
-              </button>
-              {elapsedMs !== null && (
-                <span className={`text-xs font-mono ${muted}`}>
-                  {elapsedMs} ms
-                </span>
-              )}
-              {results && (
-                <span className={`text-xs ${muted}`}>
-                  {rows.length} row{rows.length === 1 ? "" : "s"}
-                </span>
-              )}
+            <div className={`rounded-lg border overflow-hidden ${card}`}>
+              <QueryPanel
+                isDark={isDark}
+                sparqlEndpoint="/api/sandbox/query"
+                requestShape="sandbox"
+                initialQuery={SANDBOX_DEFAULT_QUERY}
+                templatesOverride={SANDBOX_TEMPLATES}
+              />
             </div>
-
-            {queryError && (
-              <div
-                className={`text-xs px-3 py-2 rounded border font-mono whitespace-pre-wrap ${
-                  isDark
-                    ? "text-red-300 border-red-900/50 bg-slate-950"
-                    : "text-red-700 border-red-200 bg-red-50"
-                }`}
-              >
-                {queryError}
-              </div>
-            )}
-
-            {results && (
-              <div className={`rounded border overflow-auto max-h-96 ${rowDiv}`}>
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr>
-                      {vars.map((v) => (
-                        <th
-                          key={v}
-                          className={`text-left font-semibold px-3 py-2 border-b ${tableHd}`}
-                        >
-                          ?{v}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.length === 0 ? (
-                      <tr>
-                        <td
-                          colSpan={Math.max(vars.length, 1)}
-                          className={`text-center italic px-3 py-4 ${muted}`}
-                        >
-                          (no results)
-                        </td>
-                      </tr>
-                    ) : (
-                      rows.map((row, i) => (
-                        <tr key={i} className={`border-b ${tableRow}`}>
-                          {vars.map((v) => {
-                            const b = row[v];
-                            return (
-                              <td
-                                key={v}
-                                className={`px-3 py-2 font-mono align-top ${subtle}`}
-                                title={b?.value ?? ""}
-                              >
-                                {b ? b.value : <span className={muted}>-</span>}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
           </div>
         )}
       </div>

@@ -523,6 +523,11 @@ function SubstanceElhMode({ isDark }: { isDark: boolean }) {
     }
   }
 
+  function gotoPairCompare(code: string) {
+    setConceptA(code);
+    setSubTab("pair");
+  }
+
   async function runTopK() {
     if (!tkConcept.trim() || tkComputing) return;
     setTkComputing(true);
@@ -802,8 +807,15 @@ function SubstanceElhMode({ isDark }: { isDark: boolean }) {
                           <span className={`w-5 text-[10px] font-mono text-right ${muted}`}>
                             {j + 1}
                           </span>
-                          <span className={`flex-1 font-mono font-semibold ${heading}`}>
+                          <button
+                            onClick={() => gotoPairCompare(n.concept)}
+                            title={`Compare ${exp.seedConcept} vs ${n.concept}`}
+                            className={`w-24 font-mono font-semibold text-left hover:underline ${heading}`}
+                          >
                             {n.concept}
+                          </button>
+                          <span className={`flex-1 truncate ${subtle}`} title={n.label ?? ""}>
+                            {n.label ?? <span className={muted}>—</span>}
                           </span>
                           <span className={`w-14 text-right font-mono tabular-nums text-[11px] ${heading}`}>
                             {n.score.toFixed(3)}
@@ -918,7 +930,16 @@ function SubstanceElhMode({ isDark }: { isDark: boolean }) {
                       }`}
                     >
                       <span className={`w-5 text-[10px] font-mono text-right ${muted}`}>{i + 1}</span>
-                      <span className={`flex-1 font-mono text-xs font-semibold ${heading}`}>{n.concept}</span>
+                      <button
+                        onClick={() => gotoPairCompare(n.concept)}
+                        title={`Compare ${tkResult.concept} vs ${n.concept}`}
+                        className={`w-24 font-mono text-xs font-semibold text-left hover:underline ${heading}`}
+                      >
+                        {n.concept}
+                      </button>
+                      <span className={`flex-1 truncate text-xs ${subtle}`} title={n.label ?? ""}>
+                        {n.label ?? <span className={muted}>—</span>}
+                      </span>
                       <span className={`w-14 text-right font-mono text-xs tabular-nums ${heading}`}>
                         {n.score.toFixed(3)}
                       </span>

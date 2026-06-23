@@ -37,20 +37,3 @@ export default function HomePage() {
     </div>
   );
 }
-
-function ComingSoon({ isDark, label }: { isDark: boolean; label: string }) {
-  return (
-    <div
-      className={`flex flex-col items-center justify-center h-full gap-3 ${
-        isDark ? "text-slate-500" : "text-gray-400"
-      }`}
-    >
-      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <circle cx="12" cy="12" r="10" />
-        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-      </svg>
-      <p className={`text-lg font-semibold ${isDark ? "text-slate-400" : "text-gray-500"}`}>{label}</p>
-      <p className={`text-sm ${isDark ? "text-slate-500" : "text-gray-400"}`}>Coming soon</p>
-    </div>
-  );
-}
