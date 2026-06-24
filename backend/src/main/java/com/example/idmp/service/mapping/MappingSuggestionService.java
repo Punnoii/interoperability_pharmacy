@@ -125,18 +125,6 @@ public class MappingSuggestionService {
     return suggestions;
   }
 
-  private static boolean isTechnicalMetadata(String columnText) {
-    return containsAny(
-        columnText,
-        "raw_record_id",
-        "source_file",
-        "status",
-        "version",
-        "approved_by",
-        "record"
-    );
-  }
-
   private static String normalize(String value) {
     return value == null ? "" : value.toLowerCase(Locale.ROOT);
   }

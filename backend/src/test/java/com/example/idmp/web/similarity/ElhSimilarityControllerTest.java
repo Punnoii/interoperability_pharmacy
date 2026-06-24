@@ -1,6 +1,5 @@
 package com.example.idmp.web.similarity;
 
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -32,7 +31,6 @@ class ElhSimilarityControllerTest {
 
   @Autowired private MockMvc mvc;
   @Autowired private ElhSimilarityService service;
-  @Autowired private SparqlExpansionService expansionService;
 
   @TestConfiguration
   static class MockedServicesConfig {
