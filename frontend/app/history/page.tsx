@@ -27,15 +27,11 @@ export default function HistoryPage() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return entries;
-    return entries.filter(
-      (e) =>
-        e.query.toLowerCase().includes(q) ||
-        e.source.toLowerCase().includes(q),
-    );
+    return entries.filter((e) => e.query.toLowerCase().includes(q));
   }, [entries, search]);
 
   function handleLoad(e: HistoryEntry) {
-    setPendingQuery({ query: e.query, source: e.source });
+    setPendingQuery({ query: e.query });
     router.push("/homepage");
   }
 
@@ -132,10 +128,6 @@ export default function HistoryPage() {
                     <div className="flex flex-col gap-1 min-w-0">
                       <div className={`text-xs ${muted} flex items-center gap-2 flex-wrap`}>
                         <span>{new Date(e.timestamp).toLocaleString("en-GB")}</span>
-                        <span>·</span>
-                        <span>
-                          {e.source === "all" ? "All Sources" : `Company ${e.source.toUpperCase()}`}
-                        </span>
                         {typeof e.resultCount === "number" && (
                           <>
                             <span>·</span>

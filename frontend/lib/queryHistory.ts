@@ -13,7 +13,7 @@ const COOKIE_MAX_AGE = 2592000;
 export interface HistoryEntry {
   id: string;
   query: string;
-  source: string;
+  source?: string;
   timestamp: number;
   resultCount?: number;
   error?: string;
@@ -21,7 +21,7 @@ export interface HistoryEntry {
 
 export interface PendingQuery {
   query: string;
-  source: string;
+  source?: string;
 }
 
 function safeReadLS(): HistoryEntry[] {
@@ -115,8 +115,7 @@ export function pushHistory(entry: Omit<HistoryEntry, "id" | "timestamp">) {
 
   if (
     list.length > 0 &&
-    list[0].query.trim() === trimmedQuery &&
-    list[0].source === entry.source
+    list[0].query.trim() === trimmedQuery
   ) {
     return;
   }
@@ -159,11 +158,7 @@ export function popPendingQuery(): PendingQuery | null {
     if (!raw) return null;
     window.sessionStorage.removeItem(PENDING_KEY);
     const parsed = JSON.parse(raw);
-    if (
-      parsed &&
-      typeof parsed.query === "string" &&
-      typeof parsed.source === "string"
-    ) {
+    if (parsed && typeof parsed.query === "string") {
       return parsed;
     }
     return null;

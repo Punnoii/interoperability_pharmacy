@@ -32,7 +32,6 @@ interface BookmarkItem {
   id: string;
   name: string;
   query: string;
-  source: string;
   createdAt: string;
 }
 
@@ -42,60 +41,9 @@ interface AcSuggestion {
   title: string;
   subtitle: string;
   query: string;
-  source: SourceKey;
 }
 
 type ViewMode = "table" | "graph";
-type SourceKey = "all" | "a" | "b" | "c" | "d" | "e";
-
-const SOURCES: { key: SourceKey; label: string }[] = [
-  { key: "all", label: "All Sources" },
-  { key: "a", label: "Company A — PostgreSQL" },
-  { key: "b", label: "Company B — PostgreSQL" },
-  { key: "c", label: "Company C — MySQL" },
-  { key: "d", label: "Company D — MongoDB" },
-  { key: "e", label: "Company E — Postgres (CSV)" },
-];
-
-const SUBSTANCE_BASE_IRI = "http://example.com/idmp-demo/substance/";
-
-function applySourceFilter(query: string, source: SourceKey): string {
-  if (source === "all") return query;
-  if (!/\?substance\b/.test(query)) return query;
-
-  const prefix = `${SUBSTANCE_BASE_IRI}${source}/`;
-  const filterClause = `  FILTER(STRSTARTS(STR(?substance), "${prefix}"))\n`;
-
-  const whereMatch = query.match(/WHERE\s*\{/i);
-  if (!whereMatch || whereMatch.index === undefined) return query;
-
-  const openIdx = whereMatch.index + whereMatch[0].length;
-  let depth = 0;
-  let closeIdx = -1;
-  for (let i = openIdx; i < query.length; i++) {
-    const ch = query[i];
-    if (ch === "{") depth++;
-    else if (ch === "}") {
-      if (depth === 0) {
-        closeIdx = i;
-        break;
-      }
-      depth--;
-    }
-  }
-
-  if (closeIdx === -1) return query;
-  return query.slice(0, closeIdx) + filterClause + query.slice(closeIdx);
-}
-
-function detectLockedSource(query: string): Exclude<SourceKey, "all"> | null {
-  const m = query.match(/\/substance\/([a-e])\//);
-  if (m) {
-    const k = m[1] as Exclude<SourceKey, "all">;
-    return k;
-  }
-  return null;
-}
 
 const DEFAULT_QUERY = `PREFIX idmp-mprd: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11615-MedicinalProducts/>
 PREFIX cmns-dsg: <https://www.omg.org/spec/Commons/Designators/>
@@ -124,7 +72,6 @@ export default function QueryPanel({
   const templates = templatesOverride ?? QUERY_TEMPLATES;
   const [queryMode, setQueryMode] = useState<QueryMode>("manual");
   const [query, setQuery] = useState(initialQuery ?? DEFAULT_QUERY);
-  const [source, setSource] = useState<SourceKey>("all");
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<SparqlResults | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -141,7 +88,7 @@ export default function QueryPanel({
   const [acOpen, setAcOpen] = useState(false);
   const [acIdx, setAcIdx] = useState(0);
   const [acWord, setAcWord] = useState("");
-  const [acSubstances, setAcSubstances] = useState<Array<{ iri: string; preferredName: string; identifier: string; source: string }>>([]);
+  const [acSubstances, setAcSubstances] = useState<Array<{ iri: string; preferredName: string; identifier: string }>>([]);
   const acDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const acFetchAbort = useRef<AbortController | null>(null);
   const queryTextareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -184,7 +131,7 @@ export default function QueryPanel({
       const res = await fetch("/api/bookmarks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, query, source }),
+        body: JSON.stringify({ name, query }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -208,9 +155,6 @@ export default function QueryPanel({
     if (!confirm(`Do you wanna use ${b.name} to Query?`)) return;
     setQueryMode("manual");
     setQuery(b.query);
-    if (b.source === "all" || b.source === "a" || b.source === "b" || b.source === "c" || b.source === "d" || b.source === "e") {
-      setSource(b.source);
-    }
   }
 
   async function handleDeleteBookmark(id: string) {
@@ -305,20 +249,10 @@ export default function QueryPanel({
   }
 
   useEffect(() => {
-    const locked = detectLockedSource(query);
-    if (locked && source !== "all" && source !== locked) {
-      setSource(locked);
-    }
-  }, [query, source]);
-
-  useEffect(() => {
     const pending = popPendingQuery();
     if (pending) {
       setQueryMode("manual");
       setQuery(pending.query);
-      if (pending.source === "all" || pending.source === "a" || pending.source === "b" || pending.source === "c" || pending.source === "d" || pending.source === "e") {
-        setSource(pending.source);
-      }
     }
   }, []);
 
@@ -363,11 +297,6 @@ export default function QueryPanel({
       const display = s.preferredName || s.iri.split("/").pop() || s.iri;
       const tpl = templates.find((t) => t.id === "tpl-by-substance-iri");
       if (!tpl) return;
-      const rawSource = s.source.replace("company_", "").toLowerCase();
-      const src: SourceKey =
-        rawSource === "a" || rawSource === "b" || rawSource === "c" || rawSource === "d" || rawSource === "e"
-          ? rawSource
-          : "all";
       const nameScore = hybridScore(w, display);
       const idScore = s.identifier ? hybridScore(w, s.identifier) : 0;
       const score = Math.max(nameScore, idScore);
@@ -377,9 +306,8 @@ export default function QueryPanel({
           kind: "substance",
           key: `s:${s.iri}`,
           title: display,
-          subtitle: s.identifier ? `${s.identifier} · ${s.source}` : s.source,
+          subtitle: s.identifier ?? "",
           query: tpl.query.replace("{{IRI}}", s.iri),
-          source: src,
         },
         score,
       });
@@ -401,7 +329,6 @@ export default function QueryPanel({
           title: t.name,
           subtitle: t.description,
           query: t.query,
-          source: t.source,
         },
         score,
       });
@@ -410,11 +337,6 @@ export default function QueryPanel({
     bookmarks.forEach((b) => {
       const score = hybridScore(w, b.name);
       if (score < AC_THRESHOLD) return;
-      const rawSource = b.source.toLowerCase();
-      const src: SourceKey =
-        rawSource === "a" || rawSource === "b" || rawSource === "c" || rawSource === "d" || rawSource === "e"
-          ? rawSource
-          : "all";
       scored.push({
         item: {
           kind: "bookmark",
@@ -422,7 +344,6 @@ export default function QueryPanel({
           title: b.name,
           subtitle: "Your saved query",
           query: b.query,
-          source: src,
         },
         score,
       });
@@ -459,7 +380,6 @@ export default function QueryPanel({
     const s = acSuggestions[idx];
     if (!s) return;
     setQuery(s.query);
-    setSource(s.source);
     setAcOpen(false);
     setTimeout(() => {
       const el = queryTextareaRef.current;
@@ -520,7 +440,7 @@ export default function QueryPanel({
     }
   }
 
-  async function handleRun(overrideQuery?: string, overrideSource?: SourceKey) {
+  async function handleRun(overrideQuery?: string) {
     const sparqlToRun = overrideQuery ?? query;
     if (!sparqlToRun.trim()) return;
     setIsLoading(true);
@@ -529,12 +449,10 @@ export default function QueryPanel({
     setPage(1);
     setViewMode("table");
 
-    const finalQuery = applySourceFilter(sparqlToRun, overrideSource ?? source);
-
     try {
       const body = requestShape === "sandbox"
-        ? { sparql: finalQuery, accept: "application/sparql-results+json" }
-        : { query: finalQuery, accept: "application/sparql-results+json" };
+        ? { sparql: sparqlToRun, accept: "application/sparql-results+json" }
+        : { query: sparqlToRun, accept: "application/sparql-results+json" };
       const res = await fetch(sparqlEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -548,7 +466,6 @@ export default function QueryPanel({
       const rows = Array.isArray(data?.results?.bindings) ? data.results.bindings.length : 0;
       pushHistory({
         query: sparqlToRun,
-        source: overrideSource ?? source,
         resultCount: rows,
       });
       setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
@@ -557,7 +474,6 @@ export default function QueryPanel({
       setError(msg);
       pushHistory({
         query: sparqlToRun,
-        source: overrideSource ?? source,
         error: msg,
       });
     } finally {
@@ -579,15 +495,12 @@ export default function QueryPanel({
     ? "bg-slate-900 border-slate-700 text-slate-100"
     : "bg-white border-gray-300 text-gray-900";
 
-  const sourceLabel = SOURCES.find((s) => s.key === source)?.label ?? "All Sources";
-
   return (
     <div className="flex h-full overflow-hidden">
       <DatabaseInfoPanel
         isDark={isDark}
         mode={queryMode}
         onModeChange={setQueryMode}
-        sourceLabel={sourceLabel}
         resultCount={results ? bindings.length : null}
         bookmarks={bookmarks}
         bookmarksLoading={bookmarksLoading}
@@ -1141,7 +1054,6 @@ function DatabaseInfoPanel({
   isDark,
   mode,
   onModeChange,
-  sourceLabel,
   resultCount,
   bookmarks,
   bookmarksLoading,
@@ -1155,7 +1067,6 @@ function DatabaseInfoPanel({
   isDark: boolean;
   mode: QueryMode;
   onModeChange: (m: QueryMode) => void;
-  sourceLabel: string;
   resultCount: number | null;
   bookmarks: BookmarkItem[];
   bookmarksLoading: boolean;
