@@ -1,14 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useDebounce } from "use-debounce";
+import clsx from "clsx";
 import { Bookmark, Code2, Database, FileCode2, FlaskConical, Loader2, MoreVertical, Network, Pencil, Play, Sparkles, Table2, Trash2, Wand2, X } from "lucide-react";
 import ResultsGraph from "@/components/graph/ResultsGraph";
 import { QUERY_TEMPLATES } from "@/lib/queryTemplates";
 import { popPendingQuery, pushHistory } from "@/lib/queryHistory";
 import { hybridScore } from "@/lib/textSimilarity";
+import { APP_CONFIG } from "@/lib/config";
+import { themeClasses } from "@/lib/themeClasses";
+import { truncate } from "@/lib/format";
 
-const AC_THRESHOLD = 0.2;
-const AC_MAX_RESULTS = 8;
+const { threshold: AC_THRESHOLD, maxResults: AC_MAX_RESULTS } = APP_CONFIG.autocomplete;
 import type { SparqlBinding } from "@/components/graph/graphUtils";
 
 type QueryMode = "nlp" | "manual";
@@ -60,7 +64,7 @@ WHERE {
 }
 LIMIT 100
 `;
-const PAGE_SIZE = 10;
+const PAGE_SIZE = APP_CONFIG.query.pageSize;
 
 export default function QueryPanel({
   isDark,
@@ -89,8 +93,7 @@ export default function QueryPanel({
   const [acIdx, setAcIdx] = useState(0);
   const [acWord, setAcWord] = useState("");
   const [acSubstances, setAcSubstances] = useState<Array<{ iri: string; preferredName: string; identifier: string }>>([]);
-  const acDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const acFetchAbort = useRef<AbortController | null>(null);
+  const [debouncedWord] = useDebounce(acWord, 250);
   const queryTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const [nlpInput, setNlpInput] = useState("");
@@ -257,32 +260,19 @@ export default function QueryPanel({
   }, []);
 
   useEffect(() => {
-    if (!acOpen || acWord.length < 2) {
+    if (!acOpen || debouncedWord.length < 2) {
       setAcSubstances([]);
       return;
     }
-    if (acDebounceRef.current) clearTimeout(acDebounceRef.current);
-    acFetchAbort.current?.abort();
-    acDebounceRef.current = setTimeout(async () => {
-      const ctrl = new AbortController();
-      acFetchAbort.current = ctrl;
-      try {
-        const res = await fetch(
-          `/api/substances?search=${encodeURIComponent(acWord)}`,
-          { signal: ctrl.signal },
-        );
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!ctrl.signal.aborted && Array.isArray(data)) {
-          setAcSubstances(data.slice(0, 4));
-        }
-      } catch {
-      }
-    }, 250);
-    return () => {
-      if (acDebounceRef.current) clearTimeout(acDebounceRef.current);
-    };
-  }, [acOpen, acWord]);
+    const ctrl = new AbortController();
+    fetch(`/api/substances?search=${encodeURIComponent(debouncedWord)}`, { signal: ctrl.signal })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        if (Array.isArray(data)) setAcSubstances(data.slice(0, 4));
+      })
+      .catch(() => {});
+    return () => ctrl.abort();
+  }, [acOpen, debouncedWord]);
 
   const acSuggestions: AcSuggestion[] = useMemo(() => {
     const w = acWord.toLowerCase();
@@ -486,14 +476,11 @@ export default function QueryPanel({
   const totalPages = Math.max(1, Math.ceil(bindings.length / PAGE_SIZE));
   const pageBindings = bindings.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const card = isDark
-    ? "bg-slate-800 border-slate-700"
-    : "bg-white border-gray-200";
-  const muted = isDark ? "text-slate-400" : "text-gray-500";
-  const subtle = isDark ? "text-slate-300" : "text-gray-700";
-  const inputCls = isDark
-    ? "bg-slate-900 border-slate-700 text-slate-100"
-    : "bg-white border-gray-300 text-gray-900";
+  const tc = themeClasses(isDark);
+  const card = tc.surface;
+  const muted = tc.muted;
+  const subtle = tc.subtle;
+  const inputCls = tc.input;
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -595,10 +582,10 @@ export default function QueryPanel({
   );
 
   function renderNLPView() {
-    const card = isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-200";
-    const muted = isDark ? "text-slate-400" : "text-gray-500";
-    const subtle = isDark ? "text-slate-300" : "text-gray-700";
-    const heading = isDark ? "text-slate-100" : "text-gray-900";
+    const card = tc.surface;
+    const muted = tc.muted;
+    const subtle = tc.subtle;
+    const heading = tc.heading;
     const inputCls = isDark
       ? "bg-slate-900 border-slate-700 text-slate-100 placeholder:text-slate-500"
       : "bg-white border-gray-300 text-gray-900 placeholder:text-gray-400";

@@ -13,6 +13,7 @@ import {
   Database,
   BookOpen,
 } from "lucide-react";
+import { themeClasses } from "@/lib/themeClasses";
 
 interface SubstanceSummary {
   iri: string;
@@ -172,9 +173,10 @@ export default function SubstancePanel({ isDark }: SubstancePanelProps) {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageItems = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const card = isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-200";
-  const muted = isDark ? "text-slate-400" : "text-gray-500";
-  const subtle = isDark ? "text-slate-300" : "text-gray-700";
+  const tc = themeClasses(isDark);
+  const card = tc.surface;
+  const muted = tc.muted;
+  const subtle = tc.subtle;
   const inputCls = isDark
     ? "bg-slate-900 border-slate-700 text-slate-100 placeholder-slate-500"
     : "bg-white border-gray-300 text-gray-900 placeholder-gray-400";

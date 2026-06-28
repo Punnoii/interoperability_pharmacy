@@ -37,6 +37,14 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
   const onSelectRef = useRef(onSelectNode);
   onSelectRef.current = onSelectNode;
 
+  const colors = useMemo(() => ({
+    edge:      isDark ? "#334155" : "#cbd5e1",
+    edgeHi:    isDark ? "#cbd5e1" : "#1e293b",
+    labelFill: isDark ? "#e2e8f0" : "#1e293b",
+    labelHalo: isDark ? "#0f172a" : "#ffffff",
+    linkLabel: isDark ? "#94a3b8" : "#64748b",
+  }), [isDark]);
+
   const adjacency = useMemo(() => {
     const m = new Map<string, Set<string>>();
     for (const l of links) {
@@ -80,11 +88,7 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
     const svg = d3.select(svgEl).attr("viewBox", `0 0 ${W} ${H}`);
     svg.selectAll("*").remove();
 
-    const edgeColor = isDark ? "#334155" : "#cbd5e1";
-    const edgeHi = isDark ? "#cbd5e1" : "#1e293b";
-    const labelFill = isDark ? "#e2e8f0" : "#1e293b";
-    const labelHalo = isDark ? "#0f172a" : "#ffffff";
-    const linkLabelColor = isDark ? "#94a3b8" : "#64748b";
+    const { edge: edgeColor, edgeHi, labelFill, labelHalo, linkLabel: linkLabelColor } = colors;
 
     const defs = svg.append("defs");
     const arrow = (id: string, color: string, size: number) =>
@@ -304,7 +308,7 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
     return () => {
       sim.stop();
     };
-  }, [nodes, links, allTypes, isDark, adjacency]);
+  }, [nodes, links, allTypes, isDark, adjacency, colors]);
 
   useEffect(() => {
     const svg = svgRef.current;
@@ -338,9 +342,7 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
     const linkSel = sel.selectAll<SVGLineElement, GraphLink>("g line");
     const linkLabelSel = sel.selectAll<SVGTextElement, GraphLink>("g text");
 
-    const edgeColor = isDark ? "#334155" : "#cbd5e1";
-    const edgeHi = isDark ? "#cbd5e1" : "#1e293b";
-    const linkLabelColor = isDark ? "#94a3b8" : "#64748b";
+    const { edge: edgeColor, edgeHi, linkLabel: linkLabelColor } = colors;
 
     const focusId = selectedNodeId;
     if (!focusId) {
@@ -383,7 +385,7 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
       const el = d3.select(this);
       el.style("opacity", hit ? 1 : 0).attr("fill", hit ? edgeHi : linkLabelColor);
     });
-  }, [selectedNodeId, links, isDark]);
+  }, [selectedNodeId, links, isDark, colors]);
 
   return (
     <div ref={wrapRef} className="w-full h-full relative">

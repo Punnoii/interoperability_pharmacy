@@ -2,6 +2,20 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Atom, ChevronDown, ChevronRight, FlaskConical, GitCompare, Loader2, Network, Play, Search, Tags, X } from "lucide-react";
+import jaccard from "talisman/metrics/jaccard";
+import ngrams from "talisman/tokenizers/ngrams";
+import { nameSimilarity } from "@/lib/textSimilarity";
+import { APP_CONFIG } from "@/lib/config";
+import { themeClasses } from "@/lib/themeClasses";
+import { truncate } from "@/lib/format";
+
+const wordTokens = (s: string): string[] =>
+  s.toLowerCase().replace(/[^a-z0-9ก-๙\s]/g, " ").split(/\s+/).filter((t) => t.length > 1);
+
+const charTrigrams = (s: string): string[] => {
+  const cleaned = s.toLowerCase().replace(/[^a-z0-9ก-๙]/g, "");
+  return cleaned.length >= 3 ? (ngrams(3, cleaned) as string[]) : [];
+};
 
 interface SubstanceSimilarityProps {
   isDark: boolean;
@@ -45,38 +59,6 @@ SELECT ?substance ?name ?identifier WHERE {
 LIMIT 150
 `;
 
-function tokenize(s: string): Set<string> {
-  return new Set(
-    s.toLowerCase()
-      .replace(/[^a-z0-9ก-๙\s]/g, " ")
-      .split(/\s+/)
-      .filter((t) => t.length > 1),
-  );
-}
-
-function trigrams(s: string): Set<string> {
-  const set = new Set<string>();
-  const padded = `  ${s.toLowerCase().replace(/[^a-z0-9ก-๙]/g, "")}  `;
-  if (padded.length < 3) return set;
-  for (let i = 0; i <= padded.length - 3; i++) {
-    set.add(padded.slice(i, i + 3));
-  }
-  return set;
-}
-
-function jaccard(a: Set<string>, b: Set<string>): number {
-  if (a.size === 0 || b.size === 0) return 0;
-  let inter = 0;
-  for (const t of a) if (b.has(t)) inter++;
-  return inter / (a.size + b.size - inter);
-}
-
-function nameSimilarity(a: string, b: string, tokensA: Set<string>, tokensB: Set<string>): number {
-  const word = jaccard(tokensA, tokensB);
-  const char = jaccard(trigrams(a), trigrams(b));
-  return Math.max(word, char);
-}
-
 function shortIri(iri: string): string {
   if (!iri) return "";
   return iri.split("/").pop() ?? iri.split("#").pop() ?? iri;
@@ -101,8 +83,8 @@ function bindingsToConcepts(bindings: SparqlBinding[]): Concept[] {
 }
 
 function computePairs(items: Concept[]): PairScore[] {
+  const { sharedId, sameName: sameNameScore, minDisplay } = APP_CONFIG.similarity.pairScore;
   const out: PairScore[] = [];
-  const tokens = items.map((c) => tokenize(c.name));
   for (let i = 0; i < items.length; i++) {
     for (let j = i + 1; j < items.length; j++) {
       const a = items[i];
@@ -114,14 +96,14 @@ function computePairs(items: Concept[]): PairScore[] {
         a.identifier && b.identifier && a.identifier === b.identifier;
 
       if (sameId) {
-        score = 1.0;
+        score = sharedId;
         reasons.push("Shared identifier");
       } else {
         const sameName = a.name.trim().toLowerCase() === b.name.trim().toLowerCase();
-        const ns = nameSimilarity(a.name, b.name, tokens[i], tokens[j]);
+        const ns = nameSimilarity(a.name, b.name);
 
         if (sameName) {
-          score = 0.9;
+          score = sameNameScore;
           reasons.push("Same name");
         } else if (ns > 0) {
           score = ns;
@@ -129,7 +111,7 @@ function computePairs(items: Concept[]): PairScore[] {
         }
       }
 
-      if (score > 0.05) {
+      if (score > minDisplay) {
         out.push({ a, b, score: Number(score.toFixed(4)), reasons });
       }
     }
@@ -158,7 +140,7 @@ export default function SubstanceSimilarity({ isDark }: SubstanceSimilarityProps
   const [results, setResults] = useState<SparqlResults | null>(null);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [threshold, setThreshold] = useState(0.5);
+  const [threshold, setThreshold] = useState<number>(APP_CONFIG.similarity.defaultThreshold);
   const [picked, setPicked] = useState<PairScore | null>(null);
   const [simMode, setSimMode] = useState<SimMode>("substance");
 
@@ -178,7 +160,7 @@ export default function SubstanceSimilarity({ isDark }: SubstanceSimilarityProps
       });
       if (!res.ok) {
         const text = await res.text().catch(() => "");
-        setError(`HTTP ${res.status} ${res.statusText}${text ? ` - ${text.slice(0, 200)}` : ""}`);
+        setError(`HTTP ${res.status} ${res.statusText}${text ? ` - ${truncate(text)}` : ""}`);
         return;
       }
       const data: SparqlResults = await res.json();
@@ -198,10 +180,11 @@ export default function SubstanceSimilarity({ isDark }: SubstanceSimilarityProps
   const pairs = useMemo(() => computePairs(concepts), [concepts]);
   const visible = useMemo(() => pairs.filter((p) => p.score >= threshold), [pairs, threshold]);
 
-  const muted = isDark ? "text-slate-400" : "text-gray-500";
-  const heading = isDark ? "text-slate-100" : "text-gray-900";
-  const subtle = isDark ? "text-slate-300" : "text-gray-700";
-  const card = isDark ? "bg-slate-900 border-slate-800" : "bg-white border-gray-200";
+  const tc = themeClasses(isDark);
+  const muted = tc.muted;
+  const heading = tc.heading;
+  const subtle = tc.subtle;
+  const card = tc.card;
   const codeBg = isDark ? "bg-slate-950 border-slate-800 text-slate-200" : "bg-gray-50 border-gray-200 text-gray-800";
   const inputCls = isDark
     ? "bg-slate-950 border-slate-700 text-slate-100"
@@ -1196,13 +1179,15 @@ interface AttributeRow {
 function getAttributes(pair: PairScore): AttributeRow[] {
   const a = pair.a;
   const b = pair.b;
-  const tokensA = tokenize(a.name);
-  const tokensB = tokenize(b.name);
-  const sharedWords = [...tokensA].filter((t) => tokensB.has(t));
+  const tokensA = wordTokens(a.name);
+  const tokensB = wordTokens(b.name);
+  const setB = new Set(tokensB);
+  const sharedWords = tokensA.filter((t) => setB.has(t));
   const wordPct = Math.round(jaccard(tokensA, tokensB) * 100);
-  const trA = trigrams(a.name);
-  const trB = trigrams(b.name);
-  const sharedTrigrams = [...trA].filter((t) => trB.has(t));
+  const trA = charTrigrams(a.name);
+  const trB = charTrigrams(b.name);
+  const setTrB = new Set(trB);
+  const sharedTrigrams = trA.filter((t) => setTrB.has(t));
   const charPct = Math.round(jaccard(trA, trB) * 100);
 
   return [
@@ -1224,8 +1209,8 @@ function getAttributes(pair: PairScore): AttributeRow[] {
     {
       key: "word-tokens",
       label: "Word tokens",
-      valueA: tokensA.size > 0 ? [...tokensA].join(", ") : "-",
-      valueB: tokensB.size > 0 ? [...tokensB].join(", ") : "-",
+      valueA: tokensA.length > 0 ? tokensA.join(", ") : "-",
+      valueB: tokensB.length > 0 ? tokensB.join(", ") : "-",
       matched: false,
       mono: true,
       context: true,
@@ -1234,7 +1219,7 @@ function getAttributes(pair: PairScore): AttributeRow[] {
       key: "word-overlap",
       label: "Word overlap",
       valueA: sharedWords.length > 0 ? sharedWords.join(", ") : "(none)",
-      valueB: `${sharedWords.length}/${tokensA.size + tokensB.size - sharedWords.length} = ${wordPct}%`,
+      valueB: `${sharedWords.length}/${tokensA.length + tokensB.length - sharedWords.length} = ${wordPct}%`,
       matched: false,
       mono: true,
       context: true,
@@ -1245,7 +1230,7 @@ function getAttributes(pair: PairScore): AttributeRow[] {
       valueA: sharedTrigrams.length > 0
         ? sharedTrigrams.map((t) => `"${t}"`).join(", ")
         : "(none)",
-      valueB: `${sharedTrigrams.length}/${trA.size + trB.size - sharedTrigrams.length} = ${charPct}%`,
+      valueB: `${sharedTrigrams.length}/${trA.length + trB.length - sharedTrigrams.length} = ${charPct}%`,
       matched: false,
       mono: true,
       context: true,

@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import clsx from "clsx";
 import { Upload, X, Database, Save, Trash2 } from "lucide-react";
 import QueryPanel from "@/components/query/QueryPanel";
 import { SANDBOX_DEFAULT_QUERY, SANDBOX_TEMPLATES } from "@/lib/sandboxTemplates";
+import { themeClasses } from "@/lib/themeClasses";
+import { truncate, fmtSize } from "@/lib/format";
 
 interface UploadPanelProps {
   isDark: boolean;
@@ -24,12 +27,6 @@ const EMPTY: SlotState = {
   ontology: null, database: null, mapping: null, properties: null, catalog: null,
 };
 
-function fmtSize(n: number): string {
-  if (n < 1024) return `${n} B`;
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
-  return `${(n / 1024 / 1024).toFixed(2)} MB`;
-}
-
 interface SandboxState {
   fileCount: number;
   triples: number;
@@ -47,15 +44,14 @@ export default function UploadPanel({ isDark }: UploadPanelProps) {
     ontology: null, database: null, mapping: null, properties: null, catalog: null,
   });
 
-  const text     = isDark ? "text-slate-100" : "text-gray-900";
-  const subtle   = isDark ? "text-slate-300" : "text-gray-700";
-  const muted    = isDark ? "text-slate-400" : "text-gray-500";
-  const card     = isDark ? "bg-slate-900 border-slate-800" : "bg-white border-gray-200";
-  const rowDiv   = isDark ? "border-slate-800" : "border-gray-200";
-  const btnBase  = isDark
-    ? "bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700"
-    : "bg-white border-gray-300 text-gray-800 hover:bg-gray-50";
-  const inputBg  = isDark ? "bg-slate-950 border-slate-800" : "bg-white border-gray-200";
+  const tc = themeClasses(isDark);
+  const text     = tc.text;
+  const subtle   = tc.subtle;
+  const muted    = tc.muted;
+  const card     = tc.card;
+  const rowDiv   = tc.rowDiv;
+  const btnBase  = tc.btnBase;
+  const inputBg  = tc.inputBg;
 
   useEffect(() => {
     fetch("/api/sandbox/status").then(async (r) => {
@@ -114,7 +110,7 @@ export default function UploadPanel({ isDark }: UploadPanelProps) {
       const res = await fetch("/api/sandbox/upload", { method: "POST", body: form });
       if (!res.ok) {
         const t = await res.text().catch(() => "");
-        setStatus({ kind: "err", msg: `Upload failed (HTTP ${res.status}). ${t.slice(0, 200)}` });
+        setStatus({ kind: "err", msg: `Upload failed (HTTP ${res.status}). ${truncate(t)}` });
         return;
       }
       const data = await res.json();
@@ -138,7 +134,7 @@ export default function UploadPanel({ isDark }: UploadPanelProps) {
       const res = await fetch("/api/sandbox/save", { method: "POST" });
       if (!res.ok) {
         const t = await res.text();
-        setStatus({ kind: "err", msg: `Save failed: ${t.slice(0, 200)}` });
+        setStatus({ kind: "err", msg: `Save failed: ${truncate(t)}` });
         return;
       }
       setHasSavedProfile(true);
@@ -255,13 +251,13 @@ export default function UploadPanel({ isDark }: UploadPanelProps) {
 
         {status && (
           <div
-            className={`text-sm px-3 py-2 rounded border ${inputBg} ${
-              status.kind === "ok"
-                ? isDark ? "text-emerald-300 border-emerald-900/50" : "text-emerald-700 border-emerald-200"
-                : status.kind === "err"
-                ? isDark ? "text-red-300 border-red-900/50" : "text-red-600 border-red-200"
-                : muted
-            }`}
+            className={clsx(
+              "text-sm px-3 py-2 rounded border",
+              inputBg,
+              status.kind === "ok" && tc.ok,
+              status.kind === "err" && tc.err,
+              status.kind === "info" && muted,
+            )}
           >
             {status.msg}
           </div>

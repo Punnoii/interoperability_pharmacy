@@ -1,28 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Play, Search, Trash2, X } from "lucide-react";
 import Header from "@/components/layout/Header";
 import { useDarkMode } from "@/lib/useDarkMode";
 import {
-  clearHistory,
-  deleteHistoryEntry,
-  getHistory,
+  useQueryHistory,
   setPendingQuery,
   type HistoryEntry,
 } from "@/lib/queryHistory";
 
 export default function HistoryPage() {
   const [isDark, setIsDark] = useDarkMode();
-  const [entries, setEntries] = useState<HistoryEntry[]>([]);
+  const entries = useQueryHistory((s) => s.entries);
+  const remove = useQueryHistory((s) => s.remove);
+  const clear = useQueryHistory((s) => s.clear);
   const [search, setSearch] = useState("");
   const router = useRouter();
-
-  useEffect(() => {
-    setEntries(getHistory());
-  }, []);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -36,14 +32,12 @@ export default function HistoryPage() {
   }
 
   function handleDelete(id: string) {
-    deleteHistoryEntry(id);
-    setEntries(getHistory());
+    remove(id);
   }
 
   function handleClearAll() {
     if (!confirm("Are you sure you want to clear all history?")) return;
-    clearHistory();
-    setEntries([]);
+    clear();
   }
 
   const bg = isDark ? "bg-slate-950 text-slate-100" : "bg-gray-50 text-gray-900";
