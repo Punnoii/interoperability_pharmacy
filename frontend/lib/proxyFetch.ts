@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { APP_CONFIG } from "./config";
 
-export const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8082";
+export const BACKEND_URL = APP_CONFIG.api.backendUrl;
 
 export function forwardCookie(res: Response, init: ResponseInit = {}): ResponseInit {
   const setCookie = res.headers.get("set-cookie");

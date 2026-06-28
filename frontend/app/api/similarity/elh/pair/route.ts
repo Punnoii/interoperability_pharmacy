@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { APP_CONFIG } from "@/lib/config";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8082";
+const { backendUrl, routes } = APP_CONFIG.api;
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
 
-  const res = await fetch(`${BACKEND_URL}/api/similarity/elh/pair`, {
+  const res = await fetch(`${backendUrl}${routes.similarityPair}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),

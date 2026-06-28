@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { Database, RotateCcw, Trash2 } from "lucide-react";
+import { APP_CONFIG } from "@/lib/config";
+
+const { routes } = APP_CONFIG.api;
 
 interface ProfileFile {
   filename: string;
@@ -45,7 +48,7 @@ export default function SavedConfigSection({ isDark, data, onDeleted }: Props) {
     setBusy("restore");
     setMsg(null);
     try {
-      const res = await fetch("/api/profile/config/restore", { method: "POST" });
+      const res = await fetch(routes.profileConfigRestore, { method: "POST" });
       if (!res.ok) {
         setMsg({ kind: "err", text: `Restore failed: ${(await res.text()).slice(0, 180)}` });
         return;
@@ -64,7 +67,7 @@ export default function SavedConfigSection({ isDark, data, onDeleted }: Props) {
     setBusy("delete");
     setMsg(null);
     try {
-      const res = await fetch("/api/profile/config", { method: "DELETE" });
+      const res = await fetch(routes.profileConfig, { method: "DELETE" });
       if (!res.ok) {
         setMsg({ kind: "err", text: `Delete failed (HTTP ${res.status})` });
         return;

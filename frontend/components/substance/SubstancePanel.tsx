@@ -14,6 +14,9 @@ import {
   BookOpen,
 } from "lucide-react";
 import { themeClasses } from "@/lib/themeClasses";
+import { APP_CONFIG } from "@/lib/config";
+
+const { routes } = APP_CONFIG.api;
 
 interface SubstanceSummary {
   iri: string;
@@ -148,7 +151,7 @@ export default function SubstancePanel({ isDark }: SubstancePanelProps) {
     setCrossLoading(true);
 
     try {
-      const res = await fetch(`/api/substances/details?iri=${encodeURIComponent(s.iri)}`);
+      const res = await fetch(`${routes.substancesDetails}?iri=${encodeURIComponent(s.iri)}`);
       if (res.ok) setDetail(await res.json());
     } catch {
     } finally {

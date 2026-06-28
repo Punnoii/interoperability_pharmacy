@@ -7,6 +7,9 @@ import QueryPanel from "@/components/query/QueryPanel";
 import { SANDBOX_DEFAULT_QUERY, SANDBOX_TEMPLATES } from "@/lib/sandboxTemplates";
 import { themeClasses } from "@/lib/themeClasses";
 import { truncate, fmtSize } from "@/lib/format";
+import { APP_CONFIG } from "@/lib/config";
+
+const { routes } = APP_CONFIG.api;
 
 interface UploadPanelProps {
   isDark: boolean;
@@ -54,7 +57,7 @@ export default function UploadPanel({ isDark }: UploadPanelProps) {
   const inputBg  = tc.inputBg;
 
   useEffect(() => {
-    fetch("/api/sandbox/status").then(async (r) => {
+    fetch(routes.sandboxStatus).then(async (r) => {
       if (!r.ok) return;
       const data = await r.json();
       if (!data?.empty) {
@@ -62,7 +65,7 @@ export default function UploadPanel({ isDark }: UploadPanelProps) {
       }
     }).catch(() => {});
 
-    fetch("/api/profile/config").then(async (r) => {
+    fetch(routes.profileConfig).then(async (r) => {
       if (!r.ok) return;
       const data = await r.json();
       setHasSavedProfile(Boolean(data?.exists));
@@ -87,7 +90,7 @@ export default function UploadPanel({ isDark }: UploadPanelProps) {
     setFiles(EMPTY);
     setStatus(null);
     try {
-      await fetch("/api/sandbox/status", { method: "DELETE" });
+      await fetch(routes.sandboxStatus, { method: "DELETE" });
     } catch {}
     setSandbox(null);
   }
@@ -107,7 +110,7 @@ export default function UploadPanel({ isDark }: UploadPanelProps) {
         const f = files[s.key];
         if (f) form.append(s.key, f, f.name);
       }
-      const res = await fetch("/api/sandbox/upload", { method: "POST", body: form });
+      const res = await fetch(routes.sandboxUpload, { method: "POST", body: form });
       if (!res.ok) {
         const t = await res.text().catch(() => "");
         setStatus({ kind: "err", msg: `Upload failed (HTTP ${res.status}). ${truncate(t)}` });
@@ -131,7 +134,7 @@ export default function UploadPanel({ isDark }: UploadPanelProps) {
     setSaving(true);
     setStatus({ kind: "info", msg: "Saving to your profile..." });
     try {
-      const res = await fetch("/api/sandbox/save", { method: "POST" });
+      const res = await fetch(routes.sandboxSave, { method: "POST" });
       if (!res.ok) {
         const t = await res.text();
         setStatus({ kind: "err", msg: `Save failed: ${truncate(t)}` });

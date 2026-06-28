@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { Modal, ModalFooter } from "./Modal";
+import { APP_CONFIG } from "@/lib/config";
+
+const { routes } = APP_CONFIG.api;
 
 interface Props {
   isDark: boolean;
@@ -33,7 +36,7 @@ export default function EditNameModal({ isDark, currentName, onClose, onSaved }:
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch("/api/me", {
+      const res = await fetch(routes.me, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: next }),

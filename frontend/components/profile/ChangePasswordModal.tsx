@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { Modal, ModalFooter } from "./Modal";
+import { APP_CONFIG } from "@/lib/config";
+
+const { routes } = APP_CONFIG.api;
 
 interface Props {
   isDark: boolean;
@@ -37,7 +40,7 @@ export default function ChangePasswordModal({ isDark, onClose, onSaved }: Props)
     }
     setSaving(true);
     try {
-      const res = await fetch("/api/me/password", {
+      const res = await fetch(routes.mePassword, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ currentPassword: current, newPassword: next }),

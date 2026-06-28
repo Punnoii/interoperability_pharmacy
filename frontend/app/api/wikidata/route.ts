@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { APP_CONFIG } from "@/lib/config";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8082";
+const { backendUrl, routes } = APP_CONFIG.api;
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -12,7 +13,7 @@ export async function GET(req: NextRequest) {
   }
 
   const res = await fetch(
-    `${BACKEND_URL}/api/enrichment/wikidata/search?q=${encodeURIComponent(q)}&limit=${limit}`
+    `${backendUrl}${routes.wikidataBackend}?q=${encodeURIComponent(q)}&limit=${limit}`
   );
   const text = await res.text();
   return new NextResponse(text, {

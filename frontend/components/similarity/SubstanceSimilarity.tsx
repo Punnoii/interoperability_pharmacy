@@ -9,6 +9,8 @@ import { APP_CONFIG } from "@/lib/config";
 import { themeClasses } from "@/lib/themeClasses";
 import { truncate } from "@/lib/format";
 
+const { routes } = APP_CONFIG.api;
+
 const wordTokens = (s: string): string[] =>
   s.toLowerCase().replace(/[^a-z0-9ก-๙\s]/g, " ").split(/\s+/).filter((t) => t.length > 1);
 
@@ -150,7 +152,7 @@ export default function SubstanceSimilarity({ isDark }: SubstanceSimilarityProps
     setError(null);
     setResults(null);
     try {
-      const res = await fetch("/api/sparql", {
+      const res = await fetch(routes.sparql, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -474,7 +476,7 @@ function SubstanceElhMode({ isDark }: { isDark: boolean }) {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/similarity/elh/concepts")
+    fetch(routes.similarityConcepts)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (!cancelled && d?.concepts) setConceptList(d.concepts); })
       .catch(() => { /* silent */ });
@@ -487,7 +489,7 @@ function SubstanceElhMode({ isDark }: { isDark: boolean }) {
     setExError(null);
     setExResult(null);
     try {
-      const res = await fetch("/api/similarity/elh/expand-sparql", {
+      const res = await fetch(routes.similarityExpand, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sparql: exSparql }),
@@ -517,7 +519,7 @@ function SubstanceElhMode({ isDark }: { isDark: boolean }) {
     setTkError(null);
     setTkResult(null);
     try {
-      const res = await fetch("/api/similarity/elh/topk", {
+      const res = await fetch(routes.similarityTopK, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ concept: tkConcept.trim(), k: tkK, scope: tkScope }),
@@ -566,7 +568,7 @@ function SubstanceElhMode({ isDark }: { isDark: boolean }) {
     setExplanation(null);
     setExplainError(null);
     try {
-      const res = await fetch("/api/similarity/elh/pair", {
+      const res = await fetch(routes.similarityPair, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ conceptA: conceptA.trim(), conceptB: conceptB.trim() }),

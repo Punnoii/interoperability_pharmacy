@@ -12,6 +12,9 @@ import HistorySection from "@/components/profile/HistorySection";
 import SavedConfigSection from "@/components/profile/SavedConfigSection";
 import { useDarkMode } from "@/lib/useDarkMode";
 import { getHistory, type HistoryEntry } from "@/lib/queryHistory";
+import { APP_CONFIG } from "@/lib/config";
+
+const { routes } = APP_CONFIG.api;
 
 type Tab = "bookmarks" | "history" | "config";
 
@@ -52,9 +55,9 @@ export default function ProfilePage() {
     setLoading(true);
     try {
       const [me, bm, cfg] = await Promise.all([
-        fetch("/api/me", { cache: "no-store" }),
-        fetch("/api/bookmarks", { cache: "no-store" }),
-        fetch("/api/profile/config", { cache: "no-store" }),
+        fetch(routes.me, { cache: "no-store" }),
+        fetch(routes.bookmarks, { cache: "no-store" }),
+        fetch(routes.profileConfig, { cache: "no-store" }),
       ]);
       if (me.ok) {
         const data = await me.json();

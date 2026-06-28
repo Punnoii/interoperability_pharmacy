@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import { APP_CONFIG } from "@/lib/config";
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8082";
+const { backendUrl, routes } = APP_CONFIG.api;
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const search = searchParams.get("search");
 
   const backendPath = search
-    ? `/api/substances/search?name=${encodeURIComponent(search)}`
-    : `/api/substances`;
+    ? `${routes.substances}/search?name=${encodeURIComponent(search)}`
+    : routes.substances;
 
-  const res = await fetch(`${BACKEND_URL}${backendPath}`);
+  const res = await fetch(`${backendUrl}${backendPath}`);
   const text = await res.text();
   return new NextResponse(text, {
     status: res.status,

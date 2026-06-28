@@ -1,6 +1,9 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { APP_CONFIG } from "@/lib/config";
+
+const { routes } = APP_CONFIG.api;
 
 interface User {
   id: string;
@@ -20,7 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    fetch("/api/auth/me")
+    fetch(routes.authMe)
       .then((res) => {
         if (res.ok) {
           res.json().then((data) => setUser(data.user));
@@ -31,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await fetch(routes.authLogout, { method: "POST" });
       setUser(null);
       window.location.href = "/";
     } catch (e) {

@@ -13,6 +13,7 @@ import { themeClasses } from "@/lib/themeClasses";
 import { truncate } from "@/lib/format";
 
 const { threshold: AC_THRESHOLD, maxResults: AC_MAX_RESULTS } = APP_CONFIG.autocomplete;
+const { routes } = APP_CONFIG.api;
 import type { SparqlBinding } from "@/components/graph/graphUtils";
 
 type QueryMode = "nlp" | "manual";
@@ -106,7 +107,7 @@ export default function QueryPanel({
   const fetchBookmarks = useCallback(async () => {
     setBookmarksLoading(true);
     try {
-      const res = await fetch("/api/bookmarks", { cache: "no-store" });
+      const res = await fetch(routes.bookmarks, { cache: "no-store" });
       if (!res.ok) {
         setBookmarks([]);
         return;
@@ -131,7 +132,7 @@ export default function QueryPanel({
     if (!name) return;
     setSaving(true);
     try {
-      const res = await fetch("/api/bookmarks", {
+      const res = await fetch(routes.bookmarks, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, query }),
@@ -164,7 +165,7 @@ export default function QueryPanel({
     setOpenMenuId(null);
     if (!confirm("ลบ bookmark นี้?")) return;
     try {
-      const res = await fetch(`/api/bookmarks/${id}`, { method: "DELETE" });
+      const res = await fetch(`${routes.bookmarks}/${id}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         alert(`Delete failed: ${data?.error ?? res.statusText}`);
@@ -181,7 +182,7 @@ export default function QueryPanel({
     const next = window.prompt("Rename saved query:", b.name)?.trim();
     if (!next || next === b.name) return;
     try {
-      const res = await fetch(`/api/bookmarks/${b.id}`, {
+      const res = await fetch(`${routes.bookmarks}/${b.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: next }),
@@ -227,7 +228,7 @@ export default function QueryPanel({
     }
     setEditSaving(true);
     try {
-      const res = await fetch(`/api/bookmarks/${editingBookmark.id}`, {
+      const res = await fetch(`${routes.bookmarks}/${editingBookmark.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: next }),
@@ -265,7 +266,7 @@ export default function QueryPanel({
       return;
     }
     const ctrl = new AbortController();
-    fetch(`/api/substances?search=${encodeURIComponent(debouncedWord)}`, { signal: ctrl.signal })
+    fetch(`${routes.substances}?search=${encodeURIComponent(debouncedWord)}`, { signal: ctrl.signal })
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => {
         if (Array.isArray(data)) setAcSubstances(data.slice(0, 4));
@@ -412,7 +413,7 @@ export default function QueryPanel({
     setError(null);
 
     try {
-      const res = await fetch("/api/nlp", {
+      const res = await fetch(routes.nlp, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: nlpInput }),
