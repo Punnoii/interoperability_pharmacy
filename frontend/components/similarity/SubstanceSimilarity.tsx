@@ -966,7 +966,7 @@ function ElhSubTabBar({
   const tabs: { value: ElhSubTab; label: string; sub: string }[] = [
     { value: "expand", label: "Expand SPARQL", sub: "augment query with similar concepts" },
     { value: "topk", label: "Find Top-K Similar", sub: "rank neighbours of one concept" },
-    { value: "pair", label: "Pair Compare", sub: "score a vs b" },
+    { value: "pair", label: "Find Concept Pairs", sub: "score a vs b" },
   ];
   return (
     <div className="flex gap-2">

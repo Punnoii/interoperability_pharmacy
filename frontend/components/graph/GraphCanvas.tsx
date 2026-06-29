@@ -22,7 +22,8 @@ interface GraphCanvasProps {
 const LABEL_HIDE_ZOOM = 0.45;
 const DIM = 0.2;
 
-function endpointId(end: string | GraphNode): string {
+function endpointId(end: string | GraphNode | undefined | null): string | null {
+  if (end == null) return null;
   return typeof end === "string" ? end : end.id;
 }
 
@@ -50,6 +51,7 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
     for (const l of links) {
       const s = endpointId(l.source);
       const t = endpointId(l.target);
+      if (!s || !t) continue;
       if (!m.has(s)) m.set(s, new Set());
       if (!m.has(t)) m.set(t, new Set());
       m.get(s)!.add(t);
@@ -107,9 +109,9 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
     arrow("arrow-hi", edgeHi, 7);
 
     const root = svg.append("g");
-    const linkLayer = root.append("g");
-    const linkLabelLayer = root.append("g");
-    const nodeLayer = root.append("g");
+    const linkLayer = root.append("g").attr("class", "link-layer");
+    const linkLabelLayer = root.append("g").attr("class", "link-label-layer");
+    const nodeLayer = root.append("g").attr("class", "node-layer");
 
     const radius = (d: GraphNode) => 10 + Math.sqrt(Math.max(1, d.degree)) * 3.2;
 
@@ -212,7 +214,11 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
         root.attr("transform", event.transform.toString());
         const k = event.transform.k;
         if ((zoomK < LABEL_HIDE_ZOOM) !== (k < LABEL_HIDE_ZOOM)) {
-          labelSel.style("display", k < LABEL_HIDE_ZOOM ? "none" : null);
+          if (k < LABEL_HIDE_ZOOM) {
+            labelSel.style("display", "none");
+          } else {
+            labelSel.style("display", null);
+          }
         }
         zoomK = k;
       });
@@ -339,8 +345,8 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
     if (!svg) return;
     const sel = d3.select(svg);
     const nodeSel = sel.selectAll<SVGGElement, GraphNode>("g.node");
-    const linkSel = sel.selectAll<SVGLineElement, GraphLink>("g line");
-    const linkLabelSel = sel.selectAll<SVGTextElement, GraphLink>("g text");
+    const linkSel = sel.selectAll<SVGLineElement, GraphLink>("g.link-layer line");
+    const linkLabelSel = sel.selectAll<SVGTextElement, GraphLink>("g.link-label-layer text");
 
     const { edge: edgeColor, edgeHi, linkLabel: linkLabelColor } = colors;
 
@@ -361,6 +367,7 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
     for (const l of links) {
       const s = endpointId(l.source);
       const t = endpointId(l.target);
+      if (!s || !t) continue;
       if (s === focusId) near.add(t);
       if (t === focusId) near.add(s);
     }

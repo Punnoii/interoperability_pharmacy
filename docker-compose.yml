@@ -185,7 +185,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://backend:8082
+      - BACKEND_URL=http://backend:8082
       - DATABASE_URL=postgresql://postgres:pgpass@postgres:5432/postgres?schema=public
       - JWT_SECRET=rxvkg-dev-secret-change-in-production
     volumes:

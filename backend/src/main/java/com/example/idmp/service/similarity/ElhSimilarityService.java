@@ -21,10 +21,13 @@ import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Service;
+
+import com.example.idmp.config.CacheConfig;
 
 import jakarta.annotation.PostConstruct;
 import sim.explainer.library.SimExplainer;
@@ -40,8 +43,6 @@ public class ElhSimilarityService {
   private final AtomicReference<SimExplainer> explainerRef = new AtomicReference<>();
   private final AtomicReference<List<String>> conceptsRef = new AtomicReference<>(List.of());
   private final Set<String> knownConceptIndex = ConcurrentHashMap.newKeySet();
-
-  private final Map<String, List<Neighbor>> topKCache = new ConcurrentHashMap<>();
 
   private final Map<String, String> conceptLabels = new ConcurrentHashMap<>();
 
@@ -96,7 +97,6 @@ public class ElhSimilarityService {
     m.put("uptimeSeconds", startupEpochMs == 0 ? 0 : (System.currentTimeMillis() - startupEpochMs) / 1000);
     m.put("loadDurationMs", loadDurationMs);
     m.put("totalRequests", totalRequests.get());
-    m.put("topKCacheEntries", topKCache.size());
     if (lastError != null) {
       m.put("lastError", lastError);
       m.put("lastErrorEpochMs", lastErrorEpochMs);
@@ -185,15 +185,14 @@ public class ElhSimilarityService {
     }
     int safeScope = Math.max(0, Math.min(scope, ATC_PREFIX_LENGTHS.length));
 
-    String cacheKey = target + ":" + safeScope;
-    List<Neighbor> all = topKCache.computeIfAbsent(cacheKey,
-        key -> computeAllNeighbours(explainer, target, safeScope));
+    List<Neighbor> all = cachedNeighbours(target, safeScope);
 
     return all.size() <= k ? all : all.subList(0, k);
   }
 
-  public int cachedTopKEntries() {
-    return topKCache.size();
+  @Cacheable(value = CacheConfig.ELH_TOPK, key = "#concept + ':' + #scope")
+  public List<Neighbor> cachedNeighbours(String concept, int scope) {
+    return computeAllNeighbours(explainerRef.get(), concept, scope);
   }
 
   private List<Neighbor> computeAllNeighbours(SimExplainer explainer, String target, int scope) {

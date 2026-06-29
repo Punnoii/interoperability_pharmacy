@@ -1,9 +1,9 @@
 package com.example.idmp.web;
 
-import com.example.idmp.service.SparqlCacheService;
-
 import java.util.Map;
 
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,15 +14,18 @@ import org.springframework.web.bind.annotation.RestController;
 @CrossOrigin(origins = "*")
 public class CacheController {
 
-    private final SparqlCacheService cacheService;
+    private final CacheManager cacheManager;
 
-    public CacheController(SparqlCacheService cacheService) {
-        this.cacheService = cacheService;
+    public CacheController(CacheManager cacheManager) {
+        this.cacheManager = cacheManager;
     }
 
     @DeleteMapping("/clear")
     public Map<String, Boolean> clearCache() {
-        cacheService.clearAll();
+        cacheManager.getCacheNames().forEach(name -> {
+            Cache cache = cacheManager.getCache(name);
+            if (cache != null) cache.clear();
+        });
         return Map.of("cleared", true);
     }
 }
