@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, Moon, Sun, User, LogOut } from "lucide-react";
+import { Bell, Moon, Sun, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 interface HeaderProps {
@@ -10,7 +10,7 @@ interface HeaderProps {
 }
 
 export default function Header({ isDark, setIsDark }: HeaderProps) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   return (
     <header
@@ -53,15 +53,6 @@ export default function Header({ isDark, setIsDark }: HeaderProps) {
         >
           <User size={18} />
         </Link>
-
-        <IconButton
-          isDark={isDark}
-          aria-label="Logout"
-          onClick={logout}
-          className={isDark ? "text-red-400 hover:bg-red-900/30 hover:text-red-300" : "text-red-500 hover:bg-red-50 hover:text-red-600"}
-        >
-          <LogOut size={18} />
-        </IconButton>
       </div>
     </header>
   );

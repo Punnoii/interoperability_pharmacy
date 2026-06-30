@@ -54,6 +54,7 @@ export const APP_CONFIG = {
       wikidata:             "/api/wikidata",
       wikidataBackend:      "/api/enrichment/wikidata/search",
       admin:                "/api/admin",
+      cacheClear:           "/api/cache/clear",
     },
   },
 } as const;

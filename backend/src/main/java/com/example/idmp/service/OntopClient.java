@@ -3,7 +3,9 @@ package com.example.idmp.service;
 import com.example.idmp.config.CacheConfig;
 import com.example.idmp.config.OntopProperties;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.InvalidMediaTypeException;
@@ -20,6 +22,10 @@ import org.springframework.web.server.ResponseStatusException;
 public class OntopClient {
   private final RestClient restClient;
   private final OntopProperties properties;
+
+  @Autowired
+  @Lazy
+  private OntopClient self;
 
   public OntopClient(RestClient restClient, OntopProperties properties) {
     this.restClient = restClient;
@@ -47,7 +53,7 @@ public class OntopClient {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Accept header: " + acceptValue);
     }
 
-    String body = fetchCached(query, acceptValue, endpoint, acceptType);
+    String body = self.fetchCached(query, acceptValue, endpoint, acceptType);
     return ResponseEntity.ok()
         .contentType(acceptType)
         .body(body);

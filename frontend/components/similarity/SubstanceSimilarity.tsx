@@ -8,6 +8,7 @@ import { nameSimilarity } from "@/lib/textSimilarity";
 import { APP_CONFIG } from "@/lib/config";
 import { themeClasses } from "@/lib/themeClasses";
 import { truncate } from "@/lib/format";
+import { useUserPreferences } from "@/lib/userPreferences";
 
 const { routes } = APP_CONFIG.api;
 
@@ -142,7 +143,12 @@ export default function SubstanceSimilarity({ isDark }: SubstanceSimilarityProps
   const [results, setResults] = useState<SparqlResults | null>(null);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [threshold, setThreshold] = useState<number>(APP_CONFIG.similarity.defaultThreshold);
+  const defaultSimThreshold = useUserPreferences((s) => s.simThreshold);
+  const [threshold, setThreshold] = useState<number>(defaultSimThreshold);
+  // re-sync when user changes default in Settings (only if user hasn't manually tweaked the slider yet)
+  useEffect(() => {
+    setThreshold(defaultSimThreshold);
+  }, [defaultSimThreshold]);
   const [picked, setPicked] = useState<PairScore | null>(null);
   const [simMode, setSimMode] = useState<SimMode>("substance");
 

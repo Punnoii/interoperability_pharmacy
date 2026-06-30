@@ -44,9 +44,9 @@ interface BottomItem {
 }
 
 const bottomItems: BottomItem[] = [
-  { key: "help", label: "Help", icon: <HelpCircle size={18} /> },
+  { key: "help", label: "Help", icon: <HelpCircle size={18} />, href: "/help" },
   { key: "history", label: "History", icon: <Clock size={18} />, href: "/history" },
-  { key: "settings", label: "Settings", icon: <Settings size={18} /> },
+  { key: "settings", label: "Settings", icon: <Settings size={18} />, href: "/settings" },
 ];
 
 export default function Sidebar({ activeTab, setActiveTab, isDark }: SidebarProps) {

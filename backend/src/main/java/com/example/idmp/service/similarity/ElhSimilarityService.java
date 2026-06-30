@@ -21,7 +21,9 @@ import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
@@ -43,6 +45,10 @@ public class ElhSimilarityService {
   private final AtomicReference<SimExplainer> explainerRef = new AtomicReference<>();
   private final AtomicReference<List<String>> conceptsRef = new AtomicReference<>(List.of());
   private final Set<String> knownConceptIndex = ConcurrentHashMap.newKeySet();
+
+  @Autowired
+  @Lazy
+  private ElhSimilarityService self;
 
   private final Map<String, String> conceptLabels = new ConcurrentHashMap<>();
 
@@ -185,7 +191,7 @@ public class ElhSimilarityService {
     }
     int safeScope = Math.max(0, Math.min(scope, ATC_PREFIX_LENGTHS.length));
 
-    List<Neighbor> all = cachedNeighbours(target, safeScope);
+    List<Neighbor> all = self.cachedNeighbours(target, safeScope);
 
     return all.size() <= k ? all : all.subList(0, k);
   }

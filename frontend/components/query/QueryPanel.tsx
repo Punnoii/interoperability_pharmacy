@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDebounce } from "use-debounce";
-import clsx from "clsx";
 import { Bookmark, Code2, Database, FileCode2, FlaskConical, Loader2, MoreVertical, Network, Pencil, Play, Sparkles, Table2, Trash2, Wand2, X } from "lucide-react";
 import ResultsGraph from "@/components/graph/ResultsGraph";
 import { QUERY_TEMPLATES } from "@/lib/queryTemplates";
@@ -11,8 +10,8 @@ import { hybridScore } from "@/lib/textSimilarity";
 import { APP_CONFIG } from "@/lib/config";
 import { themeClasses } from "@/lib/themeClasses";
 import { truncate } from "@/lib/format";
+import { useUserPreferences } from "@/lib/userPreferences";
 
-const { threshold: AC_THRESHOLD, maxResults: AC_MAX_RESULTS } = APP_CONFIG.autocomplete;
 const { routes } = APP_CONFIG.api;
 import type { SparqlBinding } from "@/components/graph/graphUtils";
 
@@ -65,7 +64,6 @@ WHERE {
 }
 LIMIT 100
 `;
-const PAGE_SIZE = APP_CONFIG.query.pageSize;
 
 export default function QueryPanel({
   isDark,
@@ -75,6 +73,9 @@ export default function QueryPanel({
   templatesOverride,
 }: QueryPanelProps) {
   const templates = templatesOverride ?? QUERY_TEMPLATES;
+  const AC_THRESHOLD = useUserPreferences((s) => s.acThreshold);
+  const AC_MAX_RESULTS = useUserPreferences((s) => s.acMaxResults);
+  const PAGE_SIZE = useUserPreferences((s) => s.pageSize);
   const [queryMode, setQueryMode] = useState<QueryMode>("manual");
   const [query, setQuery] = useState(initialQuery ?? DEFAULT_QUERY);
   const [isLoading, setIsLoading] = useState(false);
