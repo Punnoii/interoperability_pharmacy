@@ -7,6 +7,7 @@ import QueryPanel from "@/components/query/QueryPanel";
 import { SANDBOX_DEFAULT_QUERY, SANDBOX_TEMPLATES } from "@/lib/sandboxTemplates";
 import { themeClasses } from "@/lib/themeClasses";
 import { truncate, fmtSize } from "@/lib/format";
+import { notifySuccess, notifyError } from "@/lib/notifications";
 import { APP_CONFIG } from "@/lib/config";
 
 const { routes } = APP_CONFIG.api;
@@ -114,6 +115,7 @@ export default function UploadPanel({ isDark }: UploadPanelProps) {
       if (!res.ok) {
         const t = await res.text().catch(() => "");
         setStatus({ kind: "err", msg: `Upload failed (HTTP ${res.status}). ${truncate(t)}` });
+        notifyError("Upload failed", `Sandbox upload returned HTTP ${res.status}.`);
         return;
       }
       const data = await res.json();
@@ -122,8 +124,14 @@ export default function UploadPanel({ isDark }: UploadPanelProps) {
         kind: "ok",
         msg: `Loaded ${data.fileCount ?? selected} file(s) into sandbox. ${data.triples ?? 0} triples ready for query.`,
       });
+      notifySuccess(
+        "Sandbox updated",
+        `Loaded ${data.fileCount ?? selected} file(s), ${data.triples ?? 0} triples ready to query.`,
+      );
     } catch (e) {
-      setStatus({ kind: "err", msg: e instanceof Error ? e.message : "Network error" });
+      const msg = e instanceof Error ? e.message : "Network error";
+      setStatus({ kind: "err", msg });
+      notifyError("Upload error", msg);
     } finally {
       setUploading(false);
     }
@@ -142,8 +150,11 @@ export default function UploadPanel({ isDark }: UploadPanelProps) {
       }
       setHasSavedProfile(true);
       setStatus({ kind: "ok", msg: "Saved to your profile. View it in the Profile tab." });
+      notifySuccess("Profile saved", "Your sandbox configuration was saved to your profile.");
     } catch (e) {
-      setStatus({ kind: "err", msg: e instanceof Error ? e.message : "Network error" });
+      const msg = e instanceof Error ? e.message : "Network error";
+      setStatus({ kind: "err", msg });
+      notifyError("Save failed", msg);
     } finally {
       setSaving(false);
     }

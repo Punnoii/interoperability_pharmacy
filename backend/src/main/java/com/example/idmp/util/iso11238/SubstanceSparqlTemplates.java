@@ -5,9 +5,9 @@ public final class SubstanceSparqlTemplates {
     private SubstanceSparqlTemplates() {}
 
     private static final String PREFIXES = """
-        PREFIX idmp-sub: <https:
-        PREFIX cmns-id:  <https:
-        PREFIX cmns-txt: <https:
+        PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
+        PREFIX cmns-id:  <https://www.omg.org/spec/Commons/Identifiers/>
+        PREFIX cmns-txt: <https://www.omg.org/spec/Commons/TextDatatype/>
         """;
 
     public static final String LIST_ALL = PREFIXES + """
@@ -17,7 +17,7 @@ public final class SubstanceSparqlTemplates {
             ?substance idmp-sub:hasSubstanceName ?nameNode .
             ?nameNode idmp-sub:hasSubstanceNameValue ?preferredName .
             ?nameNode idmp-sub:hasSubstanceNameType
-                <https:
+                <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceNameClassifier-PreferredName> .
             OPTIONAL {
                 ?substance cmns-id:isIdentifiedBy ?idNode .
                 ?idNode cmns-txt:hasTextValue ?identifier .
@@ -80,7 +80,7 @@ public final class SubstanceSparqlTemplates {
                 ?substance idmp-sub:hasSubstanceName ?nameNode .
                 ?nameNode idmp-sub:hasSubstanceNameValue ?preferredName .
                 ?nameNode idmp-sub:hasSubstanceNameType
-                    <https:
+                    <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceNameClassifier-PreferredName> .
             }
             """.formatted(safe);
     }

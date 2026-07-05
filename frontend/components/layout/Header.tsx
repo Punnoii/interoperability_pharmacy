@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, Moon, Sun, User } from "lucide-react";
+import { Moon, Sun, User } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import NotificationBell from "@/components/layout/NotificationBell";
 
 interface HeaderProps {
   isDark: boolean;
@@ -28,9 +29,7 @@ export default function Header({ isDark, setIsDark }: HeaderProps) {
       </Link>
 
       <div className="flex items-center gap-2">
-        <IconButton isDark={isDark} aria-label="Notifications">
-          <Bell size={18} />
-        </IconButton>
+        <NotificationBell isDark={isDark} />
 
         <IconButton isDark={isDark} aria-label="Toggle theme" onClick={() => setIsDark(!isDark)}>
           {isDark ? <Sun size={18} /> : <Moon size={18} />}

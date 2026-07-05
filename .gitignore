@@ -51,3 +51,4 @@ data/GSRS/*.gsrs
 data/fda-ndc/json/*.json
 data/fda-ndc/json/*.zip
 data/fda-ndc-raw/
+.jqwik-database

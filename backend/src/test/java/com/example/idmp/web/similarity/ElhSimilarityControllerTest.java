@@ -14,10 +14,8 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -26,21 +24,11 @@ import com.example.idmp.service.similarity.ElhSimilarityService.Neighbor;
 import com.example.idmp.service.similarity.SparqlExpansionService;
 
 @WebMvcTest(ElhSimilarityController.class)
-@Import(ElhSimilarityControllerTest.MockedServicesConfig.class)
 class ElhSimilarityControllerTest {
 
   @Autowired private MockMvc mvc;
-  @Autowired private ElhSimilarityService service;
-
-  @TestConfiguration
-  static class MockedServicesConfig {
-    @Bean ElhSimilarityService elhSimilarityService() {
-      return org.mockito.Mockito.mock(ElhSimilarityService.class);
-    }
-    @Bean SparqlExpansionService sparqlExpansionService() {
-      return org.mockito.Mockito.mock(SparqlExpansionService.class);
-    }
-  }
+  @MockBean private ElhSimilarityService service;
+  @MockBean private SparqlExpansionService expansionService;
 
   @Test
   @DisplayName("POST /pair returns 200 with score on success")
