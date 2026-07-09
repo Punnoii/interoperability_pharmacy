@@ -18,8 +18,8 @@ export interface TokenPayload {
   role: string;
 }
 
-export function signToken(payload: TokenPayload): string {
-  return jwt.sign(payload, SECRET, { expiresIn: "7d" });
+export function signToken(payload: TokenPayload, expiresInSeconds: number = 60 * 60 * 24 * 7): string {
+  return jwt.sign(payload, SECRET, { expiresIn: expiresInSeconds });
 }
 
 export function verifyToken(token: string): TokenPayload | null {

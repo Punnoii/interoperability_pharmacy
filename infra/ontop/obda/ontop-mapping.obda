@@ -214,9 +214,9 @@ target :fda/unii/{product_id}/{ingredient_order} a idmp-sub:SubstanceIdentifier 
 source SELECT i.product_id,
               i.ingredient_order
        FROM postgres.fda_ndc_json.ndc_fda_product_ingredient i
-       JOIN postgres.fda_ndc_json.ndc_fda_product_unii_candidate u
+       JOIN postgres.fda_ndc_json.ndc_fda_ingredient_unii u
          ON u.product_id = i.product_id
-        AND u.unii_order = i.ingredient_order
+        AND u.ingredient_order = i.ingredient_order
        JOIN postgres.fda_ndc_json.ndc_fda_product p
          ON p.product_id = i.product_id
        WHERE p.finished = true
@@ -229,9 +229,9 @@ source SELECT i.product_id,
               i.ingredient_order,
               u.unii
        FROM postgres.fda_ndc_json.ndc_fda_product_ingredient i
-       JOIN postgres.fda_ndc_json.ndc_fda_product_unii_candidate u
+       JOIN postgres.fda_ndc_json.ndc_fda_ingredient_unii u
          ON u.product_id = i.product_id
-        AND u.unii_order = i.ingredient_order
+        AND u.ingredient_order = i.ingredient_order
        JOIN postgres.fda_ndc_json.ndc_fda_product p
          ON p.product_id = i.product_id
        WHERE p.finished = true
@@ -243,9 +243,9 @@ target :fda/substance/{product_id}/{ingredient_order} cmns-id:isIdentifiedBy :fd
 source SELECT i.product_id,
               i.ingredient_order
        FROM postgres.fda_ndc_json.ndc_fda_product_ingredient i
-       JOIN postgres.fda_ndc_json.ndc_fda_product_unii_candidate u
+       JOIN postgres.fda_ndc_json.ndc_fda_ingredient_unii u
          ON u.product_id = i.product_id
-        AND u.unii_order = i.ingredient_order
+        AND u.ingredient_order = i.ingredient_order
        JOIN postgres.fda_ndc_json.ndc_fda_product p
          ON p.product_id = i.product_id
        WHERE p.finished = true
@@ -501,9 +501,9 @@ source SELECT i.product_id,
               i.ingredient_order,
               u.unii
        FROM postgres.fda_ndc_json.ndc_fda_product_ingredient i
-       JOIN postgres.fda_ndc_json.ndc_fda_product_unii_candidate u
+       JOIN postgres.fda_ndc_json.ndc_fda_ingredient_unii u
          ON u.product_id = i.product_id
-        AND u.unii_order = i.ingredient_order
+        AND u.ingredient_order = i.ingredient_order
        JOIN postgres.fda_ndc_json.ndc_fda_product p
          ON p.product_id = i.product_id
        JOIN postgres.gsrs.substance s

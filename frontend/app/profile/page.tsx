@@ -142,7 +142,7 @@ export default function ProfilePage() {
             </section>
 
             <section className="lg:col-span-2 flex flex-col gap-6">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <StatBox isDark={isDark} label="Total Query" value={totalSaved} active={tab === "bookmarks"} onClick={() => setTab("bookmarks")} />
                 <StatBox isDark={isDark} label="Query History" value={history.length} active={tab === "history"} onClick={() => setTab("history")} />
                 <StatBox isDark={isDark} label="Save Config" value={config.fileCount} active={tab === "config"} onClick={() => setTab("config")} />

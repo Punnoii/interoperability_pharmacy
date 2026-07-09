@@ -188,8 +188,8 @@ export default function SubstancePanel({ isDark }: SubstancePanelProps) {
   const divider = isDark ? "border-slate-700" : "border-gray-200";
 
   return (
-    <div className="flex h-full overflow-hidden gap-0">
-      <div className={`flex flex-col w-[420px] shrink-0 border-r ${divider}`}>
+    <div className="flex flex-col md:flex-row h-full overflow-hidden gap-0">
+      <div className={`flex flex-col w-full md:w-[420px] md:shrink-0 border-r ${divider}`}>
         <div className={`px-4 py-3 border-b ${divider}`}>
           <div className="relative">
             <Search size={15} className={`absolute left-3 top-1/2 -translate-y-1/2 ${muted}`} />

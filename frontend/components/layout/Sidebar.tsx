@@ -52,7 +52,7 @@ const bottomItems: BottomItem[] = [
 export default function Sidebar({ activeTab, setActiveTab, isDark }: SidebarProps) {
   return (
     <aside
-      className={`flex flex-col w-44 shrink-0 py-4 px-3 gap-4 border-r ${
+      className={`flex flex-col w-16 md:w-44 shrink-0 py-4 px-2 md:px-3 gap-4 border-r ${
         isDark ? "bg-slate-900 border-slate-800" : "bg-white border-gray-200"
       }`}
     >
@@ -69,12 +69,12 @@ export default function Sidebar({ activeTab, setActiveTab, isDark }: SidebarProp
             <button
               key={item.key}
               onClick={() => setActiveTab(item.key)}
-              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-left ${
+              className={`flex items-center justify-center md:justify-start gap-3 px-3 py-2 rounded-md text-sm font-medium text-left ${
                 isActive ? active : inactive
               }`}
             >
               {item.icon}
-              <span>{item.label}</span>
+              <span className="hidden md:inline">{item.label}</span>
             </button>
           );
         })}

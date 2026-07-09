@@ -485,7 +485,7 @@ export default function QueryPanel({
   const inputCls = tc.input;
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="flex flex-col md:flex-row h-full overflow-hidden">
       <DatabaseInfoPanel
         isDark={isDark}
         mode={queryMode}
@@ -880,7 +880,7 @@ export default function QueryPanel({
         {!isLoading && !error && results && bindings.length > 0 && (
           <div className="flex flex-col h-full">
             <div
-              className={`flex items-center justify-between gap-3 px-4 py-2 border-b ${isDark ? "border-slate-700 bg-slate-900/50" : "border-gray-200 bg-gray-50"
+              className={`flex flex-wrap items-center justify-between gap-3 px-4 py-2 border-b${isDark ? "border-slate-700 bg-slate-900/50" : "border-gray-200 bg-gray-50"
                 }`}
             >
               {viewMode === "table" ? (
@@ -1111,7 +1111,7 @@ function DatabaseInfoPanel({
   const openBookmark = openMenuId ? bookmarks.find((b) => b.id === openMenuId) : null;
 
   return (
-    <aside className={`w-72 shrink-0 border-r overflow-y-auto ${bg}`}>
+    <aside className={`w-full md:w-72 md:shrink-0 border-r overflow-y-auto ${bg}`}>
       <div className="flex flex-col gap-4 p-4">
         <div className="flex items-center gap-2">
           <Database size={16} className="text-blue-600" />

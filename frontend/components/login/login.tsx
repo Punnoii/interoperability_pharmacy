@@ -1,8 +1,20 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AtSign, Eye, EyeOff, User } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+
+const OAUTH_ERRORS: Record<string, string> = {
+  google_not_configured: 'Google sign-in is not configured yet.',
+  google_denied: 'Google sign-in was cancelled.',
+  google_state: 'Google sign-in session expired. Please try again.',
+  google_token: 'Could not complete Google sign-in.',
+  google_userinfo: 'Could not read your Google profile.',
+  google_email: 'Your Google account has no verified email.',
+  google_error: 'Google sign-in failed. Please try again.',
+};
 
 export default function Login() {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -12,9 +24,19 @@ export default function Login() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [remember, setRemember] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { setUser } = useAuth();
+
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get('error');
+    if (code) {
+      setError(OAUTH_ERRORS[code] ?? 'Sign-in failed. Please try again.');
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +53,7 @@ export default function Login() {
       const endpoint = isRegistering ? "/api/auth/register" : "/api/auth/login";
       const body = isRegistering
         ? JSON.stringify({ username, email, password })
-        : JSON.stringify({ email, password });
+        : JSON.stringify({ email, password, remember });
 
       const res = await fetch(endpoint, {
         method: "POST",
@@ -40,9 +62,10 @@ export default function Login() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? (isRegistering ? "Registration failed" : "Login failed"));
+      if (data.user) setUser(data.user);
       router.push("/homepage");
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -171,6 +194,8 @@ export default function Login() {
                     <div className="relative flex items-center justify-center">
                       <input
                         type="checkbox"
+                        checked={remember}
+                        onChange={(e) => setRemember(e.target.checked)}
                         className="peer appearance-none w-4 h-4 rounded border-2 border-gray-200 checked:bg-[#365bce] checked:border-[#365bce] transition-all cursor-pointer"
                       />
                       <svg className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
@@ -179,9 +204,9 @@ export default function Login() {
                     </div>
                     <span className="font-medium">Remember Me</span>
                   </label>
-                  <a href="#" className="text-[#365bce] font-bold hover:underline">
+                  <Link href="/forgot-password" className="text-[#365bce] font-bold hover:underline">
                     Forgot Password?
-                  </a>
+                  </Link>
                 </div>
               )}
 
@@ -199,6 +224,7 @@ export default function Login() {
               {}
               <button
                 type="button"
+                onClick={() => { window.location.href = '/api/auth/google'; }}
                 className="w-full bg-white text-gray-600 font-semibold py-4 rounded-2xl border border-gray-200 hover:bg-gray-50 transition-colors flex items-center justify-center gap-3 mt-4"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">

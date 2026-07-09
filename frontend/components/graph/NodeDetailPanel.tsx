@@ -60,7 +60,7 @@ export default function NodeDetailPanel({
 
   return (
     <aside
-      className={`absolute top-3 right-3 bottom-3 w-80 rounded border p-4 flex flex-col gap-3 overflow-hidden z-30 ${wrap}`}
+      className={`absolute top-3 right-3 bottom-3 left-3 w-auto md:left-auto md:w-80 rounded border p-4 flex flex-col gap-3 overflow-hidden z-30 ${wrap}`}
     >
       <header className="flex items-start gap-2">
         <span

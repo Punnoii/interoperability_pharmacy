@@ -177,7 +177,7 @@ export default function UploadPanel({ isDark }: UploadPanelProps) {
             return (
               <div
                 key={slot.key}
-                className={`flex items-center gap-4 px-4 py-3 ${i !== SLOTS.length - 1 ? `border-b ${rowDiv}` : ""}`}
+                className={`flex flex-col sm:flex-row sm:items-center gap-4 px-4 py-3 ${i !== SLOTS.length - 1 ? `border-b ${rowDiv}` : ""}`}
               >
                 <span className={`w-6 text-sm font-mono ${muted}`}>{i + 1}.</span>
 

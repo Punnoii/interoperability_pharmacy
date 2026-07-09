@@ -5,6 +5,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 OPENFDA_NDC_DIR="$ROOT_DIR/data/fda-ndc/json"
 GSRS_DIR="$ROOT_DIR/data/GSRS"
+DEFAULT_GSRS_DOWNLOAD_URL="https://gsrs.ncats.nih.gov/assets/downloads/dump-public-2026-02-26.gsrs"
+GSRS_DOWNLOAD_URL="${GSRS_DOWNLOAD_URL:-$DEFAULT_GSRS_DOWNLOAD_URL}"
 
 mkdir -p "$OPENFDA_NDC_DIR"
 mkdir -p "$GSRS_DIR"

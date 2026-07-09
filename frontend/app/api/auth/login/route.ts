@@ -16,12 +16,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
   }
 
-  const token = signToken({
-    sub: user.id,
-    email: user.email ?? "",
-    username: user.username ?? "",
-    role: user.role,
-  });
+  const remember = body?.remember === true;
+  const REMEMBER_MAX_AGE = 60 * 60 * 24 * 30;
+  const SESSION_TOKEN_TTL = 60 * 60 * 24 * 7;
+
+  const token = signToken(
+    {
+      sub: user.id,
+      email: user.email ?? "",
+      username: user.username ?? "",
+      role: user.role,
+    },
+    remember ? REMEMBER_MAX_AGE : SESSION_TOKEN_TTL,
+  );
 
   const res = NextResponse.json({
     user: { id: user.id, email: user.email, username: user.username, role: user.role },
@@ -30,8 +37,8 @@ export async function POST(req: NextRequest) {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 7,
     path: "/",
+    ...(remember ? { maxAge: REMEMBER_MAX_AGE } : {}),
   });
   return res;
 }

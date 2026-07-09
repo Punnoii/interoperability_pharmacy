@@ -199,7 +199,7 @@ export default function SubstanceSimilarity({ isDark }: SubstanceSimilarityProps
     : "bg-white border-gray-300 text-gray-900";
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="flex flex-col md:flex-row h-full overflow-hidden">
       <SimilarityInfoPanel
         isDark={isDark}
         mode={simMode}
@@ -680,7 +680,7 @@ function SubstanceElhMode({ isDark }: { isDark: boolean }) {
               </div>
             )}
 
-            <div className="grid grid-cols-4 gap-3 text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
               <div>
                 <p className={muted}>Concept A</p>
                 <p className={`font-mono ${heading}`}>{result.conceptA}</p>
@@ -975,7 +975,7 @@ function ElhSubTabBar({
     { value: "pair", label: "Find Concept Pairs", sub: "score a vs b" },
   ];
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-wrap gap-2">
       {tabs.map((t) => (
         <button
           key={t.value}
@@ -1131,7 +1131,7 @@ function SimilarityInfoPanel({
     : "border-gray-200 text-gray-700 hover:bg-gray-50";
 
   return (
-    <aside className={`w-72 shrink-0 border-r overflow-y-auto ${bg} ${border}`}>
+    <aside className={`w-full md:w-72 md:shrink-0 border-r overflow-y-auto ${bg} ${border}`}>
       <div className="flex flex-col gap-4 p-4">
         <div className="flex items-center gap-2">
           <GitCompare size={16} className="text-blue-600" />

@@ -22,6 +22,22 @@ export async function createUser(username: string, email: string, password: stri
   });
 }
 
+export async function upsertOAuthUser(email: string, username: string) {
+  const lower = email.toLowerCase();
+  const existing = await prisma.user.findUnique({ where: { email: lower } });
+  if (existing) return existing;
+  return prisma.user.create({
+    data: { email: lower, username, role: "USER" },
+  });
+}
+
+export async function updatePasswordByEmail(email: string, password: string) {
+  return prisma.user.update({
+    where: { email: email.toLowerCase() },
+    data: { passwordHash: await hashPassword(password) },
+  });
+}
+
 export async function getAllUsers() {
   return prisma.user.findMany({
     orderBy: { createdAt: "desc" },
