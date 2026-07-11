@@ -29,7 +29,7 @@ services:
       start_period: 30s
 
   ontop-trino:
-    image: ontop/ontop:5.3.1
+    image: ontop/ontop:5.5.0
     restart: unless-stopped
     environment:
       ONTOP_ONTOLOGY_FILE: /opt/ontop/input/idmp-core-entry.rdf
@@ -91,6 +91,7 @@ services:
       GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD:-}
       MAIL_FROM: ${MAIL_FROM:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-false}
     depends_on:
       backend:
         condition: service_healthy

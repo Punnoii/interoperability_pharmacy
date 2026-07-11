@@ -6,7 +6,8 @@ export type TemplateCategory =
   | "codes"
   | "chemistry"
   | "product"
-  | "crosssource";
+  | "crosssource"
+  | "tmt";
 
 export interface TemplateParam {
   token: string;
@@ -35,6 +36,7 @@ export const CATEGORY_LABELS: Record<TemplateCategory, string> = {
   chemistry: "Chemistry",
   product: "Products & packaging",
   crosssource: "Cross-source",
+  tmt: "Thai medicines (TMT)",
 };
 
 export const CATEGORY_ORDER: TemplateCategory[] = [
@@ -44,6 +46,7 @@ export const CATEGORY_ORDER: TemplateCategory[] = [
   "chemistry",
   "product",
   "crosssource",
+  "tmt",
 ];
 
 const P = `PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
@@ -64,7 +67,7 @@ const SUBSTANCE_PARAM: TemplateParam = {
   label: "Substance",
   kind: "substance",
   placeholder: "Search a substance by name…",
-  defaultValue: "http://example.com/idmp-demo/substance/WK2XYI10QM",
+  defaultValue: "http://example.com/idmp-demo/gsrs/substance/0103a288-6eb6-4ced-b13a-849cd7edf028",
 };
 
 const NAME_PARAM: TemplateParam = {
@@ -281,7 +284,8 @@ WHERE {
   <{{IRI}}> cmns-id:isIdentifiedBy ?c .
   ?c cmns-txt:hasTextValue ?code ;
      cmns-col:isMemberOf ?cs .
-  ?cs rdfs:label ?codeSystem .
+  ?cs cmns-dsg:hasName ?csn .
+  ?csn cmns-txt:hasTextValue ?codeSystem .
 }
 ORDER BY ?codeSystem
 LIMIT 60
@@ -302,7 +306,9 @@ WHERE {
   <{{IRI}}> cmns-id:isIdentifiedBy ?c .
   ?c cmns-txt:hasTextValue ?atcCode ;
      cmns-col:isMemberOf ?cs .
-  ?cs rdfs:label "WHO-ATC"^^xsd:string .
+  ?cs cmns-dsg:hasName ?csn .
+  ?csn cmns-txt:hasTextValue "WHO-ATC"^^xsd:string .
+  FILTER(REGEX(?atcCode, "^[A-Z][0-9]{2}[A-Z]{2}[0-9]{2}$"))
 }
 ORDER BY ?atcCode
 `,
@@ -322,7 +328,8 @@ WHERE {
   ?c cmns-txt:hasTextValue "{{ATC}}"^^xsd:string ;
      cmns-col:isMemberOf ?cs ;
      cmns-id:identifies ?substance .
-  ?cs rdfs:label "WHO-ATC"^^xsd:string .
+  ?cs cmns-dsg:hasName ?csn .
+  ?csn cmns-txt:hasTextValue "WHO-ATC"^^xsd:string .
   ?substance idmp-sub:hasSubstanceName ?n .
   ?n idmp-sub:hasSubstanceNameValue ?name .
 }
@@ -351,7 +358,8 @@ WHERE {
     ?mw cmns-qtu:hasNumericValue ?molecularWeight .
   }
   OPTIONAL {
-    <{{IRI}}> idmp-sub:hasSMILES ?sm .
+    <{{IRI}}> idmp-sub:hasDefiningStructure ?ms .
+    ?ms idmp-sub:hasSMILES ?sm .
     ?sm idmp-sub:hasSMILESValue ?smiles .
   }
 }
@@ -393,7 +401,8 @@ SELECT DISTINCT ?ingredientName
 WHERE {
   ?product cmns-id:isIdentifiedBy ?pid .
   ?pid cmns-txt:hasTextValue "{{NDC}}"^^xsd:string .
-  ?product idmp-mprd:hasActiveIngredient ?ai .
+  ?product cmns-dsg:isDefinedIn ?comp .
+  ?comp idmp-mprd:hasActiveIngredient ?ai .
   ?ai cmns-rlcmp:isPlayedBy ?substance .
   ?substance idmp-sub:hasSubstanceName ?sn .
   ?sn idmp-sub:hasSubstanceNameValue ?ingredientName .
@@ -458,9 +467,10 @@ LIMIT 50
     query: `${P}
 SELECT DISTINCT ?productName ?ndcCode
 WHERE {
-  ?product idmp-mprd:hasActiveIngredient ?ai ;
+  ?product cmns-dsg:isDefinedIn ?comp ;
            cmns-dsg:hasName ?pn ;
            cmns-id:isIdentifiedBy ?pid .
+  ?comp idmp-mprd:hasActiveIngredient ?ai .
   ?ai cmns-rlcmp:isPlayedBy <{{IRI}}> .
   ?pn idmp-mprd:hasFullMedicinalProductName ?productName .
   ?pid cmns-txt:hasTextValue ?ndcCode .
@@ -471,7 +481,7 @@ LIMIT 40
   {
     id: "tpl-unmatched-ingredients",
     name: "Data quality — ingredients not matched to GSRS",
-    description: "FDA ingredients whose name could not be resolved to a GSRS substance (UNII).",
+    description: "FDA ingredients matched only to an OpenFDA substance, not to a GSRS substance.",
     keywords: ["quality", "unmatched", "missing", "คุณภาพ", "gap", "coverage", "data"],
     source: "all",
     category: "crosssource",
@@ -479,13 +489,18 @@ LIMIT 40
     query: `${P}
 SELECT DISTINCT ?productName ?ingredientName
 WHERE {
-  ?product idmp-mprd:hasActiveIngredient ?ai ;
+  ?product cmns-dsg:isDefinedIn ?comp ;
            cmns-dsg:hasName ?pn .
   ?pn idmp-mprd:hasFullMedicinalProductName ?productName .
-  ?ai cmns-rlcmp:isPlayedBy ?s .
-  ?s idmp-sub:hasSubstanceName ?sn .
+  ?comp idmp-mprd:hasActiveIngredient ?ai .
+  ?ai cmns-rlcmp:isPlayedBy ?ofs .
+  ?ofs idmp-sub:hasSubstanceName ?sn .
   ?sn idmp-sub:hasSubstanceNameValue ?ingredientName .
-  FILTER(STRSTARTS(STR(?s), "http://example.com/idmp-demo/fda/unmatched-substance/"))
+  FILTER(STRSTARTS(STR(?ofs), "http://example.com/idmp-demo/fda/substance/"))
+  FILTER NOT EXISTS {
+    ?ai cmns-rlcmp:isPlayedBy ?g .
+    FILTER(STRSTARTS(STR(?g), "http://example.com/idmp-demo/gsrs/substance/"))
+  }
 }
 LIMIT 40
 `,
@@ -520,9 +535,64 @@ WHERE {
     <{{IRI}}> cmns-id:isIdentifiedBy ?c .
     ?c cmns-txt:hasTextValue ?atcCode ;
        cmns-col:isMemberOf ?cs .
-    ?cs rdfs:label "WHO-ATC"^^xsd:string .
+    ?cs cmns-dsg:hasName ?csn .
+    ?csn cmns-txt:hasTextValue "WHO-ATC"^^xsd:string .
+    FILTER(REGEX(?atcCode, "^[A-Z][0-9]{2}[A-Z]{2}[0-9]{2}$"))
   }
 }
+`,
+  },
+
+  {
+    id: "tpl-tmt-products-by-substance",
+    name: "Thai TMT products containing a substance",
+    description: "Thai medicines (TMT) whose active ingredient links to this GSRS substance — Thai ↔ GSRS cross-source.",
+    keywords: ["tmt", "thai", "ไทย", "ยาไทย", "product", "brand", "trade"],
+    source: "all",
+    category: "tmt",
+    estSeconds: 8,
+    params: [SUBSTANCE_PARAM],
+    query: `${P}
+SELECT DISTINCT ?tmtProduct ?tpuCode
+WHERE {
+  ?product idmp-mprd:hasActiveIngredient ?ai ;
+           cmns-dsg:hasName ?pn ;
+           cmns-id:isIdentifiedBy ?id .
+  ?ai cmns-rlcmp:isPlayedBy <{{IRI}}> .
+  ?pn idmp-mprd:hasFullMedicinalProductName ?tmtProduct .
+  ?id cmns-txt:hasTextValue ?tpuCode .
+  FILTER(STRSTARTS(STR(?product), "http://example.com/idmp-demo/tmt/product/"))
+}
+LIMIT 40
+`,
+  },
+  {
+    id: "tpl-tmt-product-search",
+    name: "Search Thai TMT products by name",
+    description: "Find Thai medicines (TMT) whose name contains your keyword, with the TPU code.",
+    keywords: ["tmt", "thai", "ไทย", "ยาไทย", "search", "ค้นหา", "tpu", "trade"],
+    source: "all",
+    category: "tmt",
+    estSeconds: 4,
+    params: [{
+      token: "{{TMT}}",
+      label: "Thai product name contains",
+      kind: "text",
+      placeholder: "paracetamol",
+      defaultValue: "paracetamol",
+    }],
+    query: `${P}
+SELECT DISTINCT ?product ?productName ?tpuCode
+WHERE {
+  ?product cmns-dsg:hasName ?pn ;
+           cmns-id:isIdentifiedBy ?id ;
+           cmns-dsg:hasDescription ?fsn .
+  ?pn idmp-mprd:hasFullMedicinalProductName ?productName .
+  ?id cmns-txt:hasTextValue ?tpuCode .
+  FILTER(STRSTARTS(STR(?product), "http://example.com/idmp-demo/tmt/product/"))
+  FILTER(CONTAINS(LCASE(?fsn), LCASE("{{TMT}}")))
+}
+LIMIT 40
 `,
   },
 ];

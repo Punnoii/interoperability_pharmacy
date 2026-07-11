@@ -3,7 +3,6 @@
          xmlns:owl="http://www.w3.org/2002/07/owl#">
   <owl:Ontology rdf:about="https://spec.pistoiaalliance.org/idmp/ontology/entrypoint">
     <owl:imports rdf:resource="file:/opt/ontop/ontology/ISO/ISO11238-Substances.rdf"/>
-    <owl:imports rdf:resource="file:/opt/ontop/input/bridge/idmp-registration-authority-bridge.rdf"/>
     <owl:imports rdf:resource="file:/opt/ontop/ontology/ISO/ISO11615-MedicinalProducts.rdf"/>
     <owl:imports rdf:resource="file:/opt/ontop/ontology/ISO/ISO21090-HarmonizedDatatypes.rdf"/>
     <owl:imports rdf:resource="file:/opt/ontop/ontology/CMNS/Identifiers.rdf"/>

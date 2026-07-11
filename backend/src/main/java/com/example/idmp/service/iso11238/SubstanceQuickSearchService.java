@@ -20,13 +20,14 @@ public class SubstanceQuickSearchService {
 
   private static final Logger log = LoggerFactory.getLogger(SubstanceQuickSearchService.class);
 
-  private static final String SUBSTANCE_IRI_PREFIX = "http://example.com/idmp-demo/substance/";
+  private static final String SUBSTANCE_IRI_PREFIX = "http://example.com/idmp-demo/gsrs/substance/";
 
   private static final String SQL = """
-      SELECT name_key, unii
-      FROM postgres.gsrs.substance_name_lookup
-      WHERE name_key LIKE ? ESCAPE '\\'
-      ORDER BY length(name_key), name_key
+      SELECT l.name_key, l.gsrs_uuid, s.unii
+      FROM postgres.gsrs.substance_name_lookup l
+      JOIN postgres.gsrs.substance s ON s.gsrs_uuid = l.gsrs_uuid
+      WHERE l.name_key LIKE ? ESCAPE '\\'
+      ORDER BY length(l.name_key), l.name_key
       LIMIT ?
       """;
 
@@ -54,7 +55,7 @@ public class SubstanceQuickSearchService {
       if (merged.size() >= safeLimit) {
         break;
       }
-      if (merged.stream().noneMatch(existing -> existing.unii().equals(hit.unii()))) {
+      if (merged.stream().noneMatch(existing -> existing.iri().equals(hit.iri()))) {
         merged.add(hit);
       }
     }
@@ -70,8 +71,9 @@ public class SubstanceQuickSearchService {
       try (ResultSet rs = statement.executeQuery()) {
         while (rs.next()) {
           String name = rs.getString("name_key");
+          String gsrsUuid = rs.getString("gsrs_uuid");
           String unii = rs.getString("unii");
-          hits.add(new SubstanceQuickHit(SUBSTANCE_IRI_PREFIX + unii, name, unii));
+          hits.add(new SubstanceQuickHit(SUBSTANCE_IRI_PREFIX + gsrsUuid, name, unii));
         }
       }
     } catch (Exception e) {

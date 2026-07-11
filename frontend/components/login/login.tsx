@@ -27,6 +27,7 @@ export default function Login() {
   const [remember, setRemember] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [registrationEnabled, setRegistrationEnabled] = useState(false);
   const router = useRouter();
   const { setUser } = useAuth();
 
@@ -37,6 +38,17 @@ export default function Login() {
       window.history.replaceState(null, '', window.location.pathname);
     }
   }, []);
+
+  useEffect(() => {
+    fetch('/api/auth/registration-status')
+      .then((r) => (r.ok ? r.json() : { enabled: false }))
+      .then((d) => setRegistrationEnabled(Boolean(d?.enabled)))
+      .catch(() => setRegistrationEnabled(false));
+  }, []);
+
+  useEffect(() => {
+    if (!registrationEnabled && isRegistering) setIsRegistering(false);
+  }, [registrationEnabled, isRegistering]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -238,19 +250,21 @@ export default function Login() {
             </form>
 
             {}
-            <p className="text-center mt-10 text-gray-500 text-[13px] font-medium">
-              {isRegistering ? 'Already have an account?' : "Don't have an account yet?"}{' '}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsRegistering(!isRegistering);
-                  setError('');
-                }}
-                className="text-[#365bce] font-bold hover:underline ml-1"
-              >
-                {isRegistering ? 'Sign In' : 'Sign Up'}
-              </button>
-            </p>
+            {registrationEnabled && (
+              <p className="text-center mt-10 text-gray-500 text-[13px] font-medium">
+                {isRegistering ? 'Already have an account?' : "Don't have an account yet?"}{' '}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsRegistering(!isRegistering);
+                    setError('');
+                  }}
+                  className="text-[#365bce] font-bold hover:underline ml-1"
+                >
+                  {isRegistering ? 'Sign In' : 'Sign Up'}
+                </button>
+              </p>
+            )}
 
           </div>
         </div>

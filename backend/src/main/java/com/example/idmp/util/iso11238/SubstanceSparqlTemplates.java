@@ -6,6 +6,7 @@ public final class SubstanceSparqlTemplates {
 
     private static final String PREFIXES = """
         PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
+        PREFIX idmp-dtp: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO21090-HarmonizedDatatypes/>
         PREFIX cmns-id:  <https://www.omg.org/spec/Commons/Identifiers/>
         PREFIX cmns-txt: <https://www.omg.org/spec/Commons/TextDatatype/>
         """;
@@ -17,7 +18,7 @@ public final class SubstanceSparqlTemplates {
             ?substance idmp-sub:hasSubstanceName ?nameNode .
             ?nameNode idmp-sub:hasSubstanceNameValue ?preferredName .
             ?nameNode idmp-sub:hasSubstanceNameType
-                <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceNameClassifier-PreferredName> .
+                <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceNameClassifier-CommonName> .
             OPTIONAL {
                 ?substance cmns-id:isIdentifiedBy ?idNode .
                 ?idNode cmns-txt:hasTextValue ?identifier .
@@ -29,7 +30,7 @@ public final class SubstanceSparqlTemplates {
     public static final String COUNT_PER_SOURCE = PREFIXES + """
         SELECT ?source (COUNT(DISTINCT ?substance) AS ?count) WHERE {
             ?substance a idmp-sub:Substance .
-            BIND(REPLACE(STR(?substance), "^.*/substance/([a-z])/.*$", "$1") AS ?source)
+            BIND(REPLACE(STR(?substance), "^.*/(gsrs|fda)/substance/.*$", "$1") AS ?source)
         }
         GROUP BY ?source
         """;
@@ -61,7 +62,7 @@ public final class SubstanceSparqlTemplates {
                 <%s> idmp-sub:hasSubstanceName ?nameNode .
                 ?nameNode idmp-sub:hasSubstanceNameValue ?nameValue .
                 ?nameNode idmp-sub:hasSubstanceNameType ?nameType .
-                OPTIONAL { ?nameNode idmp-sub:hasLanguageCode ?langCode . }
+                OPTIONAL { ?nameNode idmp-dtp:hasLanguageCode ?langCode . }
                 OPTIONAL {
                     <%s> cmns-id:isIdentifiedBy ?idNode .
                     ?idNode cmns-txt:hasTextValue ?idValue .
@@ -73,18 +74,18 @@ public final class SubstanceSparqlTemplates {
     public static String crossSource(String identifier) {
         String safe = sanitize(identifier);
         return PREFIXES + """
-            SELECT ?substance ?preferredName ?substanceType ?identifier WHERE {
+            SELECT ?substance (SAMPLE(?nm) AS ?preferredName) ("%s" AS ?identifier) WHERE {
                 ?substance a idmp-sub:Substance .
-                OPTIONAL { ?substance idmp-sub:hasSubstanceType ?substanceType . }
                 ?substance cmns-id:isIdentifiedBy ?idNode .
-                ?idNode cmns-txt:hasTextValue ?identifier .
-                FILTER(?identifier = "%s")
+                ?idNode cmns-txt:hasTextValue "%s" .
                 ?substance idmp-sub:hasSubstanceName ?nameNode .
-                ?nameNode idmp-sub:hasSubstanceNameValue ?preferredName .
+                ?nameNode idmp-sub:hasSubstanceNameValue ?nm .
                 ?nameNode idmp-sub:hasSubstanceNameType
-                    <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceNameClassifier-PreferredName> .
+                    <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceNameClassifier-CommonName> .
             }
-            """.formatted(safe);
+            GROUP BY ?substance
+            LIMIT 50
+            """.formatted(safe, safe);
     }
 
     static String sanitize(String input) {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/lib/session";
 
 const DOMAIN_KNOWLEDGE = `You are an expert SPARQL query generator for the IDMP ISO 11238 Substances Ontology system.
 Your task is to convert natural language (Thai or English) into a valid, executable SPARQL query.
@@ -95,6 +96,11 @@ async function callGemini(apiKey: string, prompt: string, model: string): Promis
 }
 
 export async function POST(req: NextRequest) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
+  }
+
   const { query } = await req.json() as { query: string };
 
   if (!query?.trim()) {

@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { APP_CONFIG } from "@/lib/config";
+import { getSession } from "@/lib/session";
 
 const { backendUrl, routes } = APP_CONFIG.api;
 
 export async function POST(req: NextRequest) {
+    const session = await getSession();
+    if (!session) {
+        return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
+    }
+
     const body = await req.json();
 
     const res = await fetch(`${backendUrl}${routes.sparql}`, {

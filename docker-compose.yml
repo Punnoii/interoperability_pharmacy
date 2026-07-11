@@ -59,6 +59,20 @@ services:
       - ./infra/db/fda_ndc/json:/work:ro
     command: ["sh", "/work/load_raw_openfda_json.sh"]
 
+  tmt-demo-loader:
+    build:
+      context: ./infra/db/fda_ndc/json
+    profiles: ["loader"]
+    environment:
+      PGPASSWORD: pgpass
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./data/TMT:/data/TMT:ro
+      - ./infra/db/tmt_demo:/work:ro
+    command: ["sh", "/work/load-raw-tmt-demo.sh"]
+
   trino:
     image: trinodb/trino:479
     restart: unless-stopped
@@ -77,7 +91,7 @@ services:
       start_period: 30s
 
   ontop-trino:
-    image: ontop/ontop:5.3.1
+    image: ontop/ontop:5.5.0
     restart: unless-stopped
     environment:
       ONTOP_ONTOLOGY_FILE: /opt/ontop/input/idmp-core-entry.rdf
@@ -138,6 +152,7 @@ services:
       - BACKEND_URL=http://backend:8082
       - DATABASE_URL=postgresql://postgres:pgpass@postgres:5432/postgres?schema=public
       - JWT_SECRET=rxvkg-dev-secret-change-in-production
+      - ALLOW_REGISTRATION=true
     volumes:
       - ./frontend:/app
       - /app/node_modules

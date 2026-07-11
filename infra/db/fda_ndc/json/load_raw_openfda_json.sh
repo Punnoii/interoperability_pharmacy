@@ -1,19 +1,14 @@
 #!/bin/sh
 set -eu
 
-JSON_FILE="/data/fda-ndc/json/drug-ndc-0001-of-0001.json"
+set -- /data/fda-ndc/json/drug-ndc-*.json
+JSON_FILE="$1"
 
 psql -v ON_ERROR_STOP=1 \
   -h postgres \
   -U postgres \
   -d postgres \
   -f /work/ndc-fda-json-raw.sql
-
-psql -v ON_ERROR_STOP=1 \
-  -h postgres \
-  -U postgres \
-  -d postgres \
-  -f /work/ndc-fda-json-view.sql
 
 jq -r '
   .meta.last_updated as $last_updated

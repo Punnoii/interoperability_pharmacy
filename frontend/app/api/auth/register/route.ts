@@ -3,6 +3,10 @@ import { createUser } from "@/lib/users";
 import { signToken } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
+  if (process.env.ALLOW_REGISTRATION !== "true") {
+    return NextResponse.json({ error: "Registration is disabled" }, { status: 403 });
+  }
+
   const body = await req.json().catch(() => null);
   const username: string = body?.username ?? "";
   const email: string = body?.email ?? "";

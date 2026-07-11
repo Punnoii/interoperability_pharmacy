@@ -200,22 +200,12 @@ public class SubstanceServiceImpl implements SubstanceService {
         if (substanceIri == null) {
             return "Unknown";
         }
-        int idx = substanceIri.indexOf("/substance/");
-        if (idx < 0) {
-            return "Unknown";
+        if (substanceIri.contains("/gsrs/substance/")) {
+            return "GSRS";
         }
-        int letterStart = idx + "/substance/".length();
-        if (letterStart >= substanceIri.length()) {
-            return "Unknown";
+        if (substanceIri.contains("/fda/substance/")) {
+            return "OpenFDA NDC";
         }
-        char letter = substanceIri.charAt(letterStart);
-        return switch (letter) {
-            case 'a' -> "Company A";
-            case 'b' -> "Company B";
-            case 'c' -> "Company C";
-            case 'd' -> "Company D";
-            case 'e' -> "Company E";
-            default -> "Unknown";
-        };
+        return "Unknown";
     }
 }
