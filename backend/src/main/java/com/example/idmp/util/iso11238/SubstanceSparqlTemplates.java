@@ -13,7 +13,7 @@ public final class SubstanceSparqlTemplates {
     public static final String LIST_ALL = PREFIXES + """
         SELECT ?substance ?preferredName ?substanceType ?identifier WHERE {
             ?substance a idmp-sub:Substance .
-            ?substance idmp-sub:hasSubstanceType ?substanceType .
+            OPTIONAL { ?substance idmp-sub:hasSubstanceType ?substanceType . }
             ?substance idmp-sub:hasSubstanceName ?nameNode .
             ?nameNode idmp-sub:hasSubstanceNameValue ?preferredName .
             ?nameNode idmp-sub:hasSubstanceNameType
@@ -23,6 +23,7 @@ public final class SubstanceSparqlTemplates {
                 ?idNode cmns-txt:hasTextValue ?identifier .
             }
         }
+        LIMIT 500
         """;
 
     public static final String COUNT_PER_SOURCE = PREFIXES + """
@@ -38,7 +39,7 @@ public final class SubstanceSparqlTemplates {
         return PREFIXES + """
             SELECT ?substance ?name ?substanceType ?identifier WHERE {
                 ?substance a idmp-sub:Substance .
-                ?substance idmp-sub:hasSubstanceType ?substanceType .
+                OPTIONAL { ?substance idmp-sub:hasSubstanceType ?substanceType . }
                 ?substance idmp-sub:hasSubstanceName ?nameNode .
                 ?nameNode idmp-sub:hasSubstanceNameValue ?name .
                 FILTER(CONTAINS(LCASE(?name), LCASE("%s")))
@@ -47,6 +48,7 @@ public final class SubstanceSparqlTemplates {
                     ?idNode cmns-txt:hasTextValue ?identifier .
                 }
             }
+            LIMIT 100
             """.formatted(safe);
     }
 
@@ -55,7 +57,7 @@ public final class SubstanceSparqlTemplates {
         return PREFIXES + """
             SELECT ?substanceType ?nameValue ?nameType ?langCode ?idValue WHERE {
                 <%s> a idmp-sub:Substance .
-                <%s> idmp-sub:hasSubstanceType ?substanceType .
+                OPTIONAL { <%s> idmp-sub:hasSubstanceType ?substanceType . }
                 <%s> idmp-sub:hasSubstanceName ?nameNode .
                 ?nameNode idmp-sub:hasSubstanceNameValue ?nameValue .
                 ?nameNode idmp-sub:hasSubstanceNameType ?nameType .
@@ -73,7 +75,7 @@ public final class SubstanceSparqlTemplates {
         return PREFIXES + """
             SELECT ?substance ?preferredName ?substanceType ?identifier WHERE {
                 ?substance a idmp-sub:Substance .
-                ?substance idmp-sub:hasSubstanceType ?substanceType .
+                OPTIONAL { ?substance idmp-sub:hasSubstanceType ?substanceType . }
                 ?substance cmns-id:isIdentifiedBy ?idNode .
                 ?idNode cmns-txt:hasTextValue ?identifier .
                 FILTER(?identifier = "%s")

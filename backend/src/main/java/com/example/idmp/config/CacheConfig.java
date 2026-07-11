@@ -15,13 +15,14 @@ public class CacheConfig {
 
     public static final String SPARQL_RESULTS = "sparqlResults";
     public static final String ELH_TOPK = "elhTopK";
+    public static final String SUBSTANCE_QUICK_SEARCH = "substanceQuickSearch";
 
     private Duration ttl = Duration.ofMinutes(5);
     private int maxEntries = 100;
 
     @Bean
     public CacheManager cacheManager() {
-        CaffeineCacheManager mgr = new CaffeineCacheManager(SPARQL_RESULTS, ELH_TOPK);
+        CaffeineCacheManager mgr = new CaffeineCacheManager(SPARQL_RESULTS, ELH_TOPK, SUBSTANCE_QUICK_SEARCH);
         mgr.setCaffeine(Caffeine.newBuilder()
                 .maximumSize(maxEntries)
                 .expireAfterWrite(ttl));

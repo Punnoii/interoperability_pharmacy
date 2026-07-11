@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL("/?error=google_not_configured", req.url));
   }
 
-  const redirectUri = `${req.nextUrl.origin}/api/auth/google/callback`;
+  const redirectUri = `${process.env.APP_URL || req.nextUrl.origin}/api/auth/google/callback`;
   const state = crypto.randomBytes(16).toString("hex");
 
   const params = new URLSearchParams({

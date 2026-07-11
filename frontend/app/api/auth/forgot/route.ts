@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
 
   await prisma.passwordResetToken.create({ data: { email, tokenHash, expiresAt } });
 
-  const link = `${req.nextUrl.origin}/reset-password?token=${rawToken}`;
+  const link = `${process.env.APP_URL || req.nextUrl.origin}/reset-password?token=${rawToken}`;
 
   try {
     const { sent } = await sendPasswordResetEmail(email, link);

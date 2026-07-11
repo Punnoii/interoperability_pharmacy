@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Clock, Settings, FlaskConical, HelpCircle, GitCompare, Upload } from "lucide-react";
+import { Clock, Settings, HelpCircle, GitCompare, Upload } from "lucide-react";
 
 interface SidebarProps {
   activeTab: string;
@@ -18,11 +18,6 @@ const navItems = [
         <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
       </svg>
     ),
-  },
-  {
-    key: "substances",
-    label: "Substances",
-    icon: <FlaskConical size={18} />,
   },
   {
     key: "explore",

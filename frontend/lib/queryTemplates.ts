@@ -1,5 +1,21 @@
 export type SourceKey = "all" | "a" | "b" | "c" | "d" | "e";
 
+export type TemplateCategory =
+  | "explore"
+  | "substance"
+  | "codes"
+  | "chemistry"
+  | "product"
+  | "crosssource";
+
+export interface TemplateParam {
+  token: string;
+  label: string;
+  kind: "substance" | "text";
+  placeholder: string;
+  defaultValue: string;
+}
+
 export interface QueryTemplate {
   id: string;
   name: string;
@@ -7,96 +23,236 @@ export interface QueryTemplate {
   keywords: string[];
   source: SourceKey;
   query: string;
+  category?: TemplateCategory;
+  params?: TemplateParam[];
+  estSeconds?: number;
 }
 
-const PREFIXES_SUB = `PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
+export const CATEGORY_LABELS: Record<TemplateCategory, string> = {
+  explore: "Explore the graph",
+  substance: "Substance lookup",
+  codes: "Identifiers & codes",
+  chemistry: "Chemistry",
+  product: "Products & packaging",
+  crosssource: "Cross-source",
+};
+
+export const CATEGORY_ORDER: TemplateCategory[] = [
+  "explore",
+  "substance",
+  "codes",
+  "chemistry",
+  "product",
+  "crosssource",
+];
+
+const P = `PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
+PREFIX idmp-mprd: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11615-MedicinalProducts/>
+PREFIX idmp-dtp: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO21090-HarmonizedDatatypes/>
 PREFIX cmns-id: <https://www.omg.org/spec/Commons/Identifiers/>
+PREFIX cmns-dsg: <https://www.omg.org/spec/Commons/Designators/>
 PREFIX cmns-txt: <https://www.omg.org/spec/Commons/TextDatatype/>
+PREFIX cmns-col: <https://www.omg.org/spec/Commons/Collections/>
+PREFIX cmns-qtu: <https://www.omg.org/spec/Commons/QuantitiesAndUnits/>
+PREFIX cmns-rlcmp: <https://www.omg.org/spec/Commons/RolesAndCompositions/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 `;
 
-const PREFIXES_PRD = `PREFIX idmp-mprd: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11615-MedicinalProducts/>
-PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
-PREFIX cmns-dsg: <https://www.omg.org/spec/Commons/Designators/>
-PREFIX cmns-id: <https://www.omg.org/spec/Commons/Identifiers/>
-PREFIX cmns-txt: <https://www.omg.org/spec/Commons/TextDatatype/>
-`;
+const SUBSTANCE_PARAM: TemplateParam = {
+  token: "{{IRI}}",
+  label: "Substance",
+  kind: "substance",
+  placeholder: "Search a substance by name…",
+  defaultValue: "http://example.com/idmp-demo/substance/WK2XYI10QM",
+};
+
+const NAME_PARAM: TemplateParam = {
+  token: "{{NAME}}",
+  label: "Substance name",
+  kind: "text",
+  placeholder: "amoxicillin",
+  defaultValue: "amoxicillin",
+};
+
+const PRODUCT_PARAM: TemplateParam = {
+  token: "{{PRODUCT}}",
+  label: "Product name contains",
+  kind: "text",
+  placeholder: "advil",
+  defaultValue: "advil",
+};
+
+const NDC_PARAM: TemplateParam = {
+  token: "{{NDC}}",
+  label: "NDC product code",
+  kind: "text",
+  placeholder: "0573-0164",
+  defaultValue: "0573-0164",
+};
+
+const ATC_PARAM: TemplateParam = {
+  token: "{{ATC}}",
+  label: "ATC code",
+  kind: "text",
+  placeholder: "M01AE01",
+  defaultValue: "M01AE01",
+};
 
 export const QUERY_TEMPLATES: QueryTemplate[] = [
   {
-    id: "tpl-all-substances",
-    name: "All substances (preferred name + UNII)",
-    description: "One row per substance — preferred name + UNII identifier. Best for similarity comparisons.",
-    keywords: ["list", "all", "substance", "ทั้งหมด", "รายการ", "name", "id", "preferred"],
-    source: "all",
-    query: `${PREFIXES_SUB}
-SELECT ?substance (SAMPLE(?nm) AS ?name) (SAMPLE(?id) AS ?identifier)
-WHERE {
-  ?substance a idmp-sub:Substance ;
-             idmp-sub:hasSubstanceName ?n ;
-             cmns-id:isIdentifiedBy ?i .
-  ?n idmp-sub:hasSubstanceNameValue ?nm ;
-     idmp-sub:hasSubstanceNameType idmp-sub:SubstanceNameClassifier-PreferredName .
-  ?i cmns-txt:hasTextValue ?id .
-}
-GROUP BY ?substance
-LIMIT 100
-`,
-  },
-  {
-    id: "tpl-names-only",
-    name: "Substance names (preferred only)",
-    description: "Substance IRI + the preferred name for each.",
-    keywords: ["name", "names", "ชื่อ", "label", "preferred"],
-    source: "all",
-    query: `${PREFIXES_SUB}
-SELECT ?substance ?nameValue
-WHERE {
-  ?substance a idmp-sub:Substance ;
-             idmp-sub:hasSubstanceName ?n .
-  ?n idmp-sub:hasSubstanceNameValue ?nameValue ;
-     idmp-sub:hasSubstanceNameType idmp-sub:SubstanceNameClassifier-PreferredName .
-}
-ORDER BY ?nameValue
-LIMIT 100
-`,
-  },
-  {
-    id: "tpl-identifiers-only",
-    name: "Substance UNII identifiers",
-    description: "Every substance with its UNII identifier value.",
-    keywords: ["id", "identifier", "code", "unii", "รหัส"],
-    source: "all",
-    query: `${PREFIXES_SUB}
-SELECT ?substance ?identifierValue
-WHERE {
-  ?substance a idmp-sub:Substance ;
-             cmns-id:isIdentifiedBy ?i .
-  ?i cmns-txt:hasTextValue ?identifierValue .
-}
-ORDER BY ?identifierValue
-LIMIT 100
-`,
-  },
-  {
     id: "tpl-count-substances",
-    name: "Count total substances",
-    description: "How many substances are in the federation.",
-    keywords: ["count", "total", "นับ", "summary", "stats"],
+    name: "Count all substances",
+    description: "How many distinct substances exist across GSRS + FDA.",
+    keywords: ["count", "total", "นับ", "สาร", "summary", "stats", "how many"],
     source: "all",
-    query: `${PREFIXES_SUB}
-SELECT (COUNT(DISTINCT ?substance) AS ?total)
+    category: "explore",
+    estSeconds: 9,
+    query: `${P}
+SELECT (COUNT(DISTINCT ?substance) AS ?totalSubstances)
 WHERE {
   ?substance a idmp-sub:Substance .
 }
 `,
   },
   {
-    id: "tpl-substances-with-many-names",
-    name: "Substances with the most synonyms",
-    description: "Find substances that have many name variants (synonyms, code names, brand names).",
-    keywords: ["synonym", "many", "names", "หลาย", "ชื่อ", "variants"],
+    id: "tpl-count-products",
+    name: "Count all medicinal products",
+    description: "How many FDA NDC medicinal products are in the graph.",
+    keywords: ["count", "product", "drug", "ยา", "total", "นับ", "fda", "ndc"],
     source: "all",
-    query: `${PREFIXES_SUB}
+    category: "explore",
+    estSeconds: 1,
+    query: `${P}
+SELECT (COUNT(DISTINCT ?product) AS ?totalProducts)
+WHERE {
+  ?product a idmp-mprd:MedicinalProduct .
+}
+`,
+  },
+  {
+    id: "tpl-graph-summary",
+    name: "Graph summary — substances vs products",
+    description: "One row: total substances and total medicinal products side by side.",
+    keywords: ["summary", "overview", "stats", "สรุป", "count", "both"],
+    source: "all",
+    category: "explore",
+    estSeconds: 10,
+    query: `${P}
+SELECT (COUNT(DISTINCT ?s) AS ?substances) (COUNT(DISTINCT ?p) AS ?products)
+WHERE {
+  { ?s a idmp-sub:Substance . }
+  UNION
+  { ?p a idmp-mprd:MedicinalProduct . }
+}
+`,
+  },
+  {
+    id: "tpl-code-systems",
+    name: "Which code systems are available?",
+    description: "List every coding system (WHO-ATC, CAS, PUBCHEM, …) that substances are coded in.",
+    keywords: ["code system", "atc", "cas", "pubchem", "vocabulary", "ระบบรหัส", "sources"],
+    source: "all",
+    category: "explore",
+    estSeconds: 5,
+    query: `${P}
+SELECT DISTINCT ?codeSystem
+WHERE {
+  ?cs a idmp-dtp:CodeSystem ;
+      rdfs:label ?codeSystem .
+}
+ORDER BY ?codeSystem
+LIMIT 60
+`,
+  },
+  {
+    id: "tpl-peek-products",
+    name: "Peek — 100 medicinal products",
+    description: "Fast sample of FDA products with their NDC code. Good first query.",
+    keywords: ["peek", "sample", "first", "preview", "ดู", "product", "ยา", "list"],
+    source: "all",
+    category: "explore",
+    estSeconds: 1,
+    query: `${P}
+SELECT ?product ?productName ?ndcCode
+WHERE {
+  ?product a idmp-mprd:MedicinalProduct ;
+           cmns-dsg:hasName ?n ;
+           cmns-id:isIdentifiedBy ?i .
+  ?n idmp-mprd:hasFullMedicinalProductName ?productName .
+  ?i cmns-txt:hasTextValue ?ndcCode .
+}
+LIMIT 100
+`,
+  },
+
+  {
+    id: "tpl-substance-search-name",
+    name: "Search substances by name",
+    description: "Find substance IRIs whose name contains your keyword. Click a row to enrich it with Wikidata.",
+    keywords: ["search", "find", "name", "ค้นหา", "ชื่อ", "contains", "keyword", "lookup"],
+    source: "all",
+    category: "substance",
+    estSeconds: 25,
+    params: [NAME_PARAM],
+    query: `${P}
+SELECT DISTINCT ?substance ?name
+WHERE {
+  ?substance idmp-sub:hasSubstanceName ?n .
+  ?n idmp-sub:hasSubstanceNameValue ?name .
+  FILTER(CONTAINS(LCASE(?name), LCASE("{{NAME}}")))
+}
+LIMIT 50
+`,
+  },
+  {
+    id: "tpl-substance-synonyms",
+    name: "All names & synonyms of one substance",
+    description: "Every recorded name variant (systematic, brand, code names) for a substance.",
+    keywords: ["synonym", "names", "ชื่อพ้อง", "alias", "variants", "brand"],
+    source: "all",
+    category: "substance",
+    estSeconds: 11,
+    params: [SUBSTANCE_PARAM],
+    query: `${P}
+SELECT DISTINCT ?name
+WHERE {
+  <{{IRI}}> idmp-sub:hasSubstanceName ?n .
+  ?n idmp-sub:hasSubstanceNameValue ?name .
+}
+ORDER BY ?name
+LIMIT 60
+`,
+  },
+  {
+    id: "tpl-substance-relationships",
+    name: "Related substances (impurity, salt, parent)",
+    description: "Substances linked to this one, with the relationship type from GSRS.",
+    keywords: ["relationship", "related", "impurity", "salt", "parent", "moiety", "ความสัมพันธ์"],
+    source: "all",
+    category: "substance",
+    estSeconds: 22,
+    params: [SUBSTANCE_PARAM],
+    query: `${P}
+SELECT DISTINCT ?relationshipType ?relatedSubstance
+WHERE {
+  ?rel idmp-sub:hasSubjectSubstance <{{IRI}}> ;
+       idmp-sub:hasRelatedSubstance ?relatedSubstance ;
+       cmns-dsg:isSignifiedBy ?rc .
+  ?rc cmns-txt:hasTextValue ?relationshipType .
+}
+LIMIT 40
+`,
+  },
+  {
+    id: "tpl-substances-most-synonyms",
+    name: "Substances with the most synonyms",
+    description: "Which substances carry the largest number of name variants.",
+    keywords: ["synonym", "most", "many", "หลาย", "ranking", "top"],
+    source: "all",
+    category: "substance",
+    estSeconds: 25,
+    query: `${P}
 SELECT ?substance (COUNT(DISTINCT ?nameValue) AS ?nameCount)
 WHERE {
   ?substance a idmp-sub:Substance ;
@@ -109,89 +265,173 @@ ORDER BY DESC(?nameCount)
 LIMIT 30
 `,
   },
+
   {
-    id: "tpl-search-by-name",
-    name: "Search substances by name (CONTAINS)",
-    description: "Filter substances whose preferred name contains a keyword — edit the FILTER string.",
-    keywords: ["search", "filter", "contains", "ค้นหา", "name", "keyword"],
+    id: "tpl-substance-all-codes",
+    name: "All identifiers of one substance",
+    description: "Every code for a substance across all systems — UNII, CAS, ATC, PubChem, ChEMBL…",
+    keywords: ["identifier", "code", "unii", "cas", "pubchem", "chembl", "รหัส", "all codes"],
     source: "all",
-    query: `${PREFIXES_SUB}
-SELECT ?substance ?nameValue ?identifierValue
+    category: "codes",
+    estSeconds: 14,
+    params: [SUBSTANCE_PARAM],
+    query: `${P}
+SELECT DISTINCT ?codeSystem ?code
 WHERE {
-  ?substance a idmp-sub:Substance ;
-             idmp-sub:hasSubstanceName ?n ;
-             cmns-id:isIdentifiedBy ?i .
-  ?n idmp-sub:hasSubstanceNameValue ?nameValue ;
-     idmp-sub:hasSubstanceNameType idmp-sub:SubstanceNameClassifier-PreferredName .
-  ?i cmns-txt:hasTextValue ?identifierValue .
-  FILTER(CONTAINS(LCASE(?nameValue), "aspirin"))
+  <{{IRI}}> cmns-id:isIdentifiedBy ?c .
+  ?c cmns-txt:hasTextValue ?code ;
+     cmns-col:isMemberOf ?cs .
+  ?cs rdfs:label ?codeSystem .
 }
-LIMIT 50
+ORDER BY ?codeSystem
+LIMIT 60
 `,
   },
   {
-    id: "tpl-find-by-unii",
-    name: "Find substance by UNII code",
-    description: "Look up the substance that has a specific UNII identifier — edit the code in the FILTER.",
-    keywords: ["unii", "lookup", "code", "find", "specific"],
+    id: "tpl-substance-atc",
+    name: "ATC codes of one substance",
+    description: "WHO ATC classification codes for a substance (the query behind the UNII bug fix).",
+    keywords: ["atc", "who", "classification", "รหัส atc", "therapeutic"],
     source: "all",
-    query: `${PREFIXES_SUB}
-SELECT ?substance ?nameValue ?identifierValue
+    category: "codes",
+    estSeconds: 16,
+    params: [SUBSTANCE_PARAM],
+    query: `${P}
+SELECT DISTINCT ?atcCode
 WHERE {
-  ?substance a idmp-sub:Substance ;
-             idmp-sub:hasSubstanceName ?n ;
-             cmns-id:isIdentifiedBy ?i .
-  ?n idmp-sub:hasSubstanceNameValue ?nameValue ;
-     idmp-sub:hasSubstanceNameType idmp-sub:SubstanceNameClassifier-PreferredName .
-  ?i cmns-txt:hasTextValue ?identifierValue .
-  FILTER(?identifierValue = "R16CO5Y76E")
+  <{{IRI}}> cmns-id:isIdentifiedBy ?c .
+  ?c cmns-txt:hasTextValue ?atcCode ;
+     cmns-col:isMemberOf ?cs .
+  ?cs rdfs:label "WHO-ATC"^^xsd:string .
 }
+ORDER BY ?atcCode
 `,
   },
   {
-    id: "tpl-all-products",
-    name: "All medicinal products (FDA NDC)",
-    description: "List FDA-approved medicinal products with their NDC code and product name.",
-    keywords: ["product", "drug", "medicine", "ยา", "fda", "ndc"],
+    id: "tpl-substance-by-atc",
+    name: "Reverse lookup — which substance has this ATC code?",
+    description: "Start from a WHO ATC code and find the substance it classifies.",
+    keywords: ["reverse", "atc", "lookup", "ย้อนกลับ", "which substance", "by code"],
     source: "all",
-    query: `${PREFIXES_PRD}
+    category: "codes",
+    estSeconds: 20,
+    params: [ATC_PARAM],
+    query: `${P}
+SELECT DISTINCT ?substance ?name
+WHERE {
+  ?c cmns-txt:hasTextValue "{{ATC}}"^^xsd:string ;
+     cmns-col:isMemberOf ?cs ;
+     cmns-id:identifies ?substance .
+  ?cs rdfs:label "WHO-ATC"^^xsd:string .
+  ?substance idmp-sub:hasSubstanceName ?n .
+  ?n idmp-sub:hasSubstanceNameValue ?name .
+}
+LIMIT 30
+`,
+  },
+
+  {
+    id: "tpl-substance-chemistry",
+    name: "Chemistry — formula, weight, SMILES",
+    description: "Molecular formula, molecular weight and SMILES string of a substance.",
+    keywords: ["chemistry", "formula", "weight", "smiles", "molecular", "เคมี", "โครงสร้าง"],
+    source: "all",
+    category: "chemistry",
+    estSeconds: 4,
+    params: [SUBSTANCE_PARAM],
+    query: `${P}
+SELECT DISTINCT ?formula ?molecularWeight ?smiles
+WHERE {
+  OPTIONAL {
+    <{{IRI}}> idmp-sub:hasDefiningMolecularFormula ?mf .
+    ?mf cmns-txt:hasTextValue ?formula .
+  }
+  OPTIONAL {
+    <{{IRI}}> idmp-sub:hasDefiningMolecularWeight ?mw .
+    ?mw cmns-qtu:hasNumericValue ?molecularWeight .
+  }
+  OPTIONAL {
+    <{{IRI}}> idmp-sub:hasSMILES ?sm .
+    ?sm idmp-sub:hasSMILESValue ?smiles .
+  }
+}
+`,
+  },
+
+  {
+    id: "tpl-product-search",
+    name: "Search products by name",
+    description: "Find FDA medicinal products whose name contains your keyword.",
+    keywords: ["product", "drug", "search", "brand", "ยา", "ค้นหา", "name"],
+    source: "all",
+    category: "product",
+    estSeconds: 1,
+    params: [PRODUCT_PARAM],
+    query: `${P}
 SELECT ?product ?productName ?ndcCode
 WHERE {
-  ?product a idmp-mprd:MedicinalProduct ;
-           cmns-dsg:hasName ?n ;
-           cmns-id:isIdentifiedBy ?i .
-  ?n idmp-mprd:hasFullMedicinalProductName ?productName .
-  ?i cmns-txt:hasTextValue ?ndcCode .
-}
-LIMIT 100
-`,
-  },
-  {
-    id: "tpl-products-by-ingredient",
-    name: "Products containing a specific ingredient",
-    description: "Find drugs that include a given active ingredient — edit the FILTER string.",
-    keywords: ["ingredient", "active", "drug", "ส่วนผสม", "สาร", "contain"],
-    source: "all",
-    query: `${PREFIXES_PRD}
-SELECT DISTINCT ?productName ?ingredientName
-WHERE {
-  ?product idmp-mprd:hasActiveIngredient ?ingredient ;
-           cmns-dsg:hasName ?pn .
+  ?product cmns-dsg:hasName ?pn ;
+           cmns-id:isIdentifiedBy ?pid .
   ?pn idmp-mprd:hasFullMedicinalProductName ?productName .
-  ?ingredient idmp-sub:hasSubstanceName ?in .
-  ?in idmp-sub:hasSubstanceNameValue ?ingredientName .
-  FILTER(CONTAINS(LCASE(?ingredientName), "ibuprofen"))
+  ?pid cmns-txt:hasTextValue ?ndcCode .
+  FILTER(CONTAINS(LCASE(?productName), LCASE("{{PRODUCT}}")))
 }
-LIMIT 50
+LIMIT 40
 `,
   },
   {
-    id: "tpl-packages",
-    name: "Drug packaging (NDC package codes)",
-    description: "List packaged drug variants with their package NDC code and description.",
-    keywords: ["package", "ndc", "packaging", "บรรจุภัณฑ์"],
+    id: "tpl-product-ingredients",
+    name: "Active ingredients of one product (by NDC)",
+    description: "Given an NDC product code, list its active ingredients.",
+    keywords: ["ingredient", "active", "ส่วนผสม", "ndc", "composition", "what is in"],
     source: "all",
-    query: `${PREFIXES_PRD}
+    category: "product",
+    estSeconds: 13,
+    params: [NDC_PARAM],
+    query: `${P}
+SELECT DISTINCT ?ingredientName
+WHERE {
+  ?product cmns-id:isIdentifiedBy ?pid .
+  ?pid cmns-txt:hasTextValue "{{NDC}}"^^xsd:string .
+  ?product idmp-mprd:hasActiveIngredient ?ai .
+  ?ai cmns-rlcmp:isPlayedBy ?substance .
+  ?substance idmp-sub:hasSubstanceName ?sn .
+  ?sn idmp-sub:hasSubstanceNameValue ?ingredientName .
+}
+LIMIT 30
+`,
+  },
+  {
+    id: "tpl-product-packages",
+    name: "Packaging of one product (by NDC)",
+    description: "Package variants (box, blister, bottle) and their package NDC codes.",
+    keywords: ["package", "packaging", "บรรจุภัณฑ์", "box", "bottle", "ndc"],
+    source: "all",
+    category: "product",
+    estSeconds: 2,
+    params: [NDC_PARAM],
+    query: `${P}
+SELECT ?packageCode ?packageDescription
+WHERE {
+  ?product cmns-id:isIdentifiedBy ?pid .
+  ?pid cmns-txt:hasTextValue "{{NDC}}"^^xsd:string .
+  ?pkg cmns-dsg:isDefinedIn ?product ;
+       cmns-dsg:hasDescription ?packageDescription ;
+       cmns-id:isIdentifiedBy ?pcid .
+  ?pcid cmns-txt:hasTextValue ?packageCode .
+}
+LIMIT 30
+`,
+  },
+  {
+    id: "tpl-packages-all",
+    name: "Peek — 50 drug packages",
+    description: "Sample of packaged products with package NDC and description.",
+    keywords: ["package", "peek", "sample", "บรรจุภัณฑ์", "list"],
+    source: "all",
+    category: "product",
+    estSeconds: 2,
+    query: `${P}
 SELECT ?packageCode ?packageDesc ?productName
 WHERE {
   ?pkg a idmp-mprd:PackagedMedicinalProduct ;
@@ -205,36 +445,83 @@ WHERE {
 LIMIT 50
 `,
   },
+
   {
-    id: "tpl-count-by-class",
-    name: "Count entities by RDF class",
-    description: "Distribution check — how many of each class exist in the graph.",
-    keywords: ["count", "group", "class", "type", "นับ", "ประเภท", "stats"],
+    id: "tpl-substance-products",
+    name: "Which products contain this substance?",
+    description: "FDA products whose active ingredient is the given substance — the GSRS ↔ FDA join.",
+    keywords: ["product", "contains", "ingredient", "ผลิตภัณฑ์", "which drugs", "cross"],
     source: "all",
-    query: `PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-SELECT ?class (COUNT(?s) AS ?count)
+    category: "crosssource",
+    estSeconds: 6,
+    params: [SUBSTANCE_PARAM],
+    query: `${P}
+SELECT DISTINCT ?productName ?ndcCode
 WHERE {
-  ?s rdf:type ?class .
+  ?product idmp-mprd:hasActiveIngredient ?ai ;
+           cmns-dsg:hasName ?pn ;
+           cmns-id:isIdentifiedBy ?pid .
+  ?ai cmns-rlcmp:isPlayedBy <{{IRI}}> .
+  ?pn idmp-mprd:hasFullMedicinalProductName ?productName .
+  ?pid cmns-txt:hasTextValue ?ndcCode .
 }
-GROUP BY ?class
-ORDER BY DESC(?count)
-LIMIT 30
+LIMIT 40
 `,
   },
   {
-    id: "tpl-by-substance-iri",
-    name: "Details of one specific substance",
-    description: "Use when you have a known substance IRI — replaces the {{IRI}} placeholder.",
-    keywords: ["one", "iri", "detail", "specific", "เดี่ยว"],
+    id: "tpl-unmatched-ingredients",
+    name: "Data quality — ingredients not matched to GSRS",
+    description: "FDA ingredients whose name could not be resolved to a GSRS substance (UNII).",
+    keywords: ["quality", "unmatched", "missing", "คุณภาพ", "gap", "coverage", "data"],
     source: "all",
-    query: `${PREFIXES_SUB}
-SELECT ?nameValue ?identifierValue
+    category: "crosssource",
+    estSeconds: 24,
+    query: `${P}
+SELECT DISTINCT ?productName ?ingredientName
 WHERE {
-  <{{IRI}}> a idmp-sub:Substance ;
-            idmp-sub:hasSubstanceName ?n ;
-            cmns-id:isIdentifiedBy ?i .
-  ?n idmp-sub:hasSubstanceNameValue ?nameValue .
-  ?i cmns-txt:hasTextValue ?identifierValue .
+  ?product idmp-mprd:hasActiveIngredient ?ai ;
+           cmns-dsg:hasName ?pn .
+  ?pn idmp-mprd:hasFullMedicinalProductName ?productName .
+  ?ai cmns-rlcmp:isPlayedBy ?s .
+  ?s idmp-sub:hasSubstanceName ?sn .
+  ?sn idmp-sub:hasSubstanceNameValue ?ingredientName .
+  FILTER(STRSTARTS(STR(?s), "http://example.com/idmp-demo/fda/unmatched-substance/"))
+}
+LIMIT 40
+`,
+  },
+  {
+    id: "tpl-substance-full-profile",
+    name: "Full profile of one substance",
+    description: "Chemistry, synonym count and every ATC code — one row, the flagship cross-source lookup.",
+    keywords: ["profile", "everything", "full", "ทั้งหมด", "overview", "summary", "cross"],
+    source: "all",
+    category: "crosssource",
+    estSeconds: 16,
+    params: [SUBSTANCE_PARAM],
+    query: `${P}
+SELECT
+  (SAMPLE(?formula) AS ?molecularFormula)
+  (SAMPLE(?mw) AS ?molecularWeight)
+  (COUNT(DISTINCT ?name) AS ?nameCount)
+  (GROUP_CONCAT(DISTINCT ?atcCode; SEPARATOR=", ") AS ?atcCodes)
+WHERE {
+  <{{IRI}}> idmp-sub:hasSubstanceName ?n .
+  ?n idmp-sub:hasSubstanceNameValue ?name .
+  OPTIONAL {
+    <{{IRI}}> idmp-sub:hasDefiningMolecularFormula ?mf .
+    ?mf cmns-txt:hasTextValue ?formula .
+  }
+  OPTIONAL {
+    <{{IRI}}> idmp-sub:hasDefiningMolecularWeight ?mwn .
+    ?mwn cmns-qtu:hasNumericValue ?mw .
+  }
+  OPTIONAL {
+    <{{IRI}}> cmns-id:isIdentifiedBy ?c .
+    ?c cmns-txt:hasTextValue ?atcCode ;
+       cmns-col:isMemberOf ?cs .
+    ?cs rdfs:label "WHO-ATC"^^xsd:string .
+  }
 }
 `,
   },

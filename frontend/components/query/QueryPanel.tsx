@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDebounce } from "use-debounce";
-import { Bookmark, Code2, Database, FileCode2, FlaskConical, Loader2, MoreVertical, Network, Pencil, Play, Sparkles, Table2, Trash2, Wand2, X } from "lucide-react";
+import { Bookmark, Code2, Database, FileCode2, FlaskConical, Loader2, MoreVertical, Network, Pencil, Play, Search, Sparkles, Table2, Trash2, Wand2, X } from "lucide-react";
 import ResultsGraph from "@/components/graph/ResultsGraph";
+import WikidataPopup from "@/components/query/WikidataPopup";
+import QuickSearch from "@/components/query/QuickSearch";
 import { QUERY_TEMPLATES } from "@/lib/queryTemplates";
 import { popPendingQuery, pushHistory } from "@/lib/queryHistory";
 import { hybridScore } from "@/lib/textSimilarity";
@@ -49,6 +51,41 @@ interface AcSuggestion {
 
 type ViewMode = "table" | "graph";
 
+const NAME_HINTS = ["name", "label", "title", "preferred", "display"];
+
+function localName(uri: string): string {
+  const tail = uri.split(/[#/]/).filter(Boolean).pop() ?? uri;
+  return decodeURIComponent(tail);
+}
+
+function cellText(cell: { type?: string; value: string } | undefined): string | null {
+  if (!cell?.value) return null;
+  const raw = cell.type === "uri" ? localName(cell.value) : cell.value;
+  const trimmed = raw.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function isSearchable(text: string): boolean {
+  return text.length > 1 && text.length <= 120 && /[a-zA-Z฀-๿]/.test(text);
+}
+
+function rowTerms(binding: SparqlBinding, vars: string[]): string[] {
+  const named: string[] = [];
+  const literals: string[] = [];
+  const uris: string[] = [];
+
+  for (const v of vars) {
+    const text = cellText(binding[v]);
+    if (!text || !isSearchable(text)) continue;
+    const lower = v.toLowerCase();
+    if (NAME_HINTS.some((h) => lower.includes(h))) named.push(text);
+    else if (binding[v]?.type === "uri") uris.push(text);
+    else literals.push(text);
+  }
+
+  return [...new Set([...named, ...literals, ...uris])];
+}
+
 const DEFAULT_QUERY = `PREFIX idmp-mprd: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11615-MedicinalProducts/>
 PREFIX cmns-dsg: <https://www.omg.org/spec/Commons/Designators/>
 PREFIX cmns-id: <https://www.omg.org/spec/Commons/Identifiers/>
@@ -83,6 +120,8 @@ export default function QueryPanel({
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("table");
   const [page, setPage] = useState(1);
+  const [wikiTerms, setWikiTerms] = useState<string[] | null>(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
   const [bookmarksLoading, setBookmarksLoading] = useState(true);
@@ -94,7 +133,7 @@ export default function QueryPanel({
   const [acOpen, setAcOpen] = useState(false);
   const [acIdx, setAcIdx] = useState(0);
   const [acWord, setAcWord] = useState("");
-  const [acSubstances, setAcSubstances] = useState<Array<{ iri: string; preferredName: string; identifier: string }>>([]);
+  const [acSubstances, setAcSubstances] = useState<Array<{ iri: string; name: string; unii: string }>>([]);
   const [debouncedWord] = useDebounce(acWord, 250);
   const queryTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -267,7 +306,7 @@ export default function QueryPanel({
       return;
     }
     const ctrl = new AbortController();
-    fetch(`${routes.substances}?search=${encodeURIComponent(debouncedWord)}`, { signal: ctrl.signal })
+    fetch(`${routes.substancesQuickSearch}?q=${encodeURIComponent(debouncedWord)}&limit=4`, { signal: ctrl.signal })
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => {
         if (Array.isArray(data)) setAcSubstances(data.slice(0, 4));
@@ -284,22 +323,23 @@ export default function QueryPanel({
     const seenIri = new Set<string>();
 
     acSubstances.forEach((s) => {
-      if (seenIri.has(s.iri)) return;
-      seenIri.add(s.iri);
-      const display = s.preferredName || s.iri.split("/").pop() || s.iri;
-      const tpl = templates.find((t) => t.id === "tpl-by-substance-iri");
+      const dedupeKey = `${s.unii}:${s.name}`;
+      if (seenIri.has(dedupeKey)) return;
+      seenIri.add(dedupeKey);
+      const display = s.name || s.iri.split("/").pop() || s.iri;
+      const tpl = templates.find((t) => t.id === "tpl-substance-full-profile");
       if (!tpl) return;
       const nameScore = hybridScore(w, display);
-      const idScore = s.identifier ? hybridScore(w, s.identifier) : 0;
+      const idScore = s.unii ? hybridScore(w, s.unii) : 0;
       const score = Math.max(nameScore, idScore);
       if (score < AC_THRESHOLD) return;
       scored.push({
         item: {
           kind: "substance",
-          key: `s:${s.iri}`,
+          key: `s:${s.unii}:${s.name}`,
           title: display,
-          subtitle: s.identifier ?? "",
-          query: tpl.query.replace("{{IRI}}", s.iri),
+          subtitle: s.unii ?? "",
+          query: tpl.query.split("{{IRI}}").join(s.iri),
         },
         score,
       });
@@ -348,6 +388,24 @@ export default function QueryPanel({
   useEffect(() => {
     if (acIdx >= acSuggestions.length) setAcIdx(Math.max(0, acSuggestions.length - 1));
   }, [acSuggestions, acIdx]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  function handleQuickSearchApply(nextQuery: string, run: boolean) {
+    setQueryMode("manual");
+    setQuery(nextQuery);
+    setAcOpen(false);
+    if (run) void handleRun(nextQuery);
+  }
 
   function getCurrentWord(value: string, caret: number): string {
     const before = value.slice(0, caret);
@@ -710,8 +768,15 @@ export default function QueryPanel({
                     </tr>
                   </thead>
                   <tbody>
-                    {bindings.slice(0, 30).map((binding, idx) => (
-                      <tr key={idx} className={isDark ? "border-b border-slate-800 hover:bg-slate-700/40" : "border-b border-gray-100 hover:bg-gray-50"}>
+                    {bindings.slice(0, 30).map((binding, idx) => {
+                      const terms = rowTerms(binding, vars);
+                      return (
+                      <tr
+                        key={idx}
+                        onClick={() => terms.length > 0 && setWikiTerms(terms)}
+                        title={terms.length > 0 ? `Look up “${terms[0]}” on Wikidata` : undefined}
+                        className={`${terms.length > 0 ? "cursor-pointer" : ""} ${isDark ? "border-b border-slate-800 hover:bg-slate-700/40" : "border-b border-gray-100 hover:bg-gray-50"}`}
+                      >
                         <td className={`px-3 py-2 text-xs font-mono ${muted}`}>{idx + 1}</td>
                         {vars.map((v) => {
                           const cell = binding[v];
@@ -720,7 +785,7 @@ export default function QueryPanel({
                             <td key={v} className="px-3 py-2 max-w-xs">
                               {cell ? (
                                 isUri ? (
-                                  <a href={cell.value} target="_blank" rel="noopener noreferrer" className="truncate block text-xs font-mono text-blue-600 hover:underline" title={cell.value}>{cell.value}</a>
+                                  <a href={cell.value} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="truncate block text-xs font-mono text-blue-600 hover:underline" title={cell.value}>{cell.value}</a>
                                 ) : (
                                   <span className={`text-xs truncate block ${subtle}`} title={cell.value}>{cell.value}</span>
                                 )
@@ -731,13 +796,23 @@ export default function QueryPanel({
                           );
                         })}
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
             </div>
           )}
         </div>
+
+        {wikiTerms && (
+          <WikidataPopup
+            isDark={isDark}
+            term={wikiTerms[0]}
+            alternatives={wikiTerms.slice(0, 6)}
+            onClose={() => setWikiTerms(null)}
+          />
+        )}
       </div>
     );
   }
@@ -846,6 +921,15 @@ export default function QueryPanel({
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Bookmark size={14} />}
             <span>{saving ? "Saving..." : "Save"}</span>
           </button>
+
+          <button
+            onClick={() => setPaletteOpen(true)}
+            title="Quick search — substances & query templates (⌘K)"
+            className={`flex items-center gap-2 px-3 py-2 rounded text-sm font-medium border ${tc.btnBase}`}
+          >
+            <Search size={14} />
+            <span>Templates</span>
+          </button>
         </div>
       </div>
 
@@ -951,13 +1035,18 @@ export default function QueryPanel({
                     </tr>
                   </thead>
                   <tbody>
-                    {pageBindings.map((binding, idx) => (
+                    {pageBindings.map((binding, idx) => {
+                      const terms = rowTerms(binding, vars);
+                      return (
                       <tr
                         key={idx}
+                        onClick={() => terms.length > 0 && setWikiTerms(terms)}
+                        title={terms.length > 0 ? `Look up “${terms[0]}” on Wikidata` : undefined}
                         className={
-                          isDark
+                          (terms.length > 0 ? "cursor-pointer " : "") +
+                          (isDark
                             ? "border-b border-slate-800 hover:bg-slate-700/40"
-                            : "border-b border-gray-100 hover:bg-gray-50"
+                            : "border-b border-gray-100 hover:bg-gray-50")
                         }
                       >
                         <td className={`px-3 py-2 text-xs font-mono ${muted}`}>
@@ -974,6 +1063,7 @@ export default function QueryPanel({
                                     href={cell.value}
                                     target="_blank"
                                     rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
                                     className="truncate block text-xs font-mono text-blue-600 hover:underline dark:text-blue-400"
                                     title={cell.value}
                                   >
@@ -991,7 +1081,8 @@ export default function QueryPanel({
                           );
                         })}
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -1034,6 +1125,25 @@ export default function QueryPanel({
           </div>
         )}
       </div>
+
+      {wikiTerms && (
+        <WikidataPopup
+          isDark={isDark}
+          term={wikiTerms[0]}
+          alternatives={wikiTerms.slice(0, 6)}
+          onClose={() => setWikiTerms(null)}
+        />
+      )}
+
+      {paletteOpen && (
+        <QuickSearch
+          isDark={isDark}
+          templates={templates}
+          bookmarks={bookmarks}
+          onClose={() => setPaletteOpen(false)}
+          onApply={handleQuickSearchApply}
+        />
+      )}
     </div>
   );
   }

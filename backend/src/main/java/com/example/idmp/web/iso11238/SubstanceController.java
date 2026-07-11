@@ -11,9 +11,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.idmp.service.iso11238.SubstanceQuickSearchService;
 import com.example.idmp.service.iso11238.SubstanceService;
 import com.example.idmp.web.dto.iso11238.CrossSourceResult;
 import com.example.idmp.web.dto.iso11238.SubstanceDetail;
+import com.example.idmp.web.dto.iso11238.SubstanceQuickHit;
 import com.example.idmp.web.dto.iso11238.SubstanceSummary;
 
 @RestController
@@ -22,14 +24,25 @@ import com.example.idmp.web.dto.iso11238.SubstanceSummary;
 public class SubstanceController {
 
     private final SubstanceService substanceService;
+    private final SubstanceQuickSearchService quickSearchService;
 
-    public SubstanceController(SubstanceService substanceService) {
+    public SubstanceController(SubstanceService substanceService,
+                               SubstanceQuickSearchService quickSearchService) {
         this.substanceService = substanceService;
+        this.quickSearchService = quickSearchService;
     }
 
     @GetMapping
     public List<SubstanceSummary> listAll() {
         return substanceService.listAll();
+    }
+
+    @GetMapping("/quick-search")
+    public List<SubstanceQuickHit> quickSearch(
+            @RequestParam("q") String q,
+            @RequestParam(name = "limit", defaultValue = "8") int limit) {
+        validateKeyword(q);
+        return quickSearchService.search(q, limit);
     }
 
     @GetMapping("/search")

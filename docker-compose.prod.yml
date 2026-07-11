@@ -1,0 +1,105 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: pgpass
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  trino:
+    image: trinodb/trino:479
+    restart: unless-stopped
+    volumes:
+      - ./infra/trino/etc/catalog:/etc/trino/catalog
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8080/v1/info || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  ontop-trino:
+    image: ontop/ontop:5.3.1
+    restart: unless-stopped
+    environment:
+      ONTOP_ONTOLOGY_FILE: /opt/ontop/input/idmp-core-entry.rdf
+      ONTOP_MAPPING_FILE: /opt/ontop/input/ontop-mapping.obda
+      ONTOP_PROPERTIES_FILE: /opt/ontop/input/regulator-trino.properties
+      ONTOP_XML_CATALOG_FILE: /opt/ontop/ontology/catalog-v001.xml
+      ONTOP_CORS_ALLOWED_ORIGINS: "*"
+      ONTOP_LAZY_INIT: "true"
+      ONTOP_WAIT_FOR: "trino:8080"
+      ONTOP_WAIT_TIMEOUT: "120"
+    volumes:
+      - ./infra/ontop/obda:/opt/ontop/input
+      - ./infra/ontop/idmp/ontology/master/v1.3.0:/opt/ontop/ontology:ro
+      - ./infra/ontop/jdbc:/opt/ontop/jdbc
+    depends_on:
+      trino:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep UP || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  backend:
+    build:
+      context: ./backend
+      target: prod
+    restart: unless-stopped
+    environment:
+      ONTOP_ENDPOINT: http://ontop-trino:8080/sparql
+      TRINO_JDBC_URL: jdbc:trino://trino:8080
+      TRINO_USER: mapping-assistant
+    depends_on:
+      ontop-trino:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8082/api/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 300s
+
+  frontend:
+    build:
+      context: ./frontend
+      target: runner
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      BACKEND_URL: http://backend:8082
+      DATABASE_URL: postgresql://postgres:pgpass@postgres:5432/postgres?schema=public
+      APP_URL: https://${DOMAIN:?}
+      JWT_SECRET: ${JWT_SECRET:?}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GMAIL_USER: ${GMAIL_USER:-}
+      GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:3000/ >/dev/null 2>&1 || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  postgres-data:

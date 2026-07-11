@@ -4,6 +4,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -21,7 +22,7 @@ public class WikidataEnrichmentService {
   private final String language;
 
   public WikidataEnrichmentService(
-      RestClient restClient,
+      @Qualifier("wikidataRestClient") RestClient restClient,
       @Value("${wikidata.api-url:https://www.wikidata.org/w/api.php}") String apiUrl,
       @Value("${wikidata.language:en}") String language){
     this.restClient = restClient;

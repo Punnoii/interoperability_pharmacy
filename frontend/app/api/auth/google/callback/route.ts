@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   if (!clientId || !clientSecret) return fail("google_not_configured");
 
-  const redirectUri = `${url.origin}/api/auth/google/callback`;
+  const redirectUri = `${process.env.APP_URL || url.origin}/api/auth/google/callback`;
 
   try {
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {

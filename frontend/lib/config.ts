@@ -31,6 +31,8 @@ export const APP_CONFIG = {
       substances:           "/api/substances",
       substancesDetails:    "/api/substances/details",
       substancesCrossSource:"/api/substances/cross-source",
+      substancesQuickSearch:        "/api/substances/quick-search",
+      substancesQuickSearchBackend: "/api/substances/quick-search",
       similarityPair:       "/api/similarity/elh/pair",
       similarityTopK:       "/api/similarity/elh/topk",
       similarityExpand:     "/api/similarity/elh/expand-sparql",
