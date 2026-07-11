@@ -52,3 +52,13 @@ data/fda-ndc/json/*.json
 data/fda-ndc/json/*.zip
 data/fda-ndc-raw/
 .jqwik-database
+
+# database dump (large, contains data)
+rxvkg-db.dump
+*.dump
+
+# more raw data + backups (not for the repo)
+data/TMT/
+data/fda-ndc/text/
+*.old
+infra/ontop/obda.mine.old/
