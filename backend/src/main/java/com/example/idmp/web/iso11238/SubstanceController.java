@@ -18,7 +18,7 @@ import com.example.idmp.web.dto.iso11238.SubstanceDetail;
 import com.example.idmp.web.dto.iso11238.SubstanceQuickHit;
 import com.example.idmp.web.dto.iso11238.SubstanceSummary;
 
-// ISO-11238 substance lookups — everything the substance browser UI hits
+// ISO-11238 substance lookups, everything the substance browser UI hits
 @RestController
 @RequestMapping("/api/substances")
 @CrossOrigin(origins = "*")
@@ -33,7 +33,7 @@ public class SubstanceController {
         this.quickSearchService = quickSearchService;
     }
 
-    // full dump of substances — fine because the dataset is small and cached upstream
+    // full dump of substances, fine because the dataset is small and cached upstream
     @GetMapping
     public List<SubstanceSummary> listAll() {
         return substanceService.listAll();

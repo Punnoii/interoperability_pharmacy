@@ -9,7 +9,7 @@ interface SidebarProps {
   isDark: boolean;
 }
 
-// primary tabs — these switch the main panel via activeTab, they don't navigate
+// primary tabs, these switch the main panel via activeTab, they don't navigate
 const navItems = [
   {
     key: "query",
@@ -39,7 +39,7 @@ interface BottomItem {
   href?: string;
 }
 
-// footer items — these are real page links (href), unlike the tab buttons above
+// footer items, these are real page links (href), unlike the tab buttons above
 const bottomItems: BottomItem[] = [
   { key: "help", label: "Help", icon: <HelpCircle size={18} />, href: "/help" },
   { key: "history", label: "History", icon: <Clock size={18} />, href: "/history" },

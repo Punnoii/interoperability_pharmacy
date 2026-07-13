@@ -53,7 +53,7 @@ public class TopKResponse {
   public List<Neighbor> getResults() { return results; }
   public void setResults(List<Neighbor> results) { this.results = results; }
 
-  // one ranked neighbour — concept code, its label, and the similarity score
+  // one ranked neighbour, concept code, its label, and the similarity score
   public static class Neighbor {
     private String concept;
     private String label;

@@ -21,7 +21,7 @@ require_command() {
   fi
 }
 
-# grab the OpenFDA NDC drug dataset — idempotent, skips the download if json is already there
+# grab the OpenFDA NDC drug dataset, idempotent, skips the download if json is already there
 download_openfda_ndc() {
   require_command curl
   require_command jq
@@ -55,7 +55,7 @@ download_openfda_ndc() {
   unzip -o "$zip_path" -d "$OPENFDA_NDC_DIR"
 }
 
-# grab the GSRS substance dump — same skip-if-present guard as above
+# grab the GSRS substance dump, same skip-if-present guard as above
 download_gsrs() {
   require_command curl
 
@@ -64,7 +64,7 @@ download_gsrs() {
     return
   fi
 
-  # no url and no local file -> we can't proceed; tell the user how to supply one
+  # no url and no local file, we can't proceed; tell the user how to supply one
   if [ "${GSRS_DOWNLOAD_URL:-}" = "" ]; then
     echo "No GSRS dump found." >&2
     echo "Please download a GSRS .gsrs file into:" >&2

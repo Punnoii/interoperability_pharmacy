@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-# resolve a single file from a glob and fail loudly if nothing matches — used to check the raw data is present
+# resolve a single file from a glob and fail loudly if nothing matches, used to check the raw data is present
 find_one_file() {
   local match
   match="$(ls $1 2>/dev/null | head -n1 || true)"
@@ -36,7 +36,7 @@ echo "Building curated tables (GSRS first, NDC depends on it)..."
 docker compose exec -T postgres psql -U postgres -d postgres -v ON_ERROR_STOP=1 < infra/db/gsrs/gsrs-curated.sql
 docker compose exec -T postgres psql -U postgres -d postgres -v ON_ERROR_STOP=1 < infra/db/fda_ndc/json/ndc-fda-curated.sql
 
-# TMT (Thai medicines) is optional — only load it if someone dropped the xls in; xls->csv needs pandas+xlrd and may be skipped
+# TMT (Thai medicines) is optional, only load it if someone dropped the xls in; xls, csv needs pandas+xlrd and may be skipped
 if ls data/TMT/*.xls >/dev/null 2>&1; then
   echo "Loading TMT (Thai Medicines Terminology)..."
   python3 scripts/tmt-xls-to-csv.py || echo "TMT xls->csv skipped (needs pandas + xlrd)"

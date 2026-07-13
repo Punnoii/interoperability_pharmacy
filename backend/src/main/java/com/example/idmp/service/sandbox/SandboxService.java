@@ -57,7 +57,7 @@ public class SandboxService {
       String name = safeName(f.getOriginalFilename(), slot);
       byte[] bytes;
       try {
-        // slurp into memory - sandbox files are small demo uploads, not bulk data
+        // slurp into memory, sandbox files are small demo uploads, not bulk data
         bytes = f.getBytes();
       } catch (IOException ex) {
         throw new RuntimeException("Failed to read " + slot + ": " + ex.getMessage(), ex);
@@ -99,14 +99,14 @@ public class SandboxService {
     Query query = QueryFactory.create(sparql);
     Dataset ds = DatasetFactory.create(box.model);
 
-    // branch on query type - SELECT/ASK go to results JSON(/XML), CONSTRUCT/DESCRIBE come back as Turtle graphs
+    // branch on query type, SELECT/ASK go to results JSON(/XML), CONSTRUCT/DESCRIBE come back as Turtle graphs
     try (QueryExecution exec = QueryExecutionFactory.create(query, ds)) {
       if (query.isSelectType()) {
         ResultSet rs = exec.execSelect();
         if (accept != null && accept.contains("xml")) {
           return ResultSetFormatter.asXMLString(rs);
         }
-        // serialize straight to JSON — must NOT probe with asText() first, it drains the single-pass ResultSet and JSON would come back empty
+        // serialize straight to JSON, must NOT probe with asText() first, it drains the single-pass ResultSet and JSON would come back empty
         return formatJson(rs);
       }
       if (query.isAskType()) {
@@ -162,7 +162,7 @@ public class SandboxService {
     return dir;
   }
 
-  // lightweight listing of a saved profile's files for the UI - name/size/mtime, no contents read
+  // lightweight listing of a saved profile's files for the UI, name/size/mtime, no contents read
   public List<Map<String, Object>> describeProfile(String sid) {
     Path dir = PROFILE_ROOT.resolve(sid);
     if (!Files.isDirectory(dir)) return List.of();
@@ -297,7 +297,7 @@ public class SandboxService {
     }
   }
 
-  // one uploaded file held in memory - slot is its role (ontology/data/...), bytes are the raw content
+  // one uploaded file held in memory, slot is its role (ontology/data/...), bytes are the raw content
   public static class SandboxFile {
     public final String slot;
     public final String filename;

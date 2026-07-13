@@ -75,7 +75,7 @@ export async function PATCH(
     data.source = body.source.trim();
   }
 
-  // nothing valid to change — bail rather than issue an empty update
+  // nothing valid to change, bail rather than issue an empty update
   if (Object.keys(data).length === 0) {
     return NextResponse.json(
       { error: "no updatable fields supplied" },

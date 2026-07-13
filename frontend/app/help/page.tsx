@@ -18,7 +18,7 @@ import Header from "@/components/layout/Header";
 import { useDarkMode } from "@/lib/useDarkMode";
 import { themeClasses } from "@/lib/themeClasses";
 
-// static user guide / FAQ — no data fetching, just docs laid out in themed sections
+// static user guide / FAQ, no data fetching, just docs laid out in themed sections
 export default function HelpPage() {
   const [isDark, setIsDark] = useDarkMode();
   // tc bundles the light/dark class strings so we don't repeat ternaries everywhere
@@ -164,7 +164,7 @@ interface SectionProps {
   children: React.ReactNode;
 }
 
-// titled card with an icon header — one per help topic
+// titled card with an icon header, one per help topic
 function Section({ icon, title, tc, children }: SectionProps) {
   return (
     <section className={`rounded-2xl border ${tc.card}`}>
@@ -216,7 +216,7 @@ function NavLinks({ tc, links }: { tc: ReturnType<typeof themeClasses>; links: {
   );
 }
 
-// native <details> accordion — one collapsible Q/A
+// native <details> accordion, one collapsible Q/A
 function FaqItem({ q, a, tc }: { q: string; a: string; tc: ReturnType<typeof themeClasses> }) {
   return (
     <details className={`group rounded border ${tc.rowDiv}`}>

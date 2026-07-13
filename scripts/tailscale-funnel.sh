@@ -2,7 +2,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-# find the tailscale binary — falls back to the macOS app bundle path where it isn't symlinked onto PATH
+# find the tailscale binary, falls back to the macOS app bundle path where it isn't symlinked onto PATH
 TS="$(command -v tailscale || echo /Applications/Tailscale.app/Contents/MacOS/Tailscale)"
 if [ ! -x "$TS" ]; then
   echo "tailscale CLI not found. Install Tailscale first."

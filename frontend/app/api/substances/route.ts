@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const search = searchParams.get("search");
 
-  // no search term -> full list endpoint
+  // no search term, full list endpoint
   const backendPath = search
     ? `${routes.substances}/search?name=${encodeURIComponent(search)}`
     : routes.substances;

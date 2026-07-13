@@ -1284,7 +1284,7 @@ function getAttributes(pair: PairScore): AttributeRow[] {
   ];
 }
 
-// full-screen breakdown for a picked pair — two substance columns with every attribute row from
+// full-screen breakdown for a picked pair, two substance columns with every attribute row from
 // getAttributes. backdrop click closes; inner stopPropagation keeps panel clicks from closing it.
 function SimilarityDetailsModal({
   pair,

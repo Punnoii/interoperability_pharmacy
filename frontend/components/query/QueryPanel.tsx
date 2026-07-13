@@ -56,10 +56,10 @@ interface AcSuggestion {
 
 type ViewMode = "table" | "graph";
 
-// column-name substrings that flag a "human-readable name" column — those terms lead the wikidata list
+// column-name substrings that flag a "human-readable name" column, those terms lead the wikidata list
 const NAME_HINTS = ["name", "label", "title", "preferred", "display"];
 
-// last path/hash segment of a URI, url-decoded — turns a full IRI into something short to display
+// last path/hash segment of a URI, url-decoded, turns a full IRI into something short to display
 function localName(uri: string): string {
   const tail = uri.split(/[#/]/).filter(Boolean).pop() ?? uri;
   return decodeURIComponent(tail);
@@ -97,7 +97,7 @@ function rowTerms(binding: SparqlBinding, vars: string[]): string[] {
   return [...new Set([...named, ...literals, ...uris])];
 }
 
-// sample query shown on first load — products with name + NDC code, a gentle intro to the schema
+// sample query shown on first load, products with name + NDC code, a gentle intro to the schema
 const DEFAULT_QUERY = `PREFIX idmp-mprd: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11615-MedicinalProducts/>
 PREFIX cmns-dsg: <https://www.omg.org/spec/Commons/Designators/>
 PREFIX cmns-id: <https://www.omg.org/spec/Commons/Identifiers/>
@@ -162,7 +162,7 @@ export default function QueryPanel({
   const [nlpIsGenerating, setNlpIsGenerating] = useState(false);
   const [nlpGenError, setNlpGenError] = useState<string | null>(null);
 
-  // results container — we scroll it into view after a run finishes
+  // results container, we scroll it into view after a run finishes
   const resultsRef = useRef<HTMLDivElement>(null);
 
   // load saved queries from the api; any failure just leaves an empty list
@@ -209,7 +209,7 @@ export default function QueryPanel({
       if (data.bookmark) {
         setBookmarks((prev) => [data.bookmark, ...prev]);
       } else {
-        // server didn't echo the row back — refetch to stay in sync
+        // server didn't echo the row back, refetch to stay in sync
         fetchBookmarks();
       }
     } catch (e) {
@@ -276,7 +276,7 @@ export default function QueryPanel({
     setEditQueryText(b.query);
   }
 
-  // close the modal — but not mid-save
+  // close the modal, but not mid-save
   function handleEditBookmarkCancel() {
     if (editSaving) return;
     setEditingBookmark(null);
@@ -291,7 +291,7 @@ export default function QueryPanel({
       alert("Query ห้ามว่าง");
       return;
     }
-    // no change — just close, skip the round-trip
+    // no change, just close, skip the round-trip
     if (next === editingBookmark.query) {
       setEditingBookmark(null);
       setEditQueryText("");
@@ -447,7 +447,7 @@ export default function QueryPanel({
     if (run) void handleRun(nextQuery);
   }
 
-  // the whitespace-delimited token ending at the caret — what autocomplete matches against
+  // the whitespace-delimited token ending at the caret, what autocomplete matches against
   function getCurrentWord(value: string, caret: number): string {
     const before = value.slice(0, caret);
     const m = before.match(/(\S+)$/);
@@ -547,7 +547,7 @@ export default function QueryPanel({
     setViewMode("table");
 
     try {
-      // the sandbox endpoint wants { sparql }, the default one wants { query } — same payload otherwise
+      // the sandbox endpoint wants { sparql }, the default one wants { query }, same payload otherwise
       const body = requestShape === "sandbox"
         ? { sparql: sparqlToRun, accept: "application/sparql-results+json" }
         : { query: sparqlToRun, accept: "application/sparql-results+json" };
@@ -617,7 +617,7 @@ export default function QueryPanel({
         {queryMode === "nlp" ? renderNLPView() : renderManualView()}
       </section>
 
-      {/* edit-query modal — lives at the panel root so its backdrop covers both columns */}
+      {/* edit-query modal, lives at the panel root so its backdrop covers both columns */}
       {editingBookmark && (
         <div
           className="fixed inset-0 z-[9998] flex items-center justify-center p-4 bg-black/60"
@@ -696,7 +696,7 @@ export default function QueryPanel({
     </div>
   );
 
-  // natural-language view: question box → generated SPARQL box → shared results block
+  // natural-language view: question box, generated SPARQL box, shared results block
   function renderNLPView() {
     const card = tc.surface;
     const muted = tc.muted;
@@ -836,7 +836,7 @@ export default function QueryPanel({
               )}
               {viewMode === "table" && (
                 <div className="overflow-auto max-h-[70vh] md:max-h-none md:flex-1">
-                  {/* min-w keeps columns legible on narrow screens — the wrapper scrolls sideways instead */}
+                  {/* min-w keeps columns legible on narrow screens, the wrapper scrolls sideways instead */}
                   <table className="w-full min-w-[640px] text-sm border-collapse">
                     <thead className={`text-xs uppercase ${isDark ? "bg-slate-900 text-slate-400" : "bg-gray-50 text-gray-600"}`}>
                       <tr>
@@ -1114,7 +1114,7 @@ export default function QueryPanel({
 
             {viewMode === "table" && (
               <div className="overflow-auto max-h-[70vh] md:max-h-none md:flex-1">
-                {/* min-w keeps columns readable on mobile — the wrapper scrolls sideways instead of squishing */}
+                {/* min-w keeps columns readable on mobile, the wrapper scrolls sideways instead of squishing */}
                 <table className="w-full min-w-[640px] text-sm border-collapse">
                   <thead
                     className={`text-xs uppercase ${isDark ? "bg-slate-900 text-slate-400" : "bg-gray-50 text-gray-600"
@@ -1137,7 +1137,7 @@ export default function QueryPanel({
                   </thead>
                   <tbody>
                     {pageBindings.map((binding, idx) => {
-                      // whole row is clickable when it has a lookupable term → opens the wikidata popup
+                      // whole row is clickable when it has a lookupable term, opens the wikidata popup
                       const terms = rowTerms(binding, vars);
                       return (
                       <tr
@@ -1231,7 +1231,7 @@ export default function QueryPanel({
         )}
       </div>
 
-      {/* wikidata popup — first term is the default search, the rest are the alternative chips */}
+      {/* wikidata popup, first term is the default search, the rest are the alternative chips */}
       {wikiTerms && (
         <WikidataPopup
           isDark={isDark}
@@ -1455,7 +1455,7 @@ function DatabaseInfoPanel({
         </div>
       </div>
 
-      {/* the actual kebab popup — rendered at the aside root, positioned by the computed menuPos */}
+      {/* the actual kebab popup, rendered at the aside root, positioned by the computed menuPos */}
       {openBookmark && menuPos && (
         <div
           role="menu"
@@ -1569,7 +1569,7 @@ function ViewToggle({
   );
 }
 
-// prev/next pager button — thin wrapper for consistent styling + disabled state
+// prev/next pager button, thin wrapper for consistent styling + disabled state
 function PageBtn({
   isDark,
   disabled,
@@ -1602,9 +1602,9 @@ function pageNumbers(current: number, total: number): number[] {
   const out: number[] = [];
   let start: number;
   if (total <= 7) start = 1;
-  else if (current <= 4) start = 1;              // near the front — anchor at 1
-  else if (current >= total - 3) start = total - 6; // near the end — anchor so the last page shows
-  else start = current - 3;                      // middle — centre the window on current
+  else if (current <= 4) start = 1;              // near the front, anchor at 1
+  else if (current >= total - 3) start = total - 6; // near the end, anchor so the last page shows
+  else start = current - 3;                      // middle, centre the window on current
   for (let i = 0; i < max; i++) out.push(start + i);
   return out;
 }

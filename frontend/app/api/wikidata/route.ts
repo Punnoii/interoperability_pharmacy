@@ -3,7 +3,7 @@ import { APP_CONFIG } from "@/lib/config";
 
 const { backendUrl, routes } = APP_CONFIG.api;
 
-// wikidata substance lookup — proxies q/limit through to the backend's wikidata bridge. q is required.
+// wikidata substance lookup, proxies q/limit through to the backend's wikidata bridge. q is required.
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const q = searchParams.get("q");

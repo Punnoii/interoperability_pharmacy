@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-// tiny admin surface for flushing the caffeine caches — handy when the underlying data changes mid-demo
+// tiny admin surface for flushing the caffeine caches, handy when the underlying data changes mid-demo
 @RestController
 @RequestMapping("/api/cache")
 @CrossOrigin(origins = "*")
@@ -21,7 +21,7 @@ public class CacheController {
         this.cacheManager = cacheManager;
     }
 
-    // nukes every cache we know about, not one by one — no selective eviction on purpose
+    // nukes every cache we know about, not one by one, no selective eviction on purpose
     @DeleteMapping("/clear")
     public Map<String, Boolean> clearCache() {
         cacheManager.getCacheNames().forEach(name -> {

@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 
 // worked examples covering the query shapes we care about (SELECT / LIMIT / ASK / COUNT).
-// few-shot beats a giant schema dump here — the model copies the property paths from these.
+// few-shot beats a giant schema dump here, the model copies the property paths from these.
 const FEW_SHOT_EXAMPLES: { question: string; sparql: string }[] = [
-  // UC1-CQ9 / SELECT — chemical structure
+  // UC1-CQ9 / SELECT, chemical structure
   {
     question: "Describe the chemical structure of the substance ADENINE [USP MONOGRAPH].",
     sparql: `PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
@@ -19,7 +19,7 @@ WHERE {
   OPTIONAL { ?sub idmp-sub:hasDefiningMolecularWeight/cmns-qtu:hasNumericValue ?mw }
 }`,
   },
-  // UC1-CQ3 / LIMIT — products by active moiety
+  // UC1-CQ3 / LIMIT, products by active moiety
   {
     question: "Give 5 products that contain substances with active moiety Apixaban [USAN].",
     sparql: `PREFIX idmp-mprd: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11615-MedicinalProducts/>
@@ -41,7 +41,7 @@ WHERE {
 }
 LIMIT 5`,
   },
-  // UC1-CQ4-UNII / ASK — yes/no registration check
+  // UC1-CQ4-UNII / ASK, yes/no registration check
   {
     question: "Is a UNII registered for ROCCUS CHRYSOPS FLESH, COOKED?",
     sparql: `PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
@@ -55,7 +55,7 @@ WHERE {
   ?sub idmp-sub:hasSubstanceName/idmp-sub:hasSubstanceNameValue "ROCCUS CHRYSOPS FLESH, COOKED"
 }`,
   },
-  // UC1-CQ2 / COUNT — number of active moieties
+  // UC1-CQ2 / COUNT, number of active moieties
   {
     question: "How many active moieties does TESTOSTERONE UNDECANOATE have?",
     sparql: `PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
@@ -70,7 +70,7 @@ WHERE {
        cmns-dsg:isSignifiedBy/cmns-txt:hasTextValue "ACTIVE MOIETY"
 }`,
   },
-  // UC1-CQ4 / SELECT — jurisdiction-specific code
+  // UC1-CQ4 / SELECT, jurisdiction-specific code
   {
     question: "Which EudraVigilance (SMS) code does EUDISTEMON HUMIFUSUM WHOLE have?",
     sparql: `PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
@@ -93,7 +93,7 @@ const CONTEXT_HEADER =
   "You are a SPARQL query generator for a pharmaceutical knowledge graph\n" +
   "based on the IDMP (Identification of Medicinal Products) standard.";
 
-// the chain-of-thought scaffold — walking these 5 steps keeps the smaller models from over-joining
+// the chain-of-thought scaffold, walking these 5 steps keeps the smaller models from over-joining
 const COT_STEPS = `=== INSTRUCTIONS ===
 Think step by step. Write out your reasoning for EACH step below before the query:
 
@@ -166,7 +166,7 @@ function extractSparql(text: string): string {
   return body.trim();
 }
 
-// try these in order, first one that answers wins. 2.5-flash is deliberately not here —
+// try these in order, first one that answers wins. 2.5-flash is deliberately not here,
 // it 404s ("not available to new users") on freshly-made keys.
 const MODEL_CHAIN = [
   "gemini-2.0-flash",
@@ -185,7 +185,7 @@ async function callGemini(apiKey: string, prompt: string, model: string): Promis
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        // roomier cap than before — CoT reasoning eats tokens before the query even starts
+        // roomier cap than before, CoT reasoning eats tokens before the query even starts
         generationConfig: { temperature: 0.0, maxOutputTokens: 4096 },
       }),
     }
@@ -204,7 +204,7 @@ async function generateWithGemini(prompt: string): Promise<NextResponse> {
   for (const model of MODEL_CHAIN) {
     const res = await callGemini(apiKey, prompt, model);
 
-    // quota / overloaded — remember it and fall through to the next model
+    // quota / overloaded, remember it and fall through to the next model
     if (res.status === 429 || res.status === 503) {
       lastError = `${model}: quota/rate-limit (${res.status})`;
       continue;
@@ -232,7 +232,7 @@ async function generateWithGemini(prompt: string): Promise<NextResponse> {
   );
 }
 
-// ollama path: same job, but hitting the local container — free, no API key needed.
+// ollama path: same job, but hitting the local container, free, no API key needed.
 // 502 if ollama isn't reachable yet (it pulls the model on first use).
 async function generateWithOllama(prompt: string): Promise<NextResponse> {
   const base = process.env.OLLAMA_URL || "http://ollama:11434";
@@ -269,7 +269,7 @@ async function generateWithOllama(prompt: string): Promise<NextResponse> {
   return NextResponse.json({ sparql: extractSparql(rawText), reasoning: rawText, model });
 }
 
-// POST /api/nlp — turn a natural-language question into SPARQL.
+// POST /api/nlp, turn a natural-language question into SPARQL.
 // must be logged in; then dispatch to whichever backend NLP_PROVIDER selects (gemini by default).
 export async function POST(req: NextRequest) {
   const session = await getSession();

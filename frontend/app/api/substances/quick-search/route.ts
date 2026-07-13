@@ -3,7 +3,7 @@ import { APP_CONFIG } from "@/lib/config";
 
 const { backendUrl, routes } = APP_CONFIG.api;
 
-// typeahead for the search box — kept deliberately forgiving so a flaky backend never breaks the UI.
+// typeahead for the search box, kept deliberately forgiving so a flaky backend never breaks the UI.
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const q = searchParams.get("q");

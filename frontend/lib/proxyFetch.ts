@@ -31,7 +31,7 @@ export async function proxyJson(req: NextRequest, path: string, method: "GET" | 
   }));
 }
 
-// same idea as proxyJson but for file uploads — rebuild the FormData so fetch sets its own multipart boundary
+// same idea as proxyJson but for file uploads, rebuild the FormData so fetch sets its own multipart boundary
 export async function proxyMultipart(req: NextRequest, path: string) {
   const cookie = req.headers.get("cookie") || "";
   const form = await req.formData();

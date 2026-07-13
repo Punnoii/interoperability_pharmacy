@@ -39,7 +39,7 @@ export async function PATCH(req: NextRequest) {
     );
   }
 
-  // no local hash means an oauth-only account — there's no password to change here
+  // no local hash means an oauth-only account, there's no password to change here
   const user = await prisma.user.findUnique({
     where: { id: session.sub },
     select: { passwordHash: true },

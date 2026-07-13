@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { signToken } from "@/lib/auth";
 import { upsertOAuthUser } from "@/lib/users";
 
-// google oauth callback — trade the auth code for tokens, upsert the user, set our own cookie
+// google oauth callback, trade the auth code for tokens, upsert the user, set our own cookie
 export async function GET(req: NextRequest) {
   const url = req.nextUrl;
   const fwdHost = req.headers.get("x-forwarded-host");
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
     if (!infoRes.ok) return fail("google_userinfo");
     const info = await infoRes.json();
 
-    // don't accept an unverified google email — someone could sign up with an address they don't own
+    // don't accept an unverified google email, someone could sign up with an address they don't own
     const email: string | undefined = info.email;
     if (!email || info.email_verified === false) return fail("google_email");
 

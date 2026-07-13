@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 
-// start of the google oauth dance — build the consent url and redirect the user off to google
+// start of the google oauth dance, build the consent url and redirect the user off to google
 export async function GET(req: NextRequest) {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   if (!clientId) {

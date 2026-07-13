@@ -16,7 +16,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-// stamps every visitor with an anonymous session id — no login, just enough to scope saved sandbox/profile state
+// stamps every visitor with an anonymous session id, no login, just enough to scope saved sandbox/profile state
 // highest precedence so the id is on the request before any controller or downstream filter looks for it
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)

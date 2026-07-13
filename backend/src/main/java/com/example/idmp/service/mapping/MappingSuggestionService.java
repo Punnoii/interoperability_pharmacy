@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class MappingSuggestionService {
 
-  // returns every ISO area whose keyword set the column name hits - scores are hand-tuned confidence hints for the UI
+  // returns every ISO area whose keyword set the column name hits, scores are hand-tuned confidence hints for the UI
   public List<IsoAreaSuggestion> suggestIsoAreas(
       String table,
       String column,
@@ -60,7 +60,7 @@ public class MappingSuggestionService {
     return suggestions;
   }
 
-  // one step more specific than areas - proposes a concrete target field + the RDF triple pattern to emit
+  // one step more specific than areas, proposes a concrete target field + the RDF triple pattern to emit
   public List<MappingSuggestion> suggestMappings(
       String table,
       String column,

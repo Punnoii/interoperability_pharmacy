@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-// thin pass-through to Ontop — the frontend's query console posts raw SPARQL here
+// thin pass-through to Ontop, the frontend's query console posts raw SPARQL here
 @RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "*")
@@ -33,7 +33,7 @@ public class SparqlController {
     return ontopClient.execute(request.query(), request.accept());
   }
 
-  // liveness only — doesn't touch Ontop, see HealthController for the real backend probe
+  // liveness only, doesn't touch Ontop, see HealthController for the real backend probe
   @GetMapping("/health")
   public Map<String, String> health() {
     return Map.of("status", "ok");

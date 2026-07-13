@@ -34,7 +34,7 @@ interface HistoryStore {
   popPending: () => PendingQuery | null;
 }
 
-// mirror a trimmed slice of history into a cookie so the /history server route can read it too — localStorage alone is client-only
+// mirror a trimmed slice of history into a cookie so the /history server route can read it too, localStorage alone is client-only
 function writeCookieBackup(entries: HistoryEntry[]) {
   const { cookieMax, cookieQueryLimit, cookieMaxAgeDays } = APP_CONFIG.history;
   const compact = entries.slice(0, cookieMax).map((e) => ({

@@ -18,7 +18,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 
-// thin proxy in front of the Ontop SPARQL endpoint - takes a query string and streams the raw result back
+// thin proxy in front of the Ontop SPARQL endpoint, takes a query string and streams the raw result back
 @Service
 public class OntopClient {
   private final RestClient restClient;
@@ -46,7 +46,7 @@ public class OntopClient {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ontop endpoint is not configured");
     }
 
-    // caller may leave Accept off - fall back to whatever the config default is
+    // caller may leave Accept off, fall back to whatever the config default is
     String acceptValue = (accept == null || accept.isBlank())
         ? properties.getDefaultAccept()
         : accept.trim();

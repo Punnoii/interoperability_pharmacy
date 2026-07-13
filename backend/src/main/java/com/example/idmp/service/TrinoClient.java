@@ -7,7 +7,7 @@ import java.sql.SQLException;
 import java.util.Properties;
 import org.springframework.stereotype.Service;
 
-// hands out raw JDBC connections to Trino - callers own closing them (try-with-resources)
+// hands out raw JDBC connections to Trino, callers own closing them (try-with-resources)
 @Service
 public class TrinoClient {
   private final TrinoProperties properties;

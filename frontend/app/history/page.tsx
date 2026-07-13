@@ -12,7 +12,7 @@ import {
   type HistoryEntry,
 } from "@/lib/queryHistory";
 
-// past-queries list — reads the local (zustand) history store, no server round-trip
+// past-queries list, reads the local (zustand) history store, no server round-trip
 export default function HistoryPage() {
   const [isDark, setIsDark] = useDarkMode();
   const entries = useQueryHistory((s) => s.entries);
@@ -38,7 +38,7 @@ export default function HistoryPage() {
     remove(id);
   }
 
-  // wipes the whole store — confirm first since there's no undo
+  // wipes the whole store, confirm first since there's no undo
   function handleClearAll() {
     if (!confirm("Are you sure you want to clear all history?")) return;
     clear();

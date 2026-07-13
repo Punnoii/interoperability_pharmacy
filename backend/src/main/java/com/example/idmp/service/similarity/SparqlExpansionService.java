@@ -63,12 +63,12 @@ public class SparqlExpansionService {
       try {
         topK = similarityService.topK(seed, k, scope);
       } catch (RuntimeException ex) {
-        // engine hiccup on one annotation - log and leave that annotation untouched rather than failing the request
+        // engine hiccup on one annotation, log and leave that annotation untouched rather than failing the request
         log.warn("topK({}, {}, {}) failed: {}", seed, k, scope, ex.getMessage());
         continue;
       }
       if (topK == null) {
-        // seed isn't a known ATC code - skip so we don't emit a VALUES block with garbage
+        // seed isn't a known ATC code, skip so we don't emit a VALUES block with garbage
         log.warn("Unknown concept '{}' - skipping expansion annotation for variable {}", seed, var);
         continue;
       }
@@ -106,7 +106,7 @@ public class SparqlExpansionService {
     return new ExpansionResult(sparql, expandedSparql, entries);
   }
 
-  // render the codes as a SPARQL VALUES clause - prefixed IRIs when an iri= prefix was given, otherwise plain string literals
+  // render the codes as a SPARQL VALUES clause, prefixed IRIs when an iri= prefix was given, otherwise plain string literals
   private static String buildValuesClause(String var, List<String> concepts, String iriPrefix) {
     StringBuilder sb = new StringBuilder();
     sb.append("VALUES ").append(var).append(" { ");
@@ -128,7 +128,7 @@ public class SparqlExpansionService {
   private static String injectValuesIntoWhere(String sparql, String valuesBlock) {
     Matcher m = WHERE_OPEN.matcher(sparql);
     if (!m.find()) {
-      // no WHERE to inject into (ASK/odd query) - append it so the caller can still see what we'd have added
+      // no WHERE to inject into (ASK/odd query), append it so the caller can still see what we'd have added
       return sparql + "\n# (no WHERE { found; expansion appended)\n" + valuesBlock;
     }
     int insertAt = m.end();
@@ -138,7 +138,7 @@ public class SparqlExpansionService {
   // API-facing neighbour: adds the human label the raw Neighbor doesn't carry
   public record NeighborDto(String concept, String label, BigDecimal score) {}
 
-  // one resolved annotation - echoes back the parsed params plus the neighbours we found, for the UI to explain the rewrite
+  // one resolved annotation, echoes back the parsed params plus the neighbours we found, for the UI to explain the rewrite
   public record ExpansionEntry(
       String variable,
       String seedConcept,

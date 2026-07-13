@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
   const record = await prisma.passwordResetToken.findUnique({ where: { tokenHash } });
 
-  // reject if unknown, already spent, or past its 1h expiry — tokens are strictly single-use
+  // reject if unknown, already spent, or past its 1h expiry, tokens are strictly single-use
   if (!record || record.used || record.expiresAt < new Date()) {
     return NextResponse.json(
       { error: "This reset link is invalid or has expired" },

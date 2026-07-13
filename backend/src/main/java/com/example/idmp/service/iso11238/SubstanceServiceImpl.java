@@ -26,7 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class SubstanceServiceImpl implements SubstanceService {
 
     private static final Logger log = LoggerFactory.getLogger(SubstanceServiceImpl.class);
-    // ask Ontop for JSON results specifically - we hand-parse this shape below
+    // ask Ontop for JSON results specifically, we hand-parse this shape below
     private static final String ACCEPT_SPARQL_JSON = "application/sparql-results+json";
     private static final int WIKIDATA_RESULT_LIMIT = 5;
 
@@ -42,7 +42,7 @@ public class SubstanceServiceImpl implements SubstanceService {
     }
 
     @Override
-    // flat list for the browse view - source is inferred from the IRI, not stored as a column
+    // flat list for the browse view, source is inferred from the IRI, not stored as a column
     public List<SubstanceSummary> listAll() {
         String body = executeSparql(SubstanceSparqlTemplates.LIST_ALL);
         JsonNode bindings = parseBindings(body);
@@ -81,7 +81,7 @@ public class SubstanceServiceImpl implements SubstanceService {
     }
 
     @Override
-    // the details query cross-joins names x identifiers, so rows repeat - we fold them back into two deduped lists
+    // the details query cross-joins names x identifiers, so rows repeat, we fold them back into two deduped lists
     public SubstanceDetail getDetails(String substanceIri) {
         String query = SubstanceSparqlTemplates.details(substanceIri);
         String body = executeSparql(query);
@@ -92,7 +92,7 @@ public class SubstanceServiceImpl implements SubstanceService {
         List<IdentifierEntry> identifiers = new ArrayList<>();
 
         for (JsonNode row : bindings) {
-            // type is the same on every row - grab it once
+            // type is the same on every row, grab it once
             if (substanceType == null) {
                 substanceType = extractLocalName(textValue(row, "substanceType"));
             }
@@ -102,7 +102,7 @@ public class SubstanceServiceImpl implements SubstanceService {
             String langCode = textValue(row, "langCode");
             if (nameValue != null && !nameValue.isEmpty()) {
                 NameEntry entry = new NameEntry(nameValue, extractLocalName(nameType), langCode);
-                // contains() dedupe relies on the record's equals - cheap since a substance has few names
+                // contains() dedupe relies on the record's equals, cheap since a substance has few names
                 if (!names.contains(entry)) {
                     names.add(entry);
                 }
@@ -124,7 +124,7 @@ public class SubstanceServiceImpl implements SubstanceService {
     }
 
     @Override
-    // given one identifier value, find all substances carrying it - shows the same drug across GSRS/FDA
+    // given one identifier value, find all substances carrying it, shows the same drug across GSRS/FDA
     public List<CrossSourceResult> crossSourceLookup(String identifier) {
         String query = SubstanceSparqlTemplates.crossSource(identifier);
         String body = executeSparql(query);
@@ -161,7 +161,7 @@ public class SubstanceServiceImpl implements SubstanceService {
             // flag=true means "we actually reached Wikidata", separate from whether items came back
             return new WikidataEnrichment(true, response.items());
         } catch (Exception e) {
-            // third-party call - never let it break the substance page
+            // third-party call, never let it break the substance page
             log.warn("Wikidata enrichment failed for '{}': {}", preferredName, e.getMessage());
             return new WikidataEnrichment(false, List.of());
         }
@@ -192,7 +192,7 @@ public class SubstanceServiceImpl implements SubstanceService {
         return node.path("value").asText(null);
     }
 
-    // turn a full IRI/typecode into a short human label - try dash first (our enum-style codes), then #, then /
+    // turn a full IRI/typecode into a short human label, try dash first (our enum-style codes), then #, then /
     static String extractLocalName(String iri) {
         if (iri == null || iri.isEmpty()) {
             return null;

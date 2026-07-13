@@ -30,7 +30,7 @@ export default function EditNameModal({ isDark, currentName, onClose, onSaved }:
       setError("Name cannot be empty");
       return;
     }
-    // unchanged -> skip the round-trip
+    // unchanged, skip the round-trip
     if (next === currentName) {
       onClose();
       return;

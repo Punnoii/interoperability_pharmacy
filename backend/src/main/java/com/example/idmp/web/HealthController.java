@@ -17,7 +17,7 @@ public class HealthController {
 
     private static final Logger log = LoggerFactory.getLogger(HealthController.class);
     private static final String SPARQL_JSON = "application/sparql-results+json";
-    // cheapest possible query that still proves Ontop can answer — one triple, then bail
+    // cheapest possible query that still proves Ontop can answer, one triple, then bail
     private static final String HEALTH_QUERY = "SELECT * WHERE { ?s ?p ?o } LIMIT 1";
 
     private final OntopClient ontopClient;
@@ -28,7 +28,7 @@ public class HealthController {
         this.ontopProperties = ontopProperties;
     }
 
-    // deeper probe than /api/health — actually round-trips to Ontop and reports latency
+    // deeper probe than /api/health, actually round-trips to Ontop and reports latency
     @GetMapping("/api/health/ontop")
     public Map<String, Object> healthOntop() {
         String endpoint = ontopProperties.getEndpoint();
@@ -42,7 +42,7 @@ public class HealthController {
                     "responseTimeMs", elapsed
             );
         } catch (Exception ex) {
-            // never 500 on a health check — report unavailable + why so the UI can show it
+            // never 500 on a health check, report unavailable + why so the UI can show it
             long elapsed = (System.nanoTime() - start) / 1_000_000;
             log.warn("Ontop health check failed: {}", ex.getMessage());
             return Map.of(

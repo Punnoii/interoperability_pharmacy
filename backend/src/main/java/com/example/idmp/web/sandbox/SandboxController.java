@@ -27,7 +27,7 @@ import com.example.idmp.web.session.SessionCookieFilter;
 import jakarta.servlet.http.HttpServletRequest;
 
 // per-session scratch VKG: upload your own ontology/mapping/data and query it in isolation
-// allowCredentials=false — session is tracked by the httpOnly sid cookie, no cross-origin creds needed
+// allowCredentials=false, session is tracked by the httpOnly sid cookie, no cross-origin creds needed
 @RestController
 @RequestMapping("/api/sandbox")
 @CrossOrigin(origins = "*", allowCredentials = "false")
@@ -102,7 +102,7 @@ public class SandboxController {
       String result = service.querySparql(sid, sparql, accept);
       return ResponseEntity.ok().contentType(MediaType.parseMediaType(accept)).body(result);
     } catch (IllegalStateException ex) {
-      // no sandbox loaded yet — 409 tells the UI to prompt for an upload first
+      // no sandbox loaded yet, 409 tells the UI to prompt for an upload first
       throw new ResponseStatusException(HttpStatus.CONFLICT, ex.getMessage());
     } catch (Exception ex) {
       // otherwise assume it's a bad query and bounce it back as a 400
@@ -122,7 +122,7 @@ public class SandboxController {
     return out;
   }
 
-  // shared response shape for upload/status — sid, counts, and per-slot file metadata
+  // shared response shape for upload/status, sid, counts, and per-slot file metadata
   private Map<String, Object> describe(Sandbox box) {
     Map<String, Object> resp = new LinkedHashMap<>();
     resp.put("sid", box.sid);

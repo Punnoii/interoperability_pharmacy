@@ -19,7 +19,7 @@ import com.example.idmp.service.similarity.ElhSimilarityService.Neighbor;
 import com.example.idmp.service.similarity.SparqlExpansionService.ExpansionEntry;
 import com.example.idmp.service.similarity.SparqlExpansionService.ExpansionResult;
 
-// covers the @expand rewriter — parsing annotations and splicing VALUES clauses in
+// covers the @expand rewriter, parsing annotations and splicing VALUES clauses in
 class SparqlExpansionServiceTest {
 
   private ElhSimilarityService similarityService;
@@ -43,7 +43,7 @@ class SparqlExpansionServiceTest {
         .isInstanceOf(IllegalArgumentException.class);
   }
 
-  // no @expand comment → query passes through byte-for-byte, no expansions
+  // no @expand comment, query passes through byte-for-byte, no expansions
   @Test
   @DisplayName("query with no annotation is returned unchanged")
   void noAnnotationPassthrough() {
@@ -129,7 +129,7 @@ class SparqlExpansionServiceTest {
         .containsExactly("M01AE01", "M01AE02", "M01AB01");
   }
 
-  // two @expand lines → two VALUES clauses, both variables handled in order
+  // two @expand lines, two VALUES clauses, both variables handled in order
   @Test
   @DisplayName("multiple annotations in one query are all processed")
   void multipleAnnotations() {
@@ -152,7 +152,7 @@ class SparqlExpansionServiceTest {
         .contains("VALUES ?antibiotic");
   }
 
-  // topK returns null (seed not in the graph) → annotation dropped, query untouched
+  // topK returns null (seed not in the graph), annotation dropped, query untouched
   @Test
   @DisplayName("unknown concept causes the annotation to be skipped silently")
   void unknownConceptIsSkipped() {
@@ -182,7 +182,7 @@ class SparqlExpansionServiceTest {
     assertThat(result.expansions().get(0).scope()).isEqualTo(2);
   }
 
-  // no WHERE { to splice into → append VALUES at the end with a warning comment
+  // no WHERE { to splice into, append VALUES at the end with a warning comment
   @Test
   @DisplayName("query without WHERE clause appends VALUES at the end (defensive fallback)")
   void noWhereFallback() {

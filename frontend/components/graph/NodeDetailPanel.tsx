@@ -51,7 +51,7 @@ export default function NodeDetailPanel({
     return list;
   }, [node, links, nodeById]);
 
-  // nothing selected -> render nothing (kept after the hooks so hook order stays stable)
+  // nothing selected, render nothing (kept after the hooks so hook order stays stable)
   if (!node) return null;
 
   const meta = getTypeMeta(node.type, allTypes);

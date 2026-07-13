@@ -1,6 +1,6 @@
 import { NextAdminOptions } from "@premieroctet/next-admin";
 
-// next-admin dashboard config — only the User model is exposed, list/search/edit columns spelled out
+// next-admin dashboard config, only the User model is exposed, list/search/edit columns spelled out
 export const options: NextAdminOptions = {
   title: "RxVKG Admin",
   model: {

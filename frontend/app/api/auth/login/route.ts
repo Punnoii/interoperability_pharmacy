@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { findByEmail } from "@/lib/users";
 import { verifyPassword, signToken } from "@/lib/auth";
 
-// email/password login — verifies the hash and drops the auth cookie on success
+// email/password login, verifies the hash and drops the auth cookie on success
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const email: string = body?.email ?? "";
@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   }
 
   const user = await findByEmail(email);
-  // one generic message for missing user / no local password / bad password — don't reveal which
+  // one generic message for missing user / no local password / bad password, don't reveal which
   if (!user || !user.passwordHash || !(await verifyPassword(password, user.passwordHash))) {
     return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
   }
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     secure: process.env.NODE_ENV === "production", // Secure only in prod so localhost dev over http still works
     sameSite: "lax",
     path: "/",
-    // no maxAge without remember -> session cookie that dies when the browser closes
+    // no maxAge without remember, session cookie that dies when the browser closes
     ...(remember ? { maxAge: REMEMBER_MAX_AGE } : {}),
   });
   return res;

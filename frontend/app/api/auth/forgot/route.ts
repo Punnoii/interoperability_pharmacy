@@ -5,7 +5,7 @@ import { findByEmail } from "@/lib/users";
 import { sendPasswordResetEmail } from "@/lib/mailer";
 
 // kicks off a password reset. always answers the same way whether or not the
-// email exists — otherwise this becomes an account-enumeration oracle
+// email exists, otherwise this becomes an account-enumeration oracle
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const email: string = (body?.email ?? "").toLowerCase().trim();
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(generic);
   }
 
-  // email the raw token, store only its hash — a leaked db row can't be used to reset
+  // email the raw token, store only its hash, a leaked db row can't be used to reset
   const rawToken = crypto.randomBytes(32).toString("hex");
   const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1h window

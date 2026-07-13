@@ -25,7 +25,7 @@ import com.example.idmp.web.dto.similarity.TopKResponse;
 
 import jakarta.validation.Valid;
 
-// ELH description-logic similarity over the ATC ontology — the thesis's headline feature
+// ELH description-logic similarity over the ATC ontology, the thesis's headline feature
 @RestController
 @RequestMapping("/api/similarity/elh")
 @CrossOrigin(origins = "*")
@@ -114,7 +114,7 @@ public class ElhSimilarityController {
         dtos);
   }
 
-  // rewrite a SPARQL query to pull in similar concepts via similarity annotations — query expansion
+  // rewrite a SPARQL query to pull in similar concepts via similarity annotations, query expansion
   @PostMapping("/expand-sparql")
   public SparqlExpansionService.ExpansionResult expandSparql(@Valid @RequestBody ExpandSparqlRequest req) {
     service.trackRequest();
@@ -132,7 +132,7 @@ public class ElhSimilarityController {
     }
   }
 
-  // why two concepts scored the way they did — the forward/backward mapping tree behind the number
+  // why two concepts scored the way they did, the forward/backward mapping tree behind the number
   @GetMapping("/explain")
   public Map<String, Object> explain(
       @RequestParam("a") String a,
@@ -158,7 +158,7 @@ public class ElhSimilarityController {
     return result;
   }
 
-  // every concept the explainer knows — feeds the frontend's autocomplete/picker
+  // every concept the explainer knows, feeds the frontend's autocomplete/picker
   @GetMapping("/concepts")
   public Map<String, Object> listConcepts() {
     List<String> concepts = service.listConcepts();

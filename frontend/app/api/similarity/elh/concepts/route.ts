@@ -3,7 +3,7 @@ import { APP_CONFIG } from "@/lib/config";
 
 const { backendUrl, routes } = APP_CONFIG.api;
 
-// dumps the concept catalog the ELH index knows about — no params, so it's the pick-list for the compare UI.
+// dumps the concept catalog the ELH index knows about, no params, so it's the pick-list for the compare UI.
 // no-store since new concepts can show up as sandbox data changes.
 export async function GET() {
   const res = await fetch(`${backendUrl}${routes.similarityConcepts}`, {

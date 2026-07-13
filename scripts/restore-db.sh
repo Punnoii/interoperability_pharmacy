@@ -10,10 +10,10 @@ fi
 # this targets the prod compose stack, not the dev one
 COMPOSE="docker compose -f docker-compose.prod.yml"
 $COMPOSE up -d postgres
-# wait for readiness, then a small extra sleep — pg_isready can flip true a beat before it accepts real work
+# wait for readiness, then a small extra sleep, pg_isready can flip true a beat before it accepts real work
 until $COMPOSE exec -T postgres pg_isready -h 127.0.0.1 -U postgres >/dev/null 2>&1; do sleep 2; done
 sleep 3
-# copy the dump into the container and restore from the file — piping a big dump through exec -T is flaky
+# copy the dump into the container and restore from the file, piping a big dump through exec -T is flaky
 echo "copying dump into postgres container..."
 $COMPOSE cp "$DUMP" postgres:/tmp/restore.dump
 # --clean/--if-exists so a re-run replaces existing objects; --no-owner/--no-privileges since roles differ across machines

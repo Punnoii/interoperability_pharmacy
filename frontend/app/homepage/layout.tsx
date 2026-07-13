@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifyToken } from "@/lib/auth";
 
-// auth wall for the main app — runs on the server so unauthed users never see the page flash
+// auth wall for the main app, runs on the server so unauthed users never see the page flash
 export default async function HomepageLayout({
   children,
 }: {
@@ -15,7 +15,7 @@ export default async function HomepageLayout({
     redirect("/");
   }
 
-  // bad signature or expired -> bounce to login
+  // bad signature or expired, bounce to login
   const payload = verifyToken(token);
   if (!payload) {
     redirect("/");

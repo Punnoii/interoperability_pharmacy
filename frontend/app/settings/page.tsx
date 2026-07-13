@@ -25,7 +25,7 @@ import { truncate } from "@/lib/format";
 
 const { routes } = APP_CONFIG.api;
 
-// settings screen — appearance, display/query prefs, and the destructive data actions
+// settings screen, appearance, display/query prefs, and the destructive data actions
 export default function SettingsPage() {
   const [isDark, setIsDark] = useDarkMode();
   const { user, logout } = useAuth();
@@ -57,7 +57,7 @@ export default function SettingsPage() {
     }
   }
 
-  // local history only — server never sees this one
+  // local history only, server never sees this one
   function handleClearHistory() {
     if (!confirm(`Clear all ${historyCount} history entries?`)) return;
     clearHistory();
@@ -263,7 +263,7 @@ interface ToggleProps {
   offIcon?: React.ReactNode;
 }
 
-// hand-rolled switch — the knob slides via an inline left offset instead of a CSS class
+// hand-rolled switch, the knob slides via an inline left offset instead of a CSS class
 function Toggle({ isDark, checked, onChange, onIcon, offIcon }: ToggleProps) {
   const trackBg = checked
     ? "bg-blue-600"
@@ -358,7 +358,7 @@ interface RangeInputProps {
   isDark: boolean;
 }
 
-// slider + live readout for the 0–1 threshold settings
+// slider + live readout for the 0, 1 threshold settings
 function RangeInput({ value, onChange, min, max, step, isDark }: RangeInputProps) {
   return (
     <div className="flex items-center gap-2">

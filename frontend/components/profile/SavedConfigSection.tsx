@@ -24,7 +24,7 @@ interface Props {
   onDeleted: () => void;
 }
 
-// bytes -> B / KB / MB for the file-size column
+// bytes, B / KB / MB for the file-size column
 function fmtSize(n: number): string {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
@@ -66,7 +66,7 @@ export default function SavedConfigSection({ isDark, data, onDeleted }: Props) {
   }
 
   async function remove() {
-    // hard delete — gate it behind a confirm since there's no undo
+    // hard delete, gate it behind a confirm since there's no undo
     if (!confirm("Delete your saved config? This cannot be undone.")) return;
     setBusy("delete");
     setMsg(null);

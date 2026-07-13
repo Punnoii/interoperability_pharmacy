@@ -56,7 +56,7 @@ export default function Login() {
     if (!registrationEnabled && isRegistering) setIsRegistering(false);
   }, [registrationEnabled, isRegistering]);
 
-  // one handler for both modes — picks the endpoint + payload off isRegistering
+  // one handler for both modes, picks the endpoint + payload off isRegistering
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');

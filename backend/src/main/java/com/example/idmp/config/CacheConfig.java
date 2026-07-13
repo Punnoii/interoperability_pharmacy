@@ -22,7 +22,7 @@ public class CacheConfig {
     private Duration ttl = Duration.ofMinutes(5);
     private int maxEntries = 100;
 
-    // one caffeine spec shared across all three caches — expire-after-write, not access
+    // one caffeine spec shared across all three caches, expire-after-write, not access
     @Bean
     public CacheManager cacheManager() {
         CaffeineCacheManager mgr = new CaffeineCacheManager(SPARQL_RESULTS, ELH_TOPK, SUBSTANCE_QUICK_SEARCH);

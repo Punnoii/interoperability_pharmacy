@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createUser } from "@/lib/users";
 import { signToken } from "@/lib/auth";
 
-// self-serve signup — creates the user and logs them straight in with the auth cookie
+// self-serve signup, creates the user and logs them straight in with the auth cookie
 export async function POST(req: NextRequest) {
   // registration is off by default; flip ALLOW_REGISTRATION to open it up (this is a mostly-private deploy)
   if (process.env.ALLOW_REGISTRATION !== "true") {
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     });
     return res;
   } catch (err: unknown) {
-    // createUser throws on things like a duplicate email — surface that message as a 400
+    // createUser throws on things like a duplicate email, surface that message as a 400
     const message = err instanceof Error ? err.message : "Registration failed";
     return NextResponse.json({ error: message }, { status: 400 });
   }

@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-// pins scopePrefixOf — turning a scope number into the right ATC code prefix
+// pins scopePrefixOf, turning a scope number into the right ATC code prefix
 class AtcPrefixTest {
 
   private final ElhSimilarityService service = new ElhSimilarityService();
@@ -33,7 +33,7 @@ class AtcPrefixTest {
     assertThat(service.scopePrefixOf(code, scope)).isEqualTo(expectedPrefix);
   }
 
-  // scope 0 means no filtering — comes back as the wildcard marker
+  // scope 0 means no filtering, comes back as the wildcard marker
   @Test
   @DisplayName("scope 0 reports the wildcard '(all)' marker")
   void scopeZeroIsAll() {
@@ -57,7 +57,7 @@ class AtcPrefixTest {
     assertThat(service.scopePrefixOf("M01", 4)).isEqualTo("M01");
   }
 
-  // null in doesn't NPE — empty string out
+  // null in doesn't NPE, empty string out
   @Test
   @DisplayName("null concept yields an empty prefix without throwing")
   void nullConceptIsSafe() {

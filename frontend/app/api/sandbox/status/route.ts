@@ -6,7 +6,7 @@ export async function GET(req: NextRequest) {
   return proxyJson(req, "/api/sandbox/status", "GET");
 }
 
-// tear down the whole sandbox. note the path drops /status — it's the sandbox root, not the status resource.
+// tear down the whole sandbox. note the path drops /status, it's the sandbox root, not the status resource.
 export async function DELETE(req: NextRequest) {
   return proxyJson(req, "/api/sandbox", "DELETE");
 }

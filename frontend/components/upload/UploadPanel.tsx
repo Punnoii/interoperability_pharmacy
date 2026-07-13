@@ -18,7 +18,7 @@ interface UploadPanelProps {
 
 type SlotKey = "ontology" | "database" | "mapping" | "properties" | "catalog";
 
-// the five fixed upload slots — each maps to a named form field the backend expects
+// the five fixed upload slots, each maps to a named form field the backend expects
 const SLOTS: { key: SlotKey; label: string; hint: string; accept: string }[] = [
   { key: "ontology",   label: "Ontology",      hint: ".owl, .ttl, .rdf",    accept: ".owl,.ttl,.rdf,.xml" },
   { key: "database",   label: "Database",      hint: ".csv, .sql, .json",   accept: ".csv,.sql,.json,.tsv" },

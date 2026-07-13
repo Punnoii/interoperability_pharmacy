@@ -4,7 +4,7 @@ export function truncate(s: string, max = 200): string {
   return s.length > max ? s.slice(0, max - 3) + "..." : s;
 }
 
-// byte count -> human size, one unit deep (B / KB / MB)
+// byte count, human size, one unit deep (B / KB / MB)
 export function fmtSize(n: number): string {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;

@@ -3,7 +3,7 @@ import glob
 import os
 import sys
 
-# pandas is an optional dep (only needed for the Thai TMT step) — degrade with a hint instead of a traceback
+# pandas is an optional dep (only needed for the Thai TMT step), degrade with a hint instead of a traceback
 try:
     import pandas as pd
 except ImportError:
@@ -37,7 +37,7 @@ out = pd.DataFrame({
     "status": df["Status"],
     "country": "Thailand",
 })
-# drop rows with no TPU code — they can't be keyed/joined downstream
+# drop rows with no TPU code, they can't be keyed/joined downstream
 out = out.dropna(subset=["tpu_code"])
 out.to_csv(dst, index=False)
 print(f"{len(out)} rows -> {dst}")

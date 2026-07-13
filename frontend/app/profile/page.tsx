@@ -39,7 +39,7 @@ interface SavedConfig {
 
 const EMPTY_CONFIG: SavedConfig = { exists: false, fileCount: 0, files: [] };
 
-// account page — profile card + a three-way tab (bookmarks / history / saved upload config)
+// account page, profile card + a three-way tab (bookmarks / history / saved upload config)
 export default function ProfilePage() {
   const [isDark, setIsDark] = useDarkMode();
   const [user, setUser] = useState<User | null>(null);

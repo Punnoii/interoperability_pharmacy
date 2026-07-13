@@ -24,13 +24,13 @@ const LABEL_HIDE_ZOOM = 0.45;
 // opacity for the nodes/links pushed to the background when something is focused
 const DIM = 0.2;
 
-// d3 mutates link endpoints from id strings into node objects after the first tick — normalize both
+// d3 mutates link endpoints from id strings into node objects after the first tick, normalize both
 function endpointId(end: string | GraphNode | undefined | null): string | null {
   if (end == null) return null;
   return typeof end === "string" ? end : end.id;
 }
 
-// force-directed svg graph rendered imperatively with d3 — react owns the data, d3 owns the DOM
+// force-directed svg graph rendered imperatively with d3, react owns the data, d3 owns the DOM
 // inside the svg and the running simulation. parent drives zoom/reset through the forwarded handle.
 const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function GraphCanvas(
   { nodes, links, allTypes, isDark, selectedNodeId, searchTerm, onSelectNode },
@@ -52,7 +52,7 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
     linkLabel: isDark ? "#94a3b8" : "#64748b",
   }), [isDark]);
 
-  // id -> neighbor ids, precomputed for the focus/dim highlight on hover + selection
+  // id, neighbor ids, precomputed for the focus/dim highlight on hover + selection
   const adjacency = useMemo(() => {
     const m = new Map<string, Set<string>>();
     for (const l of links) {
@@ -103,7 +103,7 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
 
     const { edge: edgeColor, edgeHi, labelFill, labelHalo, linkLabel: linkLabelColor } = colors;
 
-    // two arrowhead markers — a base one and a highlighted one for focused edges
+    // two arrowhead markers, a base one and a highlighted one for focused edges
     const defs = svg.append("defs");
     const arrow = (id: string, color: string, size: number) =>
       defs
@@ -184,7 +184,7 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
       .style("pointer-events", "none")
       .style("user-select", "none");
 
-    // native tooltip on hover — cheap, no extra DOM
+    // native tooltip on hover, cheap, no extra DOM
     nodeSel.append("title").text((d) => `${d.type}: ${d.id}\nConnections: ${d.degree}`);
 
     nodeSel
@@ -281,7 +281,7 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
       nodeSel.attr("transform", (d) => `translate(${d.x ?? 0},${d.y ?? 0})`);
     });
 
-    // position edge labels once the layout settles — no point recomputing midpoints every tick
+    // position edge labels once the layout settles, no point recomputing midpoints every tick
     sim.on("end", () => {
       linkLabelSel
         .attr("x", (d) => (((d.source as GraphNode).x ?? 0) + ((d.target as GraphNode).x ?? 0)) / 2)
@@ -342,7 +342,7 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
     };
   }, [nodes, links, allTypes, isDark, adjacency, colors]);
 
-  // search highlight — dims everything except nodes whose label or id contains the term.
+  // search highlight, dims everything except nodes whose label or id contains the term.
   // reaches into d3's existing selection instead of rebuilding the scene.
   useEffect(() => {
     const svg = svgRef.current;

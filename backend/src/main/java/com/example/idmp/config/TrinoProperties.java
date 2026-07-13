@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 public class TrinoProperties {
     private String jdbcUrl = "jdbc:trino://localhost:8090";
-    // user is just an identity label for trino here — no password, the sandbox is read-only
+    // user is just an identity label for trino here, no password, the sandbox is read-only
     private String user = "mapping-assistant";
 
     public String getJdbcUrl() {

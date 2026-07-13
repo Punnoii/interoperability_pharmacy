@@ -1,10 +1,10 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-// jwt signing secret — from env in prod, falls back to a throwaway for local dev
+// jwt signing secret, from env in prod, falls back to a throwaway for local dev
 const SECRET = process.env.JWT_SECRET ?? "rxvkg-dev-secret-change-in-production";
 
-// bcrypt hash at cost 12 — high enough to be slow for attackers, fine for login volume here
+// bcrypt hash at cost 12, high enough to be slow for attackers, fine for login volume here
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12);
 }

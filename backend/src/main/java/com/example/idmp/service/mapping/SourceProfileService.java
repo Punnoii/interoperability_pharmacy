@@ -24,7 +24,7 @@ public class SourceProfileService {
     this.mappingSuggestionService = mappingSuggestionService;
     }
 
-    // catalog.schema.table -> per-column profile; identifiers go straight into SQL so they're validated hard first
+    // catalog.schema.table, per-column profile; identifiers go straight into SQL so they're validated hard first
     public SourceProfileResponse profile(String catalog, String schema, String table) {
         validateIdentifier(catalog, "catalog");
         validateIdentifier(schema, "schema");

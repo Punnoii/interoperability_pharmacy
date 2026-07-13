@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
   }
 
-  // cheap guard off the declared content-length — real enforcement still happens on the backend
+  // cheap guard off the declared content-length, real enforcement still happens on the backend
   const declared = Number(req.headers.get("content-length") ?? "0");
   if (declared > MAX_UPLOAD_BYTES) {
     return NextResponse.json({ error: "Upload too large (max 25 MB)" }, { status: 413 });

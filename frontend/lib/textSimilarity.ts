@@ -13,7 +13,7 @@ const tokens = (s: string): string[] =>
 const normalize = (s: string): string =>
   s.toLowerCase().replace(/[^a-z0-9ก-๙]/g, "");
 
-// blend word-set and 3-gram jaccard, take the better of the two — catches both reworded and misspelled matches
+// blend word-set and 3-gram jaccard, take the better of the two, catches both reworded and misspelled matches
 export function nameSimilarity(a: string, b: string): number {
   if (!a || !b) return 0;
   const wordScore = jaccard(tokens(a), tokens(b));

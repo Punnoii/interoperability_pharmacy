@@ -8,7 +8,7 @@ interface TokenPayload {
   role: string;
 }
 
-// figure out the public-facing origin for redirects — behind a proxy (tailscale funnel) the real host is in x-forwarded-*, not req.origin
+// figure out the public-facing origin for redirects, behind a proxy (tailscale funnel) the real host is in x-forwarded-*, not req.origin
 function externalBase(req: NextRequest): string {
   const fwdHost = req.headers.get("x-forwarded-host");
   if (fwdHost) {
@@ -19,8 +19,8 @@ function externalBase(req: NextRequest): string {
   return req.nextUrl.origin;
 }
 
-// gate the protected routes below: no cookie -> login; /admin additionally needs the ADMIN role.
-// note we only decode the jwt here (edge runtime can't verify) — real verification happens server-side; this just steers navigation
+// gate the protected routes below: no cookie, login; /admin additionally needs the ADMIN role.
+// note we only decode the jwt here (edge runtime can't verify), real verification happens server-side; this just steers navigation
 export function middleware(req: NextRequest) {
   const token = req.cookies.get("auth_token")?.value;
   const { pathname } = req.nextUrl;
@@ -37,7 +37,7 @@ export function middleware(req: NextRequest) {
         return NextResponse.redirect(new URL("/homepage", base));
       }
     } catch {
-      // unparseable token — treat as logged out
+      // unparseable token, treat as logged out
       return NextResponse.redirect(new URL("/", base));
     }
   }

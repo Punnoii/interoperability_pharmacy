@@ -23,7 +23,7 @@ import com.example.idmp.service.similarity.ElhSimilarityService;
 import com.example.idmp.service.similarity.ElhSimilarityService.Neighbor;
 import com.example.idmp.service.similarity.SparqlExpansionService;
 
-// MockMvc slice over the ELH similarity endpoints — status codes + JSON shapes
+// MockMvc slice over the ELH similarity endpoints, status codes + JSON shapes
 @WebMvcTest(ElhSimilarityController.class)
 class ElhSimilarityControllerTest {
 
@@ -31,7 +31,7 @@ class ElhSimilarityControllerTest {
   @MockBean private ElhSimilarityService service;
   @MockBean private SparqlExpansionService expansionService;
 
-  // happy path — score + echoed concepts + method come back as JSON
+  // happy path, score + echoed concepts + method come back as JSON
   @Test
   @DisplayName("POST /pair returns 200 with score on success")
   void pairSuccess() throws Exception {
@@ -49,7 +49,7 @@ class ElhSimilarityControllerTest {
         .andExpect(jsonPath("$.methodUsed").value("DYNAMIC_SIM"));
   }
 
-  // graph still loading → 503 rather than a half-answer
+  // graph still loading, 503 rather than a half-answer
   @Test
   @DisplayName("POST /pair returns 503 when service is not ready")
   void pairUnavailableWhenNotReady() throws Exception {
@@ -61,7 +61,7 @@ class ElhSimilarityControllerTest {
         .andExpect(status().isServiceUnavailable());
   }
 
-  // service returns null for an unknown code → 404
+  // service returns null for an unknown code, 404
   @Test
   @DisplayName("POST /pair returns 404 when concept is unknown")
   void pairNotFoundWhenServiceReturnsNull() throws Exception {

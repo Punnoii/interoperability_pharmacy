@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     "Semantic Data Integration for pharmaceutical data via SPARQL/Ontop over MySQL & PostgreSQL.",
 };
 
-// app shell — mounts AuthProvider so every route can read the session
+// app shell, mounts AuthProvider so every route can read the session
 export default function RootLayout({
   children,
 }: Readonly<{

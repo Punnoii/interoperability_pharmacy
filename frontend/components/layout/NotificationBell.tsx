@@ -15,7 +15,7 @@ import type { LucideIcon } from "lucide-react";
 import { useNotifications, type NotificationType } from "@/lib/notifications";
 import { timeAgo } from "@/lib/format";
 
-// no-op store for useSyncExternalStore — we only use it to detect client-side mount (see below)
+// no-op store for useSyncExternalStore, we only use it to detect client-side mount (see below)
 const emptySubscribe = () => () => {};
 
 // icon + color per notification severity
@@ -37,7 +37,7 @@ export default function NotificationBell({ isDark }: { isDark: boolean }) {
   const seedOnce = useNotifications((s) => s.seedOnce);
 
   const [open, setOpen] = useState(false);
-  // false during SSR/first paint, true once hydrated — gates the unread count so server and client
+  // false during SSR/first paint, true once hydrated, gates the unread count so server and client
   // markup match and we don't get a hydration mismatch on a persisted count
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const wrapRef = useRef<HTMLDivElement>(null);

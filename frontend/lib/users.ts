@@ -1,7 +1,7 @@
 import { prisma } from "./prisma";
 import { hashPassword } from "./auth";
 
-// email lookups are case-insensitive — we always store and query the lowercased form
+// email lookups are case-insensitive, we always store and query the lowercased form
 export async function findByEmail(email: string) {
   return prisma.user.findUnique({ where: { email: email.toLowerCase() } });
 }
@@ -42,7 +42,7 @@ export async function updatePasswordByEmail(email: string, password: string) {
   });
 }
 
-// admin listing — explicit select so passwordHash never leaves the db layer
+// admin listing, explicit select so passwordHash never leaves the db layer
 export async function getAllUsers() {
   return prisma.user.findMany({
     orderBy: { createdAt: "desc" },

@@ -35,7 +35,7 @@ import jakarta.annotation.PostConstruct;
 import sim.explainer.library.SimExplainer;
 import sim.explainer.library.enumeration.ImplementationMethod;
 
-// wraps the SimExplainer ELH-similarity engine over the ATC ontology - loads once at startup, serves concept comparisons
+// wraps the SimExplainer ELH-similarity engine over the ATC ontology, loads once at startup, serves concept comparisons
 @Service
 public class ElhSimilarityService {
 
@@ -62,12 +62,12 @@ public class ElhSimilarityService {
   private static final Pattern PREF_LABEL = Pattern.compile(
       "skos:prefLabel\\s+\"+([^\"]+)\"+@en");
 
-  // ATC hierarchy level -> code-prefix length (1=anatomical group ... 5=chemical substance); scope indexes into this
+  // ATC hierarchy level, code-prefix length (1=anatomical group ... 5=chemical substance); scope indexes into this
   private static final int[] ATC_PREFIX_LENGTHS = {1, 3, 4, 5};
 
   private Path ontologyDir;
 
-  // volatile status fields for the /metrics endpoint - written from init, read from any thread
+  // volatile status fields for the /metrics endpoint, written from init, read from any thread
   private volatile long startupEpochMs = 0L;
   private volatile long loadDurationMs = 0L;
   private volatile String lastError = null;
@@ -174,7 +174,7 @@ public class ElhSimilarityService {
     if (!knownConceptIndex.contains(a) || !knownConceptIndex.contains(b)) {
       return null;
     }
-    // must run similarity() first - getExplanationAsJson reads state it leaves behind
+    // must run similarity() first, getExplanationAsJson reads state it leaves behind
     explainer.similarity(DEFAULT_METHOD, a, b);
 
     org.json.JSONObject json = explainer.getExplanationAsJson(a, b);
@@ -209,7 +209,7 @@ public class ElhSimilarityService {
     }
     int safeScope = Math.max(0, Math.min(scope, ATC_PREFIX_LENGTHS.length));
 
-    // cache the full sorted neighbour list per (concept,scope) and just slice k off the top - k doesn't affect the compute
+    // cache the full sorted neighbour list per (concept,scope) and just slice k off the top, k doesn't affect the compute
     List<Neighbor> all = self.cachedNeighbours(target, safeScope);
 
     return all.size() <= k ? all : all.subList(0, k);
@@ -242,7 +242,7 @@ public class ElhSimilarityService {
       try {
         score = explainer.similarity(DEFAULT_METHOD, target, c);
       } catch (RuntimeException ex) {
-        // one bad pair shouldn't nuke the whole neighbour set - skip it and keep going
+        // one bad pair shouldn't nuke the whole neighbour set, skip it and keep going
         log.debug("similarity({}, {}) failed: {}", target, c, ex.getMessage());
         continue;
       }
@@ -263,7 +263,7 @@ public class ElhSimilarityService {
     return code.substring(0, Math.min(desired, code.length()));
   }
 
-  // human-readable version of the scope for the UI - "(all)" for scope 0, otherwise the actual prefix
+  // human-readable version of the scope for the UI, "(all)" for scope 0, otherwise the actual prefix
   public String scopePrefixOf(String concept, int scope) {
     if (concept == null) return "";
     int safeScope = Math.max(0, Math.min(scope, ATC_PREFIX_LENGTHS.length));
@@ -271,13 +271,13 @@ public class ElhSimilarityService {
     return atcPrefix(concept.trim(), safeScope);
   }
 
-  // ATC code -> English label, or null if we never scraped one
+  // ATC code, English label, or null if we never scraped one
   public String labelOf(String concept) {
     if (concept == null) return null;
     return conceptLabels.get(concept.trim());
   }
 
-  // scrape labels by hand rather than reparsing with an RDF lib - a class line sets the current code, the next prefLabel line fills it
+  // scrape labels by hand rather than reparsing with an RDF lib, a class line sets the current code, the next prefLabel line fills it
   private void loadConceptLabels(Path dir) throws IOException {
     try (java.util.stream.Stream<Path> stream = Files.list(dir)) {
       for (Path file : (Iterable<Path>) stream::iterator) {

@@ -21,7 +21,7 @@ export interface SubstanceHit {
   unii: string;
 }
 
-// slimmed-down bookmark — palette only needs enough to list + apply
+// slimmed-down bookmark, palette only needs enough to list + apply
 interface BookmarkLite {
   id: string;
   name: string;
@@ -178,7 +178,7 @@ export default function QuickSearch({ isDark, templates, bookmarks, onClose, onA
             </div>
 
             <div className="flex-1 overflow-auto px-4 py-4 flex flex-col gap-4">
-              {/* one field per param — substance params get the autocomplete widget, others a plain input */}
+              {/* one field per param, substance params get the autocomplete widget, others a plain input */}
               {picked.params?.map((p) =>
                 p.kind === "substance" ? (
                   <SubstanceField

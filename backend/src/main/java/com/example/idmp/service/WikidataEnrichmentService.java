@@ -34,7 +34,7 @@ public class WikidataEnrichmentService {
     }
 
   public WikidataSearchResponse search(String query, int limit) {
-    // clamp to 1..10 - this is best-effort enrichment, no reason to hammer their API
+    // clamp to 1..10, this is best-effort enrichment, no reason to hammer their API
     int safeLimit = Math.max(1,Math.min(limit,10));
 
     URI uri = UriComponentsBuilder.fromUriString(apiUrl)
@@ -53,7 +53,7 @@ public class WikidataEnrichmentService {
         .retrieve()
         .body(JsonNode.class);
 
-    // walk the "search" array by hand rather than binding a full DTO - we only want a few fields
+    // walk the "search" array by hand rather than binding a full DTO, we only want a few fields
     List<WikidataSearchItem> items = new ArrayList<>();
     if (root != null) {
       for (JsonNode item : root.path("search")) {

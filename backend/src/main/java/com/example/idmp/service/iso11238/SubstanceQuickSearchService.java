@@ -61,7 +61,7 @@ public class SubstanceQuickSearchService {
       if (merged.size() >= safeLimit) {
         break;
       }
-      // dedupe by IRI - the substring pass re-finds the prefix hits
+      // dedupe by IRI, the substring pass re-finds the prefix hits
       if (merged.stream().noneMatch(existing -> existing.iri().equals(hit.iri()))) {
         merged.add(hit);
       }

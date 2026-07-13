@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.idmp.service.WikidataEnrichmentService;
 import com.example.idmp.web.dto.WikidataSearchResponse;
 
-// optional wikidata lookup to enrich substances with external ids — best-effort, never fatal
+// optional wikidata lookup to enrich substances with external ids, best-effort, never fatal
 @RestController
 @RequestMapping("/api/enrichment/wikidata")
 @CrossOrigin(origins = "*")
@@ -34,7 +34,7 @@ public class WikidataController {
     try {
       return service.search(q, limit);
     } catch (Exception e) {
-      // wikidata being down shouldn't break the page — log and degrade to no results
+      // wikidata being down shouldn't break the page, log and degrade to no results
       log.warn("Wikidata search failed for '{}': {}", q, e.toString());
       return new WikidataSearchResponse("wikidata", q, List.of());
     }

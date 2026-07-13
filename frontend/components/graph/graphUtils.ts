@@ -25,7 +25,7 @@ export interface NodeTypeMeta {
   textColor: string;
 }
 
-// per-type node colors, cycled by index — each has a light and a dark variant
+// per-type node colors, cycled by index, each has a light and a dark variant
 const PALETTE: Omit<NodeTypeMeta, "label">[] = [
   { color: "#6366f1", colorDark: "#818cf8", textColor: "#ffffff" },
   { color: "#a855f7", colorDark: "#c084fc", textColor: "#ffffff" },
@@ -37,7 +37,7 @@ const PALETTE: Omit<NodeTypeMeta, "label">[] = [
   { color: "#84cc16", colorDark: "#a3e635", textColor: "#1a1a1a" },
 ];
 
-// stable color for a type — keyed off its position in allTypes so it doesn't shift between renders
+// stable color for a type, keyed off its position in allTypes so it doesn't shift between renders
 export function getTypeMeta(typeKey: string, allTypes: string[]): NodeTypeMeta {
   const idx = allTypes.indexOf(typeKey);
   const palette = PALETTE[(idx >= 0 ? idx : 0) % PALETTE.length];

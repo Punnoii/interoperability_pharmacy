@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { AtSign, ArrowLeft } from "lucide-react";
 
-// "forgot password" screen — email in, reset link out
+// "forgot password" screen, email in, reset link out
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);

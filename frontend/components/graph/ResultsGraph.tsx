@@ -31,7 +31,7 @@ export default function ResultsGraph({ vars, bindings, isDark }: ResultsGraphPro
     [vars, bindings]
   );
 
-  // empty state — either too few variables to form edges, or the query matched nothing
+  // empty state, either too few variables to form edges, or the query matched nothing
   if (nodes.length === 0) {
     return (
       <div className={`flex flex-col items-center justify-center h-full gap-2 ${isDark ? "text-slate-500" : "text-gray-500"}`}>
@@ -62,7 +62,7 @@ export default function ResultsGraph({ vars, bindings, isDark }: ResultsGraphPro
         <GraphSearch value={searchTerm} onChange={setSearchTerm} isDark={isDark} />
       </div>
 
-      {/* hide zoom controls while the detail panel is open — they'd overlap it */}
+      {/* hide zoom controls while the detail panel is open, they'd overlap it */}
       {!selectedNode && (
         <div className="absolute top-3 right-3 z-10">
           <GraphControls

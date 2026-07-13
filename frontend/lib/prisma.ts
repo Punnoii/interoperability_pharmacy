@@ -12,5 +12,5 @@ export const prisma =
     log: process.env.NODE_ENV === "production" ? ["error", "warn"] : ["query"],
   });
 
-// only cache in dev — prod starts fresh per process and shouldn't touch the global
+// only cache in dev, prod starts fresh per process and shouldn't touch the global
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
