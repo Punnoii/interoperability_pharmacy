@@ -12,6 +12,7 @@ interface Props {
   onSaved: () => void;
 }
 
+// change-password dialog. validates locally (required, min length, match) before PATCHing the API
 export default function ChangePasswordModal({ isDark, onClose, onSaved }: Props) {
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
@@ -59,6 +60,7 @@ export default function ChangePasswordModal({ isDark, onClose, onSaved }: Props)
     }
   }
 
+  // shared password field renderer; the last one submits on Enter
   const field = (label: string, value: string, set: (s: string) => void, isLast = false) => (
     <>
       <label className={`text-xs font-medium ${labelCls}`}>{label}</label>

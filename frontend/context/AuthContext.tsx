@@ -19,9 +19,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// holds the signed-in user for the whole app; wraps everything in RootLayout
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
+  // rehydrate the session once on mount from the auth cookie; stay null (guest) if it fails
   useEffect(() => {
     fetch(routes.authMe)
       .then((res) => {
@@ -32,6 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .catch(() => {});
   }, []);
 
+  // clear the cookie server-side, drop local state, hard-nav home so nothing stale lingers
   const logout = async () => {
     try {
       await fetch(routes.authLogout, { method: "POST" });
@@ -49,6 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// grab auth state anywhere; throws if you forgot the provider
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
+// account page payload — profile fields plus a saved-query count for the stats row.
+// select is explicit so passwordHash and friends never leak out
 export async function GET() {
   const session = await getSession();
   if (!session) {
@@ -35,6 +37,7 @@ export async function GET() {
   });
 }
 
+// edit profile — username is the only mutable field here (email/role are locked down)
 export async function PATCH(req: NextRequest) {
   const session = await getSession();
   if (!session) {

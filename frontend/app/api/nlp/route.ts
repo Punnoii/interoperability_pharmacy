@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 
+// system prompt — the ontology cheat-sheet we hand the model so it writes SPARQL
+// that actually matches our schema (prefixes, the 2-hop rule, classifier IRIs, etc.)
 const DOMAIN_KNOWLEDGE = `You are an expert SPARQL query generator for the IDMP ISO 11238 Substances Ontology system.
 Your task is to convert natural language (Thai or English) into a valid, executable SPARQL query.
 
@@ -41,6 +43,8 @@ Sources: a=Company A (PostgreSQL), b=Company B (PostgreSQL), c=Company C (MySQL)
 [CASE-INSENSITIVE FILTER]
 FILTER(CONTAINS(LCASE(?name), LCASE("search_term")))`;
 
+// glue the user's question onto the domain knowledge + a little chain-of-thought nudge.
+// the step list matters a lot for the smaller models — without it they over-join.
 function buildChainOfThoughtPrompt(nlQuery: string): string {
   return `${DOMAIN_KNOWLEDGE}
 
@@ -58,6 +62,8 @@ Think step by step:
 Then output the final SPARQL query.`;
 }
 
+// the model usually wraps the query in ```fences``` (or rambles first), so dig the
+// actual SPARQL back out. no fence? grab from the first PREFIX/SELECT/ASK/... keyword.
 function extractSparql(text: string): string {
   const fenceMatch = text.match(/```(?:sparql)?\n?([\s\S]+?)```/i);
   if (fenceMatch) return fenceMatch[1].trim();
@@ -74,6 +80,8 @@ function extractSparql(text: string): string {
   return text.trim();
 }
 
+// try these in order, first one that answers wins. 2.5-flash is deliberately not here —
+// it 404s ("not available to new users") on freshly-made keys.
 const MODEL_CHAIN = [
   "gemini-2.0-flash",
   "gemini-flash-latest",
@@ -81,6 +89,8 @@ const MODEL_CHAIN = [
   "gemini-2.0-flash-lite",
 ];
 
+// single call to gemini's REST surface. it's a plain ?key= request, so this only works
+// with a normal AIza key (not a service-account-bound one).
 async function callGemini(apiKey: string, prompt: string, model: string): Promise<Response> {
   return fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
@@ -95,6 +105,8 @@ async function callGemini(apiKey: string, prompt: string, model: string): Promis
   );
 }
 
+// gemini path: walk MODEL_CHAIN, skip the ones that are rate-limited/overloaded and try
+// the next, but fail fast on anything that's a real error (bad key, etc.).
 async function generateWithGemini(prompt: string): Promise<NextResponse> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -105,6 +117,7 @@ async function generateWithGemini(prompt: string): Promise<NextResponse> {
   for (const model of MODEL_CHAIN) {
     const res = await callGemini(apiKey, prompt, model);
 
+    // quota / overloaded — remember it and fall through to the next model
     if (res.status === 429 || res.status === 503) {
       lastError = `${model}: quota/rate-limit (${res.status})`;
       continue;
@@ -125,12 +138,15 @@ async function generateWithGemini(prompt: string): Promise<NextResponse> {
     return NextResponse.json({ sparql: extractSparql(rawText), reasoning: rawText, model });
   }
 
+  // every model came back rate-limited
   return NextResponse.json(
     { error: `All models quota-exceeded. Last: ${lastError}` },
     { status: 429 }
   );
 }
 
+// ollama path: same job, but hitting the local container — free, no API key needed.
+// 502 if ollama isn't reachable yet (it pulls the model on first use).
 async function generateWithOllama(prompt: string): Promise<NextResponse> {
   const base = process.env.OLLAMA_URL || "http://ollama:11434";
   const model = process.env.OLLAMA_MODEL || "qwen2.5:7b";
@@ -164,6 +180,8 @@ async function generateWithOllama(prompt: string): Promise<NextResponse> {
   return NextResponse.json({ sparql: extractSparql(rawText), reasoning: rawText, model });
 }
 
+// POST /api/nlp — turn a natural-language question into SPARQL.
+// must be logged in; then dispatch to whichever backend NLP_PROVIDER selects (gemini by default).
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) {
@@ -179,6 +197,7 @@ export async function POST(req: NextRequest) {
   const prompt = buildChainOfThoughtPrompt(query.trim());
   const provider = (process.env.NLP_PROVIDER || "gemini").toLowerCase();
 
+  // flip between the local model and the cloud one with a single env var
   if (provider === "ollama") {
     return generateWithOllama(prompt);
   }

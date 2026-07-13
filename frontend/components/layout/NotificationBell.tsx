@@ -15,8 +15,10 @@ import type { LucideIcon } from "lucide-react";
 import { useNotifications, type NotificationType } from "@/lib/notifications";
 import { timeAgo } from "@/lib/format";
 
+// no-op store for useSyncExternalStore — we only use it to detect client-side mount (see below)
 const emptySubscribe = () => () => {};
 
+// icon + color per notification severity
 const TYPE_META: Record<NotificationType, { Icon: LucideIcon; light: string; dark: string }> = {
   info: { Icon: Info, light: "text-blue-600", dark: "text-blue-400" },
   success: { Icon: CheckCircle2, light: "text-emerald-600", dark: "text-emerald-400" },
@@ -24,6 +26,8 @@ const TYPE_META: Record<NotificationType, { Icon: LucideIcon; light: string; dar
   error: { Icon: AlertCircle, light: "text-red-600", dark: "text-red-400" },
 };
 
+// bell + dropdown backed by the zustand notifications store. handles unread badge, mark-read,
+// dismiss, and closing on outside-click / escape.
 export default function NotificationBell({ isDark }: { isDark: boolean }) {
   const items = useNotifications((s) => s.items);
   const markRead = useNotifications((s) => s.markRead);
@@ -33,6 +37,8 @@ export default function NotificationBell({ isDark }: { isDark: boolean }) {
   const seedOnce = useNotifications((s) => s.seedOnce);
 
   const [open, setOpen] = useState(false);
+  // false during SSR/first paint, true once hydrated — gates the unread count so server and client
+  // markup match and we don't get a hydration mismatch on a persisted count
   const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -40,6 +46,7 @@ export default function NotificationBell({ isDark }: { isDark: boolean }) {
     seedOnce();
   }, [seedOnce]);
 
+  // close on click-outside / escape, only while the dropdown is open
   useEffect(() => {
     if (!open) return;
     function onDown(e: MouseEvent) {

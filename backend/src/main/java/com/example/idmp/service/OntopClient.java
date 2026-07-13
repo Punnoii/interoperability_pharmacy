@@ -18,11 +18,14 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 
+// thin proxy in front of the Ontop SPARQL endpoint - takes a query string and streams the raw result back
 @Service
 public class OntopClient {
   private final RestClient restClient;
   private final OntopProperties properties;
 
+  // self-injection so calls to fetchCached go through the proxy and actually hit the cache
+  // (a plain this.fetchCached() would bypass the @Cacheable advice)
   @Autowired
   @Lazy
   private OntopClient self;
@@ -32,6 +35,7 @@ public class OntopClient {
     this.properties = properties;
   }
 
+  // validate/normalize up front so the cache key never sees a bad Accept or an empty query
   public ResponseEntity<String> execute(String query, String accept) {
     if (query == null || query.isBlank()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query is empty");
@@ -42,6 +46,7 @@ public class OntopClient {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Ontop endpoint is not configured");
     }
 
+    // caller may leave Accept off - fall back to whatever the config default is
     String acceptValue = (accept == null || accept.isBlank())
         ? properties.getDefaultAccept()
         : accept.trim();
@@ -59,8 +64,10 @@ public class OntopClient {
         .body(body);
   }
 
+  // key is query+accept because the same SPARQL yields different bodies per result format
   @Cacheable(value = CacheConfig.SPARQL_RESULTS, key = "#query + ':' + #accept")
   public String fetchCached(String query, String accept, String endpoint, MediaType acceptType) {
+    // Ontop's SPARQL endpoint wants the query form-encoded, not in the URL
     MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
     form.add("query", query);
 
@@ -74,6 +81,7 @@ public class OntopClient {
           .toEntity(String.class);
       return response.getBody();
     } catch (RestClientResponseException ex) {
+      // surface Ontop's own status/body to the caller rather than a generic 500
       HttpStatusCode status = ex.getStatusCode();
       if (status == null) {
         status = HttpStatus.BAD_GATEWAY;

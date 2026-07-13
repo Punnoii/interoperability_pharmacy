@@ -8,6 +8,7 @@ interface Props {
   onClick: () => void;
 }
 
+// clickable stat tile (e.g. bookmarks / history counts); the active one drives which section shows below
 export default function StatBox({ isDark, label, value, active, onClick }: Props) {
   const card = active
     ? isDark ? "bg-blue-900/20 border-blue-700" : "bg-blue-50 border-blue-400"

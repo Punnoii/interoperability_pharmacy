@@ -24,12 +24,15 @@ interface Props {
   onDeleted: () => void;
 }
 
+// bytes -> B / KB / MB for the file-size column
 function fmtSize(n: number): string {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
   return `${(n / 1024 / 1024).toFixed(2)} MB`;
 }
 
+// shows the user's saved upload config and lets them push it back into the sandbox or delete it.
+// a single `busy` value tracks which of the two actions is in flight so both buttons disable together.
 export default function SavedConfigSection({ isDark, data, onDeleted }: Props) {
   const [busy, setBusy] = useState<"restore" | "delete" | null>(null);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
@@ -63,6 +66,7 @@ export default function SavedConfigSection({ isDark, data, onDeleted }: Props) {
   }
 
   async function remove() {
+    // hard delete — gate it behind a confirm since there's no undo
     if (!confirm("Delete your saved config? This cannot be undone.")) return;
     setBusy("delete");
     setMsg(null);

@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifyToken } from "@/lib/auth";
 
+// keeps /profile behind auth — same server-side token check as the other protected routes
 export default async function ProfileLayout({
   children,
 }: {
@@ -14,6 +15,7 @@ export default async function ProfileLayout({
     redirect("/");
   }
 
+  // reject tampered/stale tokens
   const payload = verifyToken(token);
   if (!payload) {
     redirect("/");

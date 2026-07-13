@@ -12,9 +12,11 @@ import { useUserPreferences } from "@/lib/userPreferences";
 
 const { routes } = APP_CONFIG.api;
 
+// lowercase word tokens, keeping latin + thai chars; drops 1-char noise. used for name Jaccard
 const wordTokens = (s: string): string[] =>
   s.toLowerCase().replace(/[^a-z0-9ก-๙\s]/g, " ").split(/\s+/).filter((t) => t.length > 1);
 
+// character 3-grams for the fuzzier name-overlap metric; needs at least 3 chars to produce any
 const charTrigrams = (s: string): string[] => {
   const cleaned = s.toLowerCase().replace(/[^a-z0-9ก-๙]/g, "");
   return cleaned.length >= 3 ? (ngrams(3, cleaned) as string[]) : [];
@@ -62,11 +64,14 @@ SELECT ?substance ?name ?identifier WHERE {
 LIMIT 150
 `;
 
+// tail segment of an IRI for display
 function shortIri(iri: string): string {
   if (!iri) return "";
   return iri.split("/").pop() ?? iri.split("#").pop() ?? iri;
 }
 
+// flatten SPARQL rows into unique concepts, tolerating a few different variable names for
+// the iri/name/identifier columns (substance|s|x, name|nameValue|label, ...)
 function bindingsToConcepts(bindings: SparqlBinding[]): Concept[] {
   const seen = new Set<string>();
   const out: Concept[] = [];
@@ -85,6 +90,8 @@ function bindingsToConcepts(bindings: SparqlBinding[]): Concept[] {
   return out;
 }
 
+// score every unordered pair of concepts. a shared identifier wins outright, else fall back to
+// exact-name then fuzzy name similarity. only pairs above minDisplay are kept, sorted high-first.
 function computePairs(items: Concept[]): PairScore[] {
   const { sharedId, sameName: sameNameScore, minDisplay } = APP_CONFIG.similarity.pairScore;
   const out: PairScore[] = [];
@@ -138,6 +145,8 @@ const SIM_MODES: { value: SimMode; label: string; description: string }[] = [
   },
 ];
 
+// similarity workbench. two modes: the ELH ontology tools (default) and a name+ID Jaccard mode
+// that runs a SPARQL query then scores the returned substances client-side against a threshold.
 export default function SubstanceSimilarity({ isDark }: SubstanceSimilarityProps) {
   const [sparql, setSparql] = useState(DEFAULT_QUERY);
   const [results, setResults] = useState<SparqlResults | null>(null);
@@ -152,6 +161,7 @@ export default function SubstanceSimilarity({ isDark }: SubstanceSimilarityProps
   const [picked, setPicked] = useState<PairScore | null>(null);
   const [simMode, setSimMode] = useState<SimMode>("substance");
 
+  // run the name+ID mode's SPARQL against the shared endpoint, asking for JSON results
   async function runQuery() {
     if (!sparql.trim() || running) return;
     setRunning(true);
@@ -186,6 +196,7 @@ export default function SubstanceSimilarity({ isDark }: SubstanceSimilarityProps
   }, [results]);
 
   const pairs = useMemo(() => computePairs(concepts), [concepts]);
+  // slider-filtered view of the scored pairs; recompute cheaply as the threshold moves
   const visible = useMemo(() => pairs.filter((p) => p.score >= threshold), [pairs, threshold]);
 
   const tc = themeClasses(isDark);
@@ -380,6 +391,7 @@ const SCOPE_LABELS: { value: number; label: string; description: string }[] = [
   { value: 4, label: "L4 chem.",   description: "Same chemical subgroup (5-char) - fastest" },
 ];
 
+// bucket a 0..1 ELH similarity score into a human-readable ATC relatedness tier + color tone
 function tierFromScore(s: number): { label: string; tone: string; description: string } {
   if (s >= 0.80)
     return {
@@ -446,6 +458,8 @@ SELECT ?drug ?atcCode WHERE {
 }
 LIMIT 50`;
 
+// the ELH ontology toolset, three sub-tabs sharing one concept datalist: expand a SPARQL query with
+// similar concepts, find a concept's top-k neighbours, or score/explain a single A-vs-B pair.
 function SubstanceElhMode({ isDark }: { isDark: boolean }) {
   const heading = isDark ? "text-slate-100" : "text-gray-900";
   const subtle = isDark ? "text-slate-300" : "text-gray-700";
@@ -480,6 +494,8 @@ function SubstanceElhMode({ isDark }: { isDark: boolean }) {
   const [explanation, setExplanation] = useState<ElhExplainResponse | null>(null);
   const [explainError, setExplainError] = useState<string | null>(null);
 
+  // load the ATC concept list once for the autocomplete datalist; cancelled guard avoids a
+  // set-state after unmount if the fetch is slow
   useEffect(() => {
     let cancelled = false;
     fetch(routes.similarityConcepts)
@@ -489,6 +505,7 @@ function SubstanceElhMode({ isDark }: { isDark: boolean }) {
     return () => { cancelled = true; };
   }, []);
 
+  // send SPARQL carrying an @expand annotation; backend returns the rewritten query + the neighbours it injected
   async function runExpand() {
     if (!exSparql.trim() || exComputing) return;
     setExComputing(true);
@@ -514,11 +531,13 @@ function SubstanceElhMode({ isDark }: { isDark: boolean }) {
     }
   }
 
+  // jump to the pair tab pre-filled with a clicked concept as side A
   function gotoPairCompare(code: string) {
     setConceptA(code);
     setSubTab("pair");
   }
 
+  // rank the k closest concepts to a source within the chosen ATC scope
   async function runTopK() {
     if (!tkConcept.trim() || tkComputing) return;
     setTkComputing(true);
@@ -544,6 +563,7 @@ function SubstanceElhMode({ isDark }: { isDark: boolean }) {
     }
   }
 
+  // fetch the forward/backward derivation trees explaining why a pair scored as it did
   async function runExplain(a: string, b: string) {
     if (!a.trim() || !b.trim() || explaining) return;
     setExplaining(true);
@@ -566,6 +586,7 @@ function SubstanceElhMode({ isDark }: { isDark: boolean }) {
     }
   }
 
+  // score a single A-vs-B pair; clears any prior explanation since it's now stale
   async function compute() {
     if (!conceptA.trim() || !conceptB.trim() || computing) return;
     setComputing(true);
@@ -958,6 +979,7 @@ function SubstanceElhMode({ isDark }: { isDark: boolean }) {
   );
 }
 
+// segmented control switching between the three ELH sub-tools
 function ElhSubTabBar({
   isDark, subTab, setSubTab,
 }: {
@@ -994,6 +1016,7 @@ function ElhSubTabBar({
   );
 }
 
+// collapsible JSON viewer for the explain-why derivation trees
 function TreeView({
   node,
   isDark,
@@ -1010,6 +1033,8 @@ function TreeView({
   );
 }
 
+// one node in the tree: null/scalar render inline, arrays/objects get a clickable expander.
+// syntax-highlights keys/strings/numbers like a pretty-printed JSON blob.
 function TreeNode({
   node,
   isDark,
@@ -1023,6 +1048,7 @@ function TreeNode({
   label?: string;
   defaultExpanded: number;
 }) {
+  // recursive renderer for one JSON value; rows above defaultExpanded depth start open
   const [open, setOpen] = useState(depth < defaultExpanded);
 
   const keyClr   = isDark ? "text-sky-300"     : "text-sky-700";
@@ -1111,6 +1137,7 @@ function TreeNode({
   );
 }
 
+// left rail that switches between the two top-level similarity modes
 function SimilarityInfoPanel({
   isDark,
   mode,
@@ -1184,6 +1211,8 @@ interface AttributeRow {
   context?: boolean;
 }
 
+// build the side-by-side comparison rows for the details modal: name, identifier, and the
+// word/trigram overlap breakdowns that explain the Jaccard score. context rows are supporting detail.
 function getAttributes(pair: PairScore): AttributeRow[] {
   const a = pair.a;
   const b = pair.b;
@@ -1255,6 +1284,8 @@ function getAttributes(pair: PairScore): AttributeRow[] {
   ];
 }
 
+// full-screen breakdown for a picked pair — two substance columns with every attribute row from
+// getAttributes. backdrop click closes; inner stopPropagation keeps panel clicks from closing it.
 function SimilarityDetailsModal({
   pair,
   onClose,

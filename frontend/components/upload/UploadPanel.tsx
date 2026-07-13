@@ -18,6 +18,7 @@ interface UploadPanelProps {
 
 type SlotKey = "ontology" | "database" | "mapping" | "properties" | "catalog";
 
+// the five fixed upload slots — each maps to a named form field the backend expects
 const SLOTS: { key: SlotKey; label: string; hint: string; accept: string }[] = [
   { key: "ontology",   label: "Ontology",      hint: ".owl, .ttl, .rdf",    accept: ".owl,.ttl,.rdf,.xml" },
   { key: "database",   label: "Database",      hint: ".csv, .sql, .json",   accept: ".csv,.sql,.json,.tsv" },
@@ -36,6 +37,9 @@ interface SandboxState {
   triples: number;
 }
 
+// upload form for the query sandbox: pick files per slot, POST them into an in-memory sandbox,
+// then optionally persist that sandbox as the user's saved profile. once loaded it drops a
+// QueryPanel below so you can run SPARQL against the uploaded triples right away.
 export default function UploadPanel({ isDark }: UploadPanelProps) {
   const [files, setFiles] = useState<SlotState>(EMPTY);
   const [uploading, setUploading] = useState(false);
@@ -57,6 +61,7 @@ export default function UploadPanel({ isDark }: UploadPanelProps) {
   const btnBase  = tc.btnBase;
   const inputBg  = tc.inputBg;
 
+  // on mount, hydrate from any existing sandbox + whether a saved profile is already on file
   useEffect(() => {
     fetch(routes.sandboxStatus).then(async (r) => {
       if (!r.ok) return;
@@ -79,6 +84,7 @@ export default function UploadPanel({ isDark }: UploadPanelProps) {
     const f = e.target.files?.[0] ?? null;
     setFiles((p) => ({ ...p, [key]: f }));
     setStatus(null);
+    // reset the input so re-picking the same file still fires onChange
     e.target.value = "";
   }
 
@@ -87,6 +93,7 @@ export default function UploadPanel({ isDark }: UploadPanelProps) {
     setStatus(null);
   }
 
+  // wipe the local selection and tear down the server-side sandbox too
   async function clearAll() {
     setFiles(EMPTY);
     setStatus(null);
@@ -98,6 +105,7 @@ export default function UploadPanel({ isDark }: UploadPanelProps) {
 
   const selected = Object.values(files).filter((f) => f !== null).length;
 
+  // bundle the chosen files into multipart form data and push them into the sandbox
   async function upload() {
     if (selected === 0 || uploading) {
       setStatus({ kind: "err", msg: "Please choose at least one file." });
@@ -137,6 +145,7 @@ export default function UploadPanel({ isDark }: UploadPanelProps) {
     }
   }
 
+  // promote the current sandbox to the user's persisted profile so it survives the idle timeout
   async function saveProfile() {
     if (!sandbox || saving) return;
     setSaving(true);

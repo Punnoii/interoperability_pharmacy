@@ -1,9 +1,12 @@
 package com.example.idmp.util.iso11238;
 
+// holds the ISO 11238 SPARQL the substance service runs - kept out of the service so the queries read as one block
 public final class SubstanceSparqlTemplates {
 
+    // constants + static factories only
     private SubstanceSparqlTemplates() {}
 
+    // shared PREFIX header glued onto every query below - Pistoia IDMP + OMG Commons vocab
     private static final String PREFIXES = """
         PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
         PREFIX idmp-dtp: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO21090-HarmonizedDatatypes/>
@@ -11,6 +14,7 @@ public final class SubstanceSparqlTemplates {
         PREFIX cmns-txt: <https://www.omg.org/spec/Commons/TextDatatype/>
         """;
 
+    // browse query - pins the name to the CommonName classifier so each substance shows one canonical label; LIMIT 500 keeps it demo-sized
     public static final String LIST_ALL = PREFIXES + """
         SELECT ?substance ?preferredName ?substanceType ?identifier WHERE {
             ?substance a idmp-sub:Substance .
@@ -27,6 +31,7 @@ public final class SubstanceSparqlTemplates {
         LIMIT 500
         """;
 
+    // dashboard tally - REPLACE mines the source (gsrs/fda) out of the IRI since there's no source predicate
     public static final String COUNT_PER_SOURCE = PREFIXES + """
         SELECT ?source (COUNT(DISTINCT ?substance) AS ?count) WHERE {
             ?substance a idmp-sub:Substance .
@@ -35,6 +40,7 @@ public final class SubstanceSparqlTemplates {
         GROUP BY ?source
         """;
 
+    // case-insensitive CONTAINS over any name - keyword is escaped before it's spliced into the FILTER string
     public static String searchByName(String keyword) {
         String safe = sanitize(keyword);
         return PREFIXES + """
@@ -53,6 +59,7 @@ public final class SubstanceSparqlTemplates {
             """.formatted(safe);
     }
 
+    // one substance, all names+identifiers - IRI goes inside <> so it's validated (not string-escaped) first
     public static String details(String substanceIri) {
         String safeIri = validateIri(substanceIri);
         return PREFIXES + """
@@ -71,6 +78,7 @@ public final class SubstanceSparqlTemplates {
             """.formatted(safeIri, safeIri, safeIri, safeIri);
     }
 
+    // match on identifier value, GROUP BY substance + SAMPLE one name so each hit collapses to a single row
     public static String crossSource(String identifier) {
         String safe = sanitize(identifier);
         return PREFIXES + """
@@ -88,6 +96,7 @@ public final class SubstanceSparqlTemplates {
             """.formatted(safe, safe);
     }
 
+    // escape anything that could break out of a SPARQL double-quoted string literal - order matters, backslash first
     static String sanitize(String input) {
         if (input == null) {
             return "";
@@ -99,6 +108,7 @@ public final class SubstanceSparqlTemplates {
                 .replace("\r", "\\r");
     }
 
+    // IRIs land inside <> where escaping doesn't apply, so reject the chars that could close the bracket instead
     static String validateIri(String iri) {
         if (iri == null || iri.isBlank()) {
             throw new IllegalArgumentException("IRI must not be null or blank");

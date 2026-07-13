@@ -8,6 +8,7 @@ import SubstanceSimilarity from "@/components/similarity/SubstanceSimilarity";
 import UploadPanel from "@/components/upload/UploadPanel";
 import { useDarkMode } from "@/lib/useDarkMode";
 
+// main workspace — sidebar switches between the three panels, all kept mounted-on-demand
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState("query");
   const [isDark, setIsDark] = useDarkMode();

@@ -25,6 +25,7 @@ import com.example.idmp.web.dto.similarity.TopKResponse;
 
 import jakarta.validation.Valid;
 
+// ELH description-logic similarity over the ATC ontology — the thesis's headline feature
 @RestController
 @RequestMapping("/api/similarity/elh")
 @CrossOrigin(origins = "*")
@@ -41,9 +42,11 @@ public class ElhSimilarityController {
     this.expansionService = expansionService;
   }
 
+  // similarity between two named concepts; null score means a concept isn't in the ontology (404, not 500)
   @PostMapping("/pair")
   public PairSimilarityResponse pair(@Valid @RequestBody PairSimilarityRequest req) {
     service.trackRequest();
+    // the explainer loads lazily at startup; bail with 503 until it's warm
     if (!service.isReady()) {
       throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
           "ELH similarity service is not initialised");
@@ -69,6 +72,7 @@ public class ElhSimilarityController {
         ONTOLOGY_NAME);
   }
 
+  // top-K nearest concepts to a query concept; scope narrows the candidate set (e.g. same ATC branch)
   @PostMapping("/topk")
   public TopKResponse topK(@Valid @RequestBody TopKRequest req) {
     service.trackRequest();
@@ -76,6 +80,7 @@ public class ElhSimilarityController {
       throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE,
           "ELH similarity service is not initialised");
     }
+    // time the compute so the response can report how long ranking took
     long started = System.currentTimeMillis();
     List<Neighbor> all;
     try {
@@ -93,6 +98,7 @@ public class ElhSimilarityController {
 
     String prefix = service.scopePrefixOf(req.getConcept(), req.getScope());
 
+    // decorate each neighbour with a human label for the UI before shipping it out
     List<TopKResponse.Neighbor> dtos = all.stream()
         .map(n -> new TopKResponse.Neighbor(n.concept(), service.labelOf(n.concept()), n.score()))
         .toList();
@@ -108,6 +114,7 @@ public class ElhSimilarityController {
         dtos);
   }
 
+  // rewrite a SPARQL query to pull in similar concepts via similarity annotations — query expansion
   @PostMapping("/expand-sparql")
   public SparqlExpansionService.ExpansionResult expandSparql(@Valid @RequestBody ExpandSparqlRequest req) {
     service.trackRequest();
@@ -125,6 +132,7 @@ public class ElhSimilarityController {
     }
   }
 
+  // why two concepts scored the way they did — the forward/backward mapping tree behind the number
   @GetMapping("/explain")
   public Map<String, Object> explain(
       @RequestParam("a") String a,
@@ -150,6 +158,7 @@ public class ElhSimilarityController {
     return result;
   }
 
+  // every concept the explainer knows — feeds the frontend's autocomplete/picker
   @GetMapping("/concepts")
   public Map<String, Object> listConcepts() {
     List<String> concepts = service.listConcepts();
@@ -159,6 +168,7 @@ public class ElhSimilarityController {
         "concepts", concepts);
   }
 
+  // readiness + request/timing metrics; doesn't gate on isReady so you can poll it while warming up
   @GetMapping("/health")
   public Map<String, Object> health() {
     Map<String, Object> body = new java.util.LinkedHashMap<>();

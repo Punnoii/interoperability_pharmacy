@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { AtSign, Eye, EyeOff, User } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
+// friendly copy for the ?error=... codes the google oauth callback can redirect back with
 const OAUTH_ERRORS: Record<string, string> = {
   google_not_configured: 'Google sign-in is not configured yet.',
   google_denied: 'Google sign-in was cancelled.',
@@ -16,6 +17,8 @@ const OAUTH_ERRORS: Record<string, string> = {
   google_error: 'Google sign-in failed. Please try again.',
 };
 
+// combined login / register form, plus the "Sign in with Google" entry point. one form toggles
+// between the two modes; registration is only offered when the backend says it's enabled.
 export default function Login() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [username, setUsername] = useState('');
@@ -31,6 +34,7 @@ export default function Login() {
   const router = useRouter();
   const { setUser } = useAuth();
 
+  // surface an oauth failure passed back as ?error=, then scrub it from the URL so a refresh is clean
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get('error');
     if (code) {
@@ -39,6 +43,7 @@ export default function Login() {
     }
   }, []);
 
+  // ask the backend whether self-registration is open; default closed on any failure
   useEffect(() => {
     fetch('/api/auth/registration-status')
       .then((r) => (r.ok ? r.json() : { enabled: false }))
@@ -46,10 +51,12 @@ export default function Login() {
       .catch(() => setRegistrationEnabled(false));
   }, []);
 
+  // if registration gets disabled while the user is on the sign-up view, kick them back to login
   useEffect(() => {
     if (!registrationEnabled && isRegistering) setIsRegistering(false);
   }, [registrationEnabled, isRegistering]);
 
+  // one handler for both modes — picks the endpoint + payload off isRegistering
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');

@@ -6,6 +6,7 @@ import { APP_CONFIG } from "@/lib/config";
 
 const { routes } = APP_CONFIG.api;
 
+// one hit from our /api/wikidata proxy — qid + the wikidata iri to link out to
 export interface WikidataItem {
   qid: string;
   iri: string;
@@ -21,14 +22,18 @@ interface WikidataPopupProps {
   onClose: () => void;
 }
 
+// modal that looks up a table cell's text on wikidata; opened from a row click in QueryPanel
 export default function WikidataPopup({ isDark, term, alternatives, onClose }: WikidataPopupProps) {
+  // query is the term we're actually searching — starts as `term` but the alt chips swap it
   const [query, setQuery] = useState(term);
   const [items, setItems] = useState<WikidataItem[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // re-seed when parent hands us a different cell to look up
   useEffect(() => setQuery(term), [term]);
 
+  // fetch the wikidata proxy; swallows nothing — sets error state instead so the body can show it
   const load = useCallback(async (q: string) => {
     setLoading(true);
     setError(null);
@@ -48,10 +53,12 @@ export default function WikidataPopup({ isDark, term, alternatives, onClose }: W
     }
   }, []);
 
+  // re-run the lookup whenever query changes (chip click or new term)
   useEffect(() => {
     if (query.trim()) load(query.trim());
   }, [query, load]);
 
+  // esc closes the whole popup
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -60,6 +67,7 @@ export default function WikidataPopup({ isDark, term, alternatives, onClose }: W
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  // theme-dependent class bundles, picked once per render
   const panel = isDark ? "bg-slate-900 border-slate-700" : "bg-white border-gray-200";
   const text = isDark ? "text-slate-100" : "text-gray-900";
   const muted = isDark ? "text-slate-400" : "text-gray-500";
@@ -74,6 +82,7 @@ export default function WikidataPopup({ isDark, term, alternatives, onClose }: W
     : "bg-blue-50 border-blue-300 text-blue-700";
 
   return (
+    // full-screen dimmed backdrop; click anywhere outside the card closes
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
       onClick={onClose}
@@ -105,6 +114,7 @@ export default function WikidataPopup({ isDark, term, alternatives, onClose }: W
           </button>
         </div>
 
+        {/* other searchable terms from the same row — click one to re-run the lookup against it */}
         {alternatives.length > 0 && (
           <div className={`flex flex-wrap gap-1.5 px-5 py-3 border-b ${divide}`}>
             {alternatives.map((alt) => (
@@ -122,6 +132,7 @@ export default function WikidataPopup({ isDark, term, alternatives, onClose }: W
           </div>
         )}
 
+        {/* body is a little state machine: loading → error → empty → hits */}
         <div className="flex-1 overflow-auto px-5 py-4">
           {loading && (
             <div className={`flex items-center justify-center py-10 ${muted}`}>

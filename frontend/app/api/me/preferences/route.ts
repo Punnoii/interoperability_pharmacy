@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
+// read the user's ui prefs (just the dark-mode flag for now)
 export async function GET() {
   const session = await getSession();
   if (!session) {
@@ -20,6 +21,7 @@ export async function GET() {
   return NextResponse.json({ darkMode: user.darkMode });
 }
 
+// persist a pref change so dark mode follows the user across devices, not just localStorage
 export async function PATCH(req: NextRequest) {
   const session = await getSession();
   if (!session) {
@@ -33,6 +35,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "invalid json body" }, { status: 400 });
   }
 
+  // only accept a real boolean — ignore anything else so a bad payload can't null the column
   const data: { darkMode?: boolean } = {};
   if (typeof body.darkMode === "boolean") {
     data.darkMode = body.darkMode;

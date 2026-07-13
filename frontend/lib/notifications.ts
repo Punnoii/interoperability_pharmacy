@@ -29,12 +29,14 @@ interface NotificationStore {
   seedOnce: () => void;
 }
 
+// in-app notification bell, backed by zustand + localStorage so it survives reloads
 export const useNotifications = create<NotificationStore>()(
   persist(
     (set, get) => ({
       items: [],
       seeded: false,
 
+      // prepend a new notice; drop empty titles and cap the list so storage can't grow forever
       push: (n) => {
         const title = n.title.trim();
         if (!title) return;
@@ -59,6 +61,7 @@ export const useNotifications = create<NotificationStore>()(
 
       clear: () => set({ items: [] }),
 
+      // one-time welcome message, guarded by a persisted flag so it doesn't reappear every visit
       seedOnce: () => {
         if (get().seeded) return;
         set({ seeded: true });
@@ -77,10 +80,12 @@ export const useNotifications = create<NotificationStore>()(
   ),
 );
 
+// fire a notification from outside react (event handlers, async callbacks) without a hook
 export function notify(n: { type: NotificationType; title: string; message?: string }) {
   useNotifications.getState().push(n);
 }
 
+// thin per-type wrappers so call sites read like notifySuccess("saved")
 export const notifyInfo = (title: string, message?: string) => notify({ type: "info", title, message });
 export const notifySuccess = (title: string, message?: string) => notify({ type: "success", title, message });
 export const notifyWarning = (title: string, message?: string) => notify({ type: "warning", title, message });

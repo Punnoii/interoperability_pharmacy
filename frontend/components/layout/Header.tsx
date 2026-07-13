@@ -10,6 +10,7 @@ interface HeaderProps {
   setIsDark: (val: boolean) => void;
 }
 
+// top bar: brand link, notifications, theme toggle, and the current user's name + profile link
 export default function Header({ isDark, setIsDark }: HeaderProps) {
   const { user } = useAuth();
 
@@ -57,6 +58,7 @@ export default function Header({ isDark, setIsDark }: HeaderProps) {
   );
 }
 
+// square icon button; forwards aria-label etc. through ...rest, custom className overrides the default theming
 function IconButton({
   isDark,
   children,

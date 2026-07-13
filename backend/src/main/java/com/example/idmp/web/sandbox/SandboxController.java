@@ -26,6 +26,8 @@ import com.example.idmp.web.session.SessionCookieFilter;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+// per-session scratch VKG: upload your own ontology/mapping/data and query it in isolation
+// allowCredentials=false — session is tracked by the httpOnly sid cookie, no cross-origin creds needed
 @RestController
 @RequestMapping("/api/sandbox")
 @CrossOrigin(origins = "*", allowCredentials = "false")
@@ -37,6 +39,7 @@ public class SandboxController {
     this.service = service;
   }
 
+  // accept the five known file slots (all optional) and (re)build this session's sandbox from them
   @PostMapping("/upload")
   public Map<String, Object> upload(
       HttpServletRequest req,
@@ -46,6 +49,7 @@ public class SandboxController {
       @RequestParam(value = "properties", required = false) MultipartFile properties,
       @RequestParam(value = "catalog",    required = false) MultipartFile catalog) {
 
+    // fixed slot order so the service always knows which upload is which
     Map<String, MultipartFile> slots = new LinkedHashMap<>();
     slots.put("ontology", ontology);
     slots.put("database", database);
@@ -53,6 +57,7 @@ public class SandboxController {
     slots.put("properties", properties);
     slots.put("catalog", catalog);
 
+    // everything's optional individually, but an upload with zero files is a client mistake
     boolean any = slots.values().stream().anyMatch(f -> f != null && !f.isEmpty());
     if (!any) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "At least one file required");
@@ -63,6 +68,7 @@ public class SandboxController {
     return describe(box);
   }
 
+  // what's loaded for this session; distinct {empty:true} shape when nothing's been uploaded yet
   @GetMapping("/status")
   public Map<String, Object> status(HttpServletRequest req) {
     String sid = SessionCookieFilter.require(req);
@@ -75,6 +81,7 @@ public class SandboxController {
     return describe(box);
   }
 
+  // tear down this session's sandbox (frees the in-memory model)
   @DeleteMapping
   public Map<String, Object> clear(HttpServletRequest req) {
     String sid = SessionCookieFilter.require(req);
@@ -82,6 +89,7 @@ public class SandboxController {
     return Map.of("cleared", true);
   }
 
+  // run SPARQL against the session's own sandbox rather than the shared Ontop endpoint
   @PostMapping(value = "/query", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<String> query(HttpServletRequest req, @RequestBody Map<String, String> body) {
     String sid = SessionCookieFilter.require(req);
@@ -94,12 +102,15 @@ public class SandboxController {
       String result = service.querySparql(sid, sparql, accept);
       return ResponseEntity.ok().contentType(MediaType.parseMediaType(accept)).body(result);
     } catch (IllegalStateException ex) {
+      // no sandbox loaded yet — 409 tells the UI to prompt for an upload first
       throw new ResponseStatusException(HttpStatus.CONFLICT, ex.getMessage());
     } catch (Exception ex) {
+      // otherwise assume it's a bad query and bounce it back as a 400
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query error: " + ex.getMessage());
     }
   }
 
+  // persist the current sandbox as the session's durable profile (see ProfileController to restore)
   @PostMapping("/save")
   public Map<String, Object> save(HttpServletRequest req) {
     String sid = SessionCookieFilter.require(req);
@@ -111,6 +122,7 @@ public class SandboxController {
     return out;
   }
 
+  // shared response shape for upload/status — sid, counts, and per-slot file metadata
   private Map<String, Object> describe(Sandbox box) {
     Map<String, Object> resp = new LinkedHashMap<>();
     resp.put("sid", box.sid);
@@ -126,6 +138,7 @@ public class SandboxController {
     return resp;
   }
 
+  // turn spring's oversized-multipart error into a clean 413 with the configured limit
   @ExceptionHandler(MaxUploadSizeExceededException.class)
   public ResponseEntity<Map<String, Object>> tooLarge(MaxUploadSizeExceededException ex) {
     return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(Map.of(

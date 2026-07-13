@@ -1,5 +1,6 @@
 import type { QueryTemplate } from "./queryTemplates";
 
+// starter queries for the sandbox (user-uploaded ontology) — generic RDF/OWL/SKOS, no IDMP prefixes since the schema is unknown
 const COMMON_PREFIXES = `PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX owl:  <http://www.w3.org/2002/07/owl#>
@@ -7,12 +8,14 @@ PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
 `;
 
+// what the sandbox editor is pre-filled with on first load
 export const SANDBOX_DEFAULT_QUERY = `${COMMON_PREFIXES}
 SELECT ?subject ?predicate ?object
 WHERE { ?subject ?predicate ?object }
 LIMIT 25
 `;
 
+// schema-discovery queries — list classes/predicates/labels to help a user probe an unfamiliar upload
 export const SANDBOX_TEMPLATES: QueryTemplate[] = [
   {
     id: "sb-peek",

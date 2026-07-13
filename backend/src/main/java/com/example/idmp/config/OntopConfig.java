@@ -18,6 +18,7 @@ import org.springframework.web.client.RestClient;
 })
 
 public class OntopConfig {
+  // default client for talking to Ontop — long read timeout since some SPARQL joins are slow
   @Bean
   @Primary
   public RestClient restClient(RestClient.Builder builder) {
@@ -28,6 +29,7 @@ public class OntopConfig {
         .build();
   }
 
+  // separate client for wikidata — tight timeouts, it's an optional enrichment we don't want blocking us
   @Bean
   public RestClient wikidataRestClient(RestClient.Builder builder) {
     return builder

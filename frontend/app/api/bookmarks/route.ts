@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
+// list the signed-in user's saved queries, newest first. scoped to session.sub so you only see your own
 export async function GET() {
   const session = await getSession();
   if (!session) {
@@ -23,12 +24,14 @@ export async function GET() {
   return NextResponse.json({ bookmarks });
 }
 
+// save a new query bookmark for the current user
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
   }
 
+  // stale cookie can outlive its user (e.g. db reset); check first so the insert doesn't blow up on the FK
   const userExists = await prisma.user.findUnique({
     where: { id: session.sub },
     select: { id: true },
@@ -49,6 +52,7 @@ export async function POST(req: NextRequest) {
 
   const name = typeof body.name === "string" ? body.name.trim() : "";
   const query = typeof body.query === "string" ? body.query.trim() : "";
+  // source is which dataset the query targets; default to "all" when the client omits it
   const source =
     typeof body.source === "string" && body.source.trim().length > 0
       ? body.source.trim()
@@ -89,5 +93,5 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  return NextResponse.json({ bookmark }, { status: 201 });
+  return NextResponse.json({ bookmark }, { status: 201 }); // 201 + the created row so the client can render it without a refetch
 }

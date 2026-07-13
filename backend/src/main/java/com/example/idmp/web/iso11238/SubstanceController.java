@@ -18,6 +18,7 @@ import com.example.idmp.web.dto.iso11238.SubstanceDetail;
 import com.example.idmp.web.dto.iso11238.SubstanceQuickHit;
 import com.example.idmp.web.dto.iso11238.SubstanceSummary;
 
+// ISO-11238 substance lookups — everything the substance browser UI hits
 @RestController
 @RequestMapping("/api/substances")
 @CrossOrigin(origins = "*")
@@ -32,11 +33,13 @@ public class SubstanceController {
         this.quickSearchService = quickSearchService;
     }
 
+    // full dump of substances — fine because the dataset is small and cached upstream
     @GetMapping
     public List<SubstanceSummary> listAll() {
         return substanceService.listAll();
     }
 
+    // typeahead-friendly: capped hit list, backed by its own cache for keystroke-rate calls
     @GetMapping("/quick-search")
     public List<SubstanceQuickHit> quickSearch(
             @RequestParam("q") String q,
@@ -45,28 +48,33 @@ public class SubstanceController {
         return quickSearchService.search(q, limit);
     }
 
+    // heavier name search returning full summaries, not the trimmed quick hits
     @GetMapping("/search")
     public List<SubstanceSummary> search(@RequestParam("name") String name) {
         validateKeyword(name);
         return substanceService.searchByName(name);
     }
 
+    // one substance's full detail, keyed by its IRI
     @GetMapping("/details")
     public SubstanceDetail details(@RequestParam("iri") String iri) {
         validateIri(iri);
         return substanceService.getDetails(iri);
     }
 
+    // resolve a plain identifier (CAS, UNII, etc.) across the mapped sources
     @GetMapping("/cross-source")
     public List<CrossSourceResult> crossSource(@RequestParam("identifier") String identifier) {
         validateNotBlank(identifier, "identifier");
         return substanceService.crossSourceLookup(identifier);
     }
 
+    // reject anything that could break out of the IRI when it's spliced into SPARQL downstream
     private static void validateIri(String value) {
         if (value == null || value.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing iri");
         }
+        // angle brackets / spaces would let a caller escape the <...> IRI term in the query
         if (value.contains("<") || value.contains(">") || value.contains(" ")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid IRI format");
         }
@@ -77,6 +85,7 @@ public class SubstanceController {
         }
     }
 
+    // length cap keeps a pathological keyword from bloating the generated query
     private static void validateKeyword(String keyword) {
         if (keyword == null || keyword.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing name");

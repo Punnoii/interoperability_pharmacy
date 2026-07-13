@@ -4,11 +4,13 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { AtSign, ArrowLeft } from "lucide-react";
 
+// "forgot password" screen — email in, reset link out
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  // devLink is only returned when mail isn't wired up (local dev) so you can click through
   const [devLink, setDevLink] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {

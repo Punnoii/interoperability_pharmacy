@@ -19,6 +19,7 @@ import com.example.idmp.service.similarity.ElhSimilarityService.Neighbor;
 import com.example.idmp.service.similarity.SparqlExpansionService.ExpansionEntry;
 import com.example.idmp.service.similarity.SparqlExpansionService.ExpansionResult;
 
+// covers the @expand rewriter — parsing annotations and splicing VALUES clauses in
 class SparqlExpansionServiceTest {
 
   private ElhSimilarityService similarityService;
@@ -30,6 +31,7 @@ class SparqlExpansionServiceTest {
     expander = new SparqlExpansionService(similarityService);
   }
 
+  // null/empty/whitespace-only all throw rather than sneak through
   @Test
   @DisplayName("blank input is rejected")
   void blankInputRejected() {
@@ -41,6 +43,7 @@ class SparqlExpansionServiceTest {
         .isInstanceOf(IllegalArgumentException.class);
   }
 
+  // no @expand comment → query passes through byte-for-byte, no expansions
   @Test
   @DisplayName("query with no annotation is returned unchanged")
   void noAnnotationPassthrough() {
@@ -51,6 +54,7 @@ class SparqlExpansionServiceTest {
     assertThat(result.expansions()).isEmpty();
   }
 
+  // the seed itself leads the list at score 1.0, then the neighbours, inside WHERE
   @Test
   @DisplayName("single annotation produces a VALUES clause with seed + neighbours")
   void singleAnnotationProducesValuesClause() {
@@ -82,6 +86,7 @@ class SparqlExpansionServiceTest {
     assertThat(valuesPos).isGreaterThan(wherePos);
   }
 
+  // iri=atc: option renders atc:CODE tokens instead of quoted literals
   @Test
   @DisplayName("IRI prefix option emits prefixed IRIs instead of string literals")
   void iriPrefixOption() {
@@ -101,6 +106,7 @@ class SparqlExpansionServiceTest {
     assertThat(result.expansions().get(0).iriPrefix()).isEqualTo("atc:");
   }
 
+  // minScore=0.6 drops anything below the threshold; seed stays regardless
   @Test
   @DisplayName("minScore option filters out low-scoring neighbours")
   void minScoreFiltersLowScores() {
@@ -123,6 +129,7 @@ class SparqlExpansionServiceTest {
         .containsExactly("M01AE01", "M01AE02", "M01AB01");
   }
 
+  // two @expand lines → two VALUES clauses, both variables handled in order
   @Test
   @DisplayName("multiple annotations in one query are all processed")
   void multipleAnnotations() {
@@ -145,6 +152,7 @@ class SparqlExpansionServiceTest {
         .contains("VALUES ?antibiotic");
   }
 
+  // topK returns null (seed not in the graph) → annotation dropped, query untouched
   @Test
   @DisplayName("unknown concept causes the annotation to be skipped silently")
   void unknownConceptIsSkipped() {
@@ -159,6 +167,7 @@ class SparqlExpansionServiceTest {
     assertThat(result.expandedSparql()).isEqualTo(input);
   }
 
+  // leaving scope off the annotation falls back to level 2
   @Test
   @DisplayName("scope defaults to 2 when omitted")
   void scopeDefaultsToTwo() {
@@ -173,6 +182,7 @@ class SparqlExpansionServiceTest {
     assertThat(result.expansions().get(0).scope()).isEqualTo(2);
   }
 
+  // no WHERE { to splice into → append VALUES at the end with a warning comment
   @Test
   @DisplayName("query without WHERE clause appends VALUES at the end (defensive fallback)")
   void noWhereFallback() {

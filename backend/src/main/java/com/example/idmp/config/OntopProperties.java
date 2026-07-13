@@ -2,6 +2,7 @@ package com.example.idmp.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+// where the Ontop SPARQL endpoint lives + the accept header we send it, bound from ontop.* config
 @ConfigurationProperties(prefix = "ontop")
 public class OntopProperties {
   private String endpoint = "http://localhost:8080/sparql";

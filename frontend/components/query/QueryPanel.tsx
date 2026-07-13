@@ -17,8 +17,10 @@ import { useUserPreferences } from "@/lib/userPreferences";
 const { routes } = APP_CONFIG.api;
 import type { SparqlBinding } from "@/components/graph/graphUtils";
 
+// nlp = ask-in-english view, manual = raw SPARQL editor
 type QueryMode = "nlp" | "manual";
 
+// the slice of the SPARQL JSON results shape we actually read (vars + rows)
 interface SparqlResults {
   head: { vars: string[] };
   results: { bindings: SparqlBinding[] };
@@ -26,6 +28,7 @@ interface SparqlResults {
 
 import type { QueryTemplate as ImportedTemplate } from "@/lib/queryTemplates";
 
+// endpoint + requestShape are overridable so the same panel drives both the live app and the sandbox
 interface QueryPanelProps {
   isDark: boolean;
   sparqlEndpoint?: string;
@@ -34,6 +37,7 @@ interface QueryPanelProps {
   templatesOverride?: ImportedTemplate[];
 }
 
+// a saved query as returned by the bookmarks api
 interface BookmarkItem {
   id: string;
   name: string;
@@ -41,6 +45,7 @@ interface BookmarkItem {
   createdAt: string;
 }
 
+// one entry in the in-editor autocomplete dropdown (mixed source: template/substance/bookmark)
 interface AcSuggestion {
   kind: "template" | "substance" | "bookmark";
   key: string;
@@ -51,13 +56,16 @@ interface AcSuggestion {
 
 type ViewMode = "table" | "graph";
 
+// column-name substrings that flag a "human-readable name" column — those terms lead the wikidata list
 const NAME_HINTS = ["name", "label", "title", "preferred", "display"];
 
+// last path/hash segment of a URI, url-decoded — turns a full IRI into something short to display
 function localName(uri: string): string {
   const tail = uri.split(/[#/]/).filter(Boolean).pop() ?? uri;
   return decodeURIComponent(tail);
 }
 
+// display text for a cell: shorten URIs to their local name, trim, null out empties
 function cellText(cell: { type?: string; value: string } | undefined): string | null {
   if (!cell?.value) return null;
   const raw = cell.type === "uri" ? localName(cell.value) : cell.value;
@@ -65,10 +73,12 @@ function cellText(cell: { type?: string; value: string } | undefined): string | 
   return trimmed.length > 0 ? trimmed : null;
 }
 
+// worth offering as a wikidata lookup? drop codes/ids and huge blobs; keep latin or thai text
 function isSearchable(text: string): boolean {
   return text.length > 1 && text.length <= 120 && /[a-zA-Z฀-๿]/.test(text);
 }
 
+// pull the searchable terms out of a row, name-ish columns first, then literals, then uris; deduped
 function rowTerms(binding: SparqlBinding, vars: string[]): string[] {
   const named: string[] = [];
   const literals: string[] = [];
@@ -83,9 +93,11 @@ function rowTerms(binding: SparqlBinding, vars: string[]): string[] {
     else literals.push(text);
   }
 
+  // order matters: the first term becomes the popup's default search, so lead with the best label
   return [...new Set([...named, ...literals, ...uris])];
 }
 
+// sample query shown on first load — products with name + NDC code, a gentle intro to the schema
 const DEFAULT_QUERY = `PREFIX idmp-mprd: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11615-MedicinalProducts/>
 PREFIX cmns-dsg: <https://www.omg.org/spec/Commons/Designators/>
 PREFIX cmns-id: <https://www.omg.org/spec/Commons/Identifiers/>
@@ -109,20 +121,25 @@ export default function QueryPanel({
   initialQuery,
   templatesOverride,
 }: QueryPanelProps) {
+  // sandbox pages can pass their own template set; otherwise use the shipped catalog
   const templates = templatesOverride ?? QUERY_TEMPLATES;
+  // autocomplete tuning knobs live in the user-prefs store so they're adjustable at runtime
   const AC_THRESHOLD = useUserPreferences((s) => s.acThreshold);
   const AC_MAX_RESULTS = useUserPreferences((s) => s.acMaxResults);
   const PAGE_SIZE = useUserPreferences((s) => s.pageSize);
   const [queryMode, setQueryMode] = useState<QueryMode>("manual");
+  // the editor query + everything about the last run (results/error/loading/paging/view)
   const [query, setQuery] = useState(initialQuery ?? DEFAULT_QUERY);
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<SparqlResults | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("table");
   const [page, setPage] = useState(1);
+  // wikiTerms non-null = the Wikidata popup is open with these candidate terms
   const [wikiTerms, setWikiTerms] = useState<string[] | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
 
+  // bookmarks list + the inline menu / edit-modal state that hangs off it
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
   const [bookmarksLoading, setBookmarksLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -130,6 +147,8 @@ export default function QueryPanel({
   const [editingBookmark, setEditingBookmark] = useState<BookmarkItem | null>(null);
   const [editQueryText, setEditQueryText] = useState("");
   const [editSaving, setEditSaving] = useState(false);
+  // in-editor autocomplete: whether it's open, the highlighted index, the word under the caret,
+  // and the debounced substance hits fetched for that word
   const [acOpen, setAcOpen] = useState(false);
   const [acIdx, setAcIdx] = useState(0);
   const [acWord, setAcWord] = useState("");
@@ -137,13 +156,16 @@ export default function QueryPanel({
   const [debouncedWord] = useDebounce(acWord, 250);
   const queryTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
+  // natural-language view: the question, the generated SPARQL, and its own loading/error
   const [nlpInput, setNlpInput] = useState("");
   const [nlpSparql, setNlpSparql] = useState("");
   const [nlpIsGenerating, setNlpIsGenerating] = useState(false);
   const [nlpGenError, setNlpGenError] = useState<string | null>(null);
 
+  // results container — we scroll it into view after a run finishes
   const resultsRef = useRef<HTMLDivElement>(null);
 
+  // load saved queries from the api; any failure just leaves an empty list
   const fetchBookmarks = useCallback(async () => {
     setBookmarksLoading(true);
     try {
@@ -165,6 +187,7 @@ export default function QueryPanel({
     fetchBookmarks();
   }, [fetchBookmarks]);
 
+  // save the current editor query as a bookmark; prompts for a name, optimistically prepends the new row
   async function handleSaveBookmark() {
     if (!query.trim() || saving) return;
     const defaultName = `Query ${new Date().toLocaleString()}`;
@@ -186,6 +209,7 @@ export default function QueryPanel({
       if (data.bookmark) {
         setBookmarks((prev) => [data.bookmark, ...prev]);
       } else {
+        // server didn't echo the row back — refetch to stay in sync
         fetchBookmarks();
       }
     } catch (e) {
@@ -195,12 +219,14 @@ export default function QueryPanel({
     }
   }
 
+  // load a saved query into the manual editor (confirm first, switch out of nlp mode)
   function handleLoadBookmark(b: BookmarkItem) {
     if (!confirm(`Do you wanna use ${b.name} to Query?`)) return;
     setQueryMode("manual");
     setQuery(b.query);
   }
 
+  // delete a bookmark, dropping it from the list on success
   async function handleDeleteBookmark(id: string) {
     setOpenMenuId(null);
     if (!confirm("ลบ bookmark นี้?")) return;
@@ -217,6 +243,7 @@ export default function QueryPanel({
     }
   }
 
+  // rename via prompt; PATCH name only, then swap the updated row in place
   async function handleRenameBookmark(b: BookmarkItem) {
     setOpenMenuId(null);
     const next = window.prompt("Rename saved query:", b.name)?.trim();
@@ -242,18 +269,21 @@ export default function QueryPanel({
     }
   }
 
+  // open the edit-query modal seeded with the bookmark's current SPARQL
   function handleEditBookmarkOpen(b: BookmarkItem) {
     setOpenMenuId(null);
     setEditingBookmark(b);
     setEditQueryText(b.query);
   }
 
+  // close the modal — but not mid-save
   function handleEditBookmarkCancel() {
     if (editSaving) return;
     setEditingBookmark(null);
     setEditQueryText("");
   }
 
+  // persist the edited SPARQL back to the bookmark (doesn't touch the main editor)
   async function handleEditBookmarkSave() {
     if (!editingBookmark) return;
     const next = editQueryText.trim();
@@ -261,6 +291,7 @@ export default function QueryPanel({
       alert("Query ห้ามว่าง");
       return;
     }
+    // no change — just close, skip the round-trip
     if (next === editingBookmark.query) {
       setEditingBookmark(null);
       setEditQueryText("");
@@ -292,6 +323,7 @@ export default function QueryPanel({
     }
   }
 
+  // one-shot on mount: pick up a query handed over from another page (e.g. history) and load it
   useEffect(() => {
     const pending = popPendingQuery();
     if (pending) {
@@ -300,6 +332,7 @@ export default function QueryPanel({
     }
   }, []);
 
+  // fetch substance matches for the word under the caret while autocomplete is open
   useEffect(() => {
     if (!acOpen || debouncedWord.length < 2) {
       setAcSubstances([]);
@@ -315,6 +348,7 @@ export default function QueryPanel({
     return () => ctrl.abort();
   }, [acOpen, debouncedWord]);
 
+  // merge substances + templates + bookmarks into one ranked suggestion list for the dropdown
   const acSuggestions: AcSuggestion[] = useMemo(() => {
     const w = acWord.toLowerCase();
     if (w.length < 2) return [];
@@ -322,6 +356,7 @@ export default function QueryPanel({
     const scored: Array<{ item: AcSuggestion; score: number }> = [];
     const seenIri = new Set<string>();
 
+    // substances: score name vs unii, build a full-profile query pre-seeded with the IRI
     acSubstances.forEach((s) => {
       const dedupeKey = `${s.unii}:${s.name}`;
       if (seenIri.has(dedupeKey)) return;
@@ -345,6 +380,7 @@ export default function QueryPanel({
       });
     });
 
+    // templates: best of name/description/keyword scores
     templates.forEach((t) => {
       const nameScore = hybridScore(w, t.name);
       const descScore = hybridScore(w, t.description);
@@ -366,6 +402,7 @@ export default function QueryPanel({
       });
     });
 
+    // bookmarks: single name score
     bookmarks.forEach((b) => {
       const score = hybridScore(w, b.name);
       if (score < AC_THRESHOLD) return;
@@ -385,10 +422,12 @@ export default function QueryPanel({
     return scored.slice(0, AC_MAX_RESULTS).map((s) => s.item);
   }, [acWord, acSubstances, bookmarks, templates]);
 
+  // keep the highlight in range when the suggestion list shrinks
   useEffect(() => {
     if (acIdx >= acSuggestions.length) setAcIdx(Math.max(0, acSuggestions.length - 1));
   }, [acSuggestions, acIdx]);
 
+  // global ⌘K / Ctrl+K opens the command palette from anywhere
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
@@ -400,6 +439,7 @@ export default function QueryPanel({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // palette callback: drop the chosen query into the editor, optionally firing it right away
   function handleQuickSearchApply(nextQuery: string, run: boolean) {
     setQueryMode("manual");
     setQuery(nextQuery);
@@ -407,12 +447,14 @@ export default function QueryPanel({
     if (run) void handleRun(nextQuery);
   }
 
+  // the whitespace-delimited token ending at the caret — what autocomplete matches against
   function getCurrentWord(value: string, caret: number): string {
     const before = value.slice(0, caret);
     const m = before.match(/(\S+)$/);
     return m ? m[1] : "";
   }
 
+  // on every keystroke: update the query, then open/close autocomplete based on the word at the caret
   function handleQueryChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     const v = e.target.value;
     setQuery(v);
@@ -426,11 +468,13 @@ export default function QueryPanel({
     }
   }
 
+  // accept a suggestion: replace the whole query, close the list, then park the caret at the end
   function handleApplySuggestion(idx: number) {
     const s = acSuggestions[idx];
     if (!s) return;
     setQuery(s.query);
     setAcOpen(false);
+    // defer the focus/caret move so it runs after React commits the new value
     setTimeout(() => {
       const el = queryTextareaRef.current;
       if (el) {
@@ -440,6 +484,7 @@ export default function QueryPanel({
     }, 0);
   }
 
+  // textarea keys: Ctrl/⌘+Enter runs (only when the dropdown's closed), arrows/enter/tab drive autocomplete
   function handleQueryKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !acOpen) {
       e.preventDefault();
@@ -463,6 +508,7 @@ export default function QueryPanel({
     }
   }
 
+  // ask the nlp endpoint to turn the english question into SPARQL; result lands in nlpSparql
   async function handleGenerate() {
     if (!nlpInput.trim() || nlpIsGenerating) return;
     setNlpIsGenerating(true);
@@ -490,6 +536,7 @@ export default function QueryPanel({
     }
   }
 
+  // run a query against the endpoint; overrideQuery lets callers (nlp/palette) run without touching editor state
   async function handleRun(overrideQuery?: string) {
     const sparqlToRun = overrideQuery ?? query;
     if (!sparqlToRun.trim()) return;
@@ -500,6 +547,7 @@ export default function QueryPanel({
     setViewMode("table");
 
     try {
+      // the sandbox endpoint wants { sparql }, the default one wants { query } — same payload otherwise
       const body = requestShape === "sandbox"
         ? { sparql: sparqlToRun, accept: "application/sparql-results+json" }
         : { query: sparqlToRun, accept: "application/sparql-results+json" };
@@ -514,10 +562,12 @@ export default function QueryPanel({
       const data = await res.json();
       setResults(data);
       const rows = Array.isArray(data?.results?.bindings) ? data.results.bindings.length : 0;
+      // log every run (success or fail) to the history sidebar
       pushHistory({
         query: sparqlToRun,
         resultCount: rows,
       });
+      // let the DOM paint the results first, then scroll them into view
       setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Unknown error";
@@ -531,11 +581,13 @@ export default function QueryPanel({
     }
   }
 
+  // derived from the last result set: rows, column vars, and the current page's slice
   const bindings = results?.results?.bindings ?? [];
   const vars = results?.head?.vars ?? [];
   const totalPages = Math.max(1, Math.ceil(bindings.length / PAGE_SIZE));
   const pageBindings = bindings.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+  // shared theme class bundle used by both render views
   const tc = themeClasses(isDark);
   const card = tc.surface;
   const muted = tc.muted;
@@ -543,6 +595,7 @@ export default function QueryPanel({
   const inputCls = tc.input;
 
   return (
+    // sidebar (mode switch + bookmarks) beside the main pane; stacks vertically on mobile
     <div className="flex flex-col md:flex-row md:h-full md:overflow-hidden">
       <DatabaseInfoPanel
         isDark={isDark}
@@ -560,9 +613,11 @@ export default function QueryPanel({
       />
 
       <section className="md:flex-1 md:overflow-auto">
+        {/* swap between the natural-language and manual-SPARQL views */}
         {queryMode === "nlp" ? renderNLPView() : renderManualView()}
       </section>
 
+      {/* edit-query modal — lives at the panel root so its backdrop covers both columns */}
       {editingBookmark && (
         <div
           className="fixed inset-0 z-[9998] flex items-center justify-center p-4 bg-black/60"
@@ -641,6 +696,7 @@ export default function QueryPanel({
     </div>
   );
 
+  // natural-language view: question box → generated SPARQL box → shared results block
   function renderNLPView() {
     const card = tc.surface;
     const muted = tc.muted;
@@ -694,6 +750,7 @@ export default function QueryPanel({
           )}
         </div>
 
+        {/* read-only preview of the generated SPARQL, with a placeholder until one exists */}
         <div className={`flex flex-col gap-2 rounded-lg border p-3 ${card}`}>
           <label className={`text-xs font-semibold ${subtle}`}>Generated SPARQL</label>
           <pre className={`min-h-[160px] max-h-72 overflow-auto px-3 py-2 rounded border text-xs font-mono leading-relaxed whitespace-pre-wrap break-words ${readOnlyBg}`}>
@@ -702,6 +759,7 @@ export default function QueryPanel({
           <div className="flex items-center justify-between gap-2">
             <button
               onClick={() => {
+                // hand the generated query off to the manual editor for tweaking
                 if (!nlpSparql.trim()) return;
                 setQuery(nlpSparql);
                 setQueryMode("manual");
@@ -727,6 +785,7 @@ export default function QueryPanel({
           </div>
         </div>
 
+        {/* results block: error / loading / empty / table+graph, gated on the run state */}
         <div ref={resultsRef} className={`md:flex-1 rounded-lg border overflow-hidden ${card}`}>
           {error && (
             <div className="flex flex-col items-center justify-center h-32 gap-2 px-6 text-red-500">
@@ -777,6 +836,7 @@ export default function QueryPanel({
               )}
               {viewMode === "table" && (
                 <div className="overflow-auto max-h-[70vh] md:max-h-none md:flex-1">
+                  {/* min-w keeps columns legible on narrow screens — the wrapper scrolls sideways instead */}
                   <table className="w-full min-w-[640px] text-sm border-collapse">
                     <thead className={`text-xs uppercase ${isDark ? "bg-slate-900 text-slate-400" : "bg-gray-50 text-gray-600"}`}>
                       <tr>
@@ -788,6 +848,7 @@ export default function QueryPanel({
                     </thead>
                     <tbody>
                       {pageBindings.map((binding, idx) => {
+                        // clicking a row with any searchable term opens the wikidata popup on it
                         const terms = rowTerms(binding, vars);
                         return (
                         <tr
@@ -848,6 +909,7 @@ export default function QueryPanel({
     );
   }
 
+  // manual view: the SPARQL textarea with inline autocomplete, Run/Save/Templates, then the results block
   function renderManualView() {
     return (
     <div className="flex flex-col md:h-full gap-4 p-4 sm:p-6 md:overflow-auto">
@@ -859,6 +921,7 @@ export default function QueryPanel({
             onChange={handleQueryChange}
             onKeyDown={handleQueryKeyDown}
             onBlur={() => {
+              // delay the close so a mousedown on a suggestion still registers before blur hides it
               setTimeout(() => setAcOpen(false), 150);
             }}
             rows={6}
@@ -866,6 +929,7 @@ export default function QueryPanel({
             className={`w-full resize-y min-h-[140px] px-3 rounded border text-sm font-mono leading-relaxed focus:outline-none focus:ring-1 focus:ring-blue-500 ${inputCls}`}
           />
 
+          {/* autocomplete dropdown, positioned under the textarea; keyboard-driven via handleQueryKeyDown */}
           {acOpen && acSuggestions.length > 0 && (
             <div
               className={`absolute left-0 right-0 top-full mt-1 z-50 max-h-72 overflow-y-auto rounded-md border shadow-xl ${
@@ -879,12 +943,14 @@ export default function QueryPanel({
               </div>
               {acSuggestions.map((s, i) => {
                 const isActive = acIdx === i;
+                // icon signals the source: substance / saved query / template
                 const Icon = s.kind === "substance" ? FlaskConical : s.kind === "bookmark" ? Bookmark : FileCode2;
                 return (
                   <div
                     key={s.key}
                     onMouseEnter={() => setAcIdx(i)}
                     onMouseDown={(e) => {
+                      // preventDefault so the textarea keeps focus (blur would otherwise close the list first)
                       e.preventDefault();
                       handleApplySuggestion(i);
                     }}
@@ -930,6 +996,7 @@ export default function QueryPanel({
             </div>
           )}
         </div>
+        {/* action column beside the editor: run, save-as-bookmark, open the ⌘K palette */}
         <div className="flex flex-col gap-2">
           <button
             onClick={() => handleRun()}
@@ -964,6 +1031,7 @@ export default function QueryPanel({
         </div>
       </div>
 
+      {/* results block: error / loading / no-run / empty / table+graph */}
       <div ref={resultsRef} className={`md:flex-1 rounded-lg border overflow-hidden ${card}`}>
         {error && (
           <div className="flex flex-col items-center justify-center h-64 gap-2 px-6 text-red-500">
@@ -1017,6 +1085,7 @@ export default function QueryPanel({
                   icon={<Table2 size={13} />}
                   label="Table"
                 />
+                {/* graph needs at least two columns to draw an edge, so disable it below that */}
                 <ViewToggle
                   active={viewMode === "graph"}
                   onClick={() => setViewMode("graph")}
@@ -1045,6 +1114,7 @@ export default function QueryPanel({
 
             {viewMode === "table" && (
               <div className="overflow-auto max-h-[70vh] md:max-h-none md:flex-1">
+                {/* min-w keeps columns readable on mobile — the wrapper scrolls sideways instead of squishing */}
                 <table className="w-full min-w-[640px] text-sm border-collapse">
                   <thead
                     className={`text-xs uppercase ${isDark ? "bg-slate-900 text-slate-400" : "bg-gray-50 text-gray-600"
@@ -1067,6 +1137,7 @@ export default function QueryPanel({
                   </thead>
                   <tbody>
                     {pageBindings.map((binding, idx) => {
+                      // whole row is clickable when it has a lookupable term → opens the wikidata popup
                       const terms = rowTerms(binding, vars);
                       return (
                       <tr
@@ -1081,9 +1152,11 @@ export default function QueryPanel({
                         }
                       >
                         <td className={`px-3 py-2 text-xs font-mono ${muted}`}>
+                          {/* running row number across pages, not just within the current one */}
                           {(page - 1) * PAGE_SIZE + idx + 1}
                         </td>
                         {vars.map((v) => {
+                          // uris render as external links, literals as plain text, missing cells as a dash
                           const cell = binding[v];
                           const isUri = cell?.type === "uri";
                           return (
@@ -1118,6 +1191,7 @@ export default function QueryPanel({
                 </table>
               </div>
             )}
+            {/* pager only shows when there's more than one page */}
             {viewMode === "table" && totalPages > 1 && (
               <div
                 className={`flex items-center justify-between gap-3 px-4 py-2 border-t ${isDark ? "border-slate-700 bg-slate-900/50" : "border-gray-200 bg-gray-50"
@@ -1157,6 +1231,7 @@ export default function QueryPanel({
         )}
       </div>
 
+      {/* wikidata popup — first term is the default search, the rest are the alternative chips */}
       {wikiTerms && (
         <WikidataPopup
           isDark={isDark}
@@ -1166,6 +1241,7 @@ export default function QueryPanel({
         />
       )}
 
+      {/* ⌘K command palette */}
       {paletteOpen && (
         <QuickSearch
           isDark={isDark}
@@ -1180,6 +1256,7 @@ export default function QueryPanel({
   }
 }
 
+// left sidebar: the nlp/manual mode switch and the saved-queries list with its kebab menu
 function DatabaseInfoPanel({
   isDark,
   mode,
@@ -1220,8 +1297,10 @@ function DatabaseInfoPanel({
     ? "rounded border border-slate-800 bg-slate-950 p-2"
     : "rounded border border-gray-200 bg-gray-50 p-2";
 
+  // the kebab menu is a fixed-position popup; we store where to draw it (computed from the button rect)
   const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
 
+  // while a menu's open, close it on outside-click / scroll / resize (fixed positioning goes stale otherwise)
   useEffect(() => {
     if (!openMenuId) return;
     function close() {
@@ -1231,6 +1310,7 @@ function DatabaseInfoPanel({
     function onDocClick(e: MouseEvent) {
       const target = e.target as HTMLElement | null;
       if (!target) return;
+      // clicks on the popup itself or its own kebab button don't count as "outside"
       if (target.closest("[data-bookmark-popup]")) return;
       if (target.closest(`[data-bookmark-kebab="${openMenuId}"]`)) return;
       close();
@@ -1248,6 +1328,7 @@ function DatabaseInfoPanel({
     };
   }, [openMenuId, onOpenMenu]);
 
+  // fixed menu width, used both for styling and to clamp the popup inside the viewport
   const MENU_WIDTH = 168;
   const openBookmark = openMenuId ? bookmarks.find((b) => b.id === openMenuId) : null;
 
@@ -1331,11 +1412,13 @@ function DatabaseInfoPanel({
                         data-bookmark-kebab={b.id}
                         onClick={(e) => {
                           e.stopPropagation();
+                          // toggle: a second click on the open row's kebab closes it
                           if (isMenuOpen) {
                             onOpenMenu(null);
                             setMenuPos(null);
                             return;
                           }
+                          // anchor the popup under the button, right-aligned but clamped 8px inside the window
                           const rect = (
                             e.currentTarget as HTMLElement
                           ).getBoundingClientRect();
@@ -1372,6 +1455,7 @@ function DatabaseInfoPanel({
         </div>
       </div>
 
+      {/* the actual kebab popup — rendered at the aside root, positioned by the computed menuPos */}
       {openBookmark && menuPos && (
         <div
           role="menu"
@@ -1417,6 +1501,7 @@ function DatabaseInfoPanel({
   );
 }
 
+// one row of the kebab menu; danger flag paints it red for destructive actions like delete
 function MenuItem({
   isDark,
   icon,
@@ -1446,6 +1531,7 @@ function MenuItem({
   );
 }
 
+// the Table/Graph segmented control button; highlights when active, greys out when disabled
 function ViewToggle({
   active,
   onClick,
@@ -1483,6 +1569,7 @@ function ViewToggle({
   );
 }
 
+// prev/next pager button — thin wrapper for consistent styling + disabled state
 function PageBtn({
   isDark,
   disabled,
@@ -1508,14 +1595,16 @@ function PageBtn({
   );
 }
 
+// which page numbers to show: a sliding window of up to 7, keeping the current page centred
+// until it bumps against either end
 function pageNumbers(current: number, total: number): number[] {
   const max = Math.min(total, 7);
   const out: number[] = [];
   let start: number;
   if (total <= 7) start = 1;
-  else if (current <= 4) start = 1;
-  else if (current >= total - 3) start = total - 6;
-  else start = current - 3;
+  else if (current <= 4) start = 1;              // near the front — anchor at 1
+  else if (current >= total - 3) start = total - 6; // near the end — anchor so the last page shows
+  else start = current - 3;                      // middle — centre the window on current
   for (let i = 0; i < max; i++) out.push(start + i);
   return out;
 }

@@ -8,6 +8,7 @@ interface GraphSearchProps {
   isDark: boolean;
 }
 
+// controlled search box for the graph; clear button only shows once there's text
 export default function GraphSearch({ value, onChange, isDark }: GraphSearchProps) {
   return (
     <div

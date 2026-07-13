@@ -32,16 +32,21 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+// per-session scratch space: users upload their own ontology/data, query it in-memory with Jena, optionally persist to disk
 @Service
 public class SandboxService {
 
   private static final Logger log = LoggerFactory.getLogger(SandboxService.class);
+  // idle sandboxes get swept after 30 min so uploaded data doesn't linger in memory forever
   private static final Duration TTL = Duration.ofMinutes(30);
+  // saved profiles live under ~/.rxvkg/profiles/<sid> so they survive restarts
   private static final Path PROFILE_ROOT = Paths.get(
       System.getProperty("user.home"), ".rxvkg", "profiles");
 
+  // live sandboxes keyed by session id; concurrent because uploads and the cleanup task race
   private final Map<String, Sandbox> bySid = new ConcurrentHashMap<>();
 
+  // ingest the uploaded slots; only the "ontology" slot gets parsed into the queryable Jena model, the rest are just stored
   public Sandbox upload(String sid, Map<String, MultipartFile> slots) {
     Sandbox box = new Sandbox(sid);
 
@@ -52,6 +57,7 @@ public class SandboxService {
       String name = safeName(f.getOriginalFilename(), slot);
       byte[] bytes;
       try {
+        // slurp into memory - sandbox files are small demo uploads, not bulk data
         bytes = f.getBytes();
       } catch (IOException ex) {
         throw new RuntimeException("Failed to read " + slot + ": " + ex.getMessage(), ex);
@@ -68,16 +74,19 @@ public class SandboxService {
     return box;
   }
 
+  // touch on every read so an actively used sandbox keeps resetting its TTL
   public Sandbox get(String sid) {
     Sandbox box = bySid.get(sid);
     if (box != null) box.touch();
     return box;
   }
 
+  // drop the in-memory sandbox; saved profiles on disk are untouched
   public void clear(String sid) {
     bySid.remove(sid);
   }
 
+  // run arbitrary SPARQL against the session's model, formatting the result to match the query form + Accept
   public String querySparql(String sid, String sparql, String accept) {
     Sandbox box = get(sid);
     if (box == null) {
@@ -90,17 +99,18 @@ public class SandboxService {
     Query query = QueryFactory.create(sparql);
     Dataset ds = DatasetFactory.create(box.model);
 
+    // branch on query type - SELECT/ASK go to results JSON(/XML), CONSTRUCT/DESCRIBE come back as Turtle graphs
     try (QueryExecution exec = QueryExecutionFactory.create(query, ds)) {
       if (query.isSelectType()) {
         ResultSet rs = exec.execSelect();
         if (accept != null && accept.contains("xml")) {
           return ResultSetFormatter.asXMLString(rs);
         }
-        return ResultSetFormatter.asText(rs).isEmpty()
-            ? formatJson(rs)
-            : formatJson(rs);
+        // serialize straight to JSON — must NOT probe with asText() first, it drains the single-pass ResultSet and JSON would come back empty
+        return formatJson(rs);
       }
       if (query.isAskType()) {
+        // hand-build the tiny ASK envelope rather than pull in a formatter for a single boolean
         boolean ans = exec.execAsk();
         return "{\"head\":{},\"boolean\":" + ans + "}";
       }
@@ -116,6 +126,7 @@ public class SandboxService {
     }
   }
 
+  // Jena writes JSON to a stream, so buffer it and hand back the string
   private String formatJson(ResultSet rs) {
     java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
     ResultSetFormatter.outputAsJSON(baos, rs);
@@ -128,6 +139,7 @@ public class SandboxService {
     return w.toString();
   }
 
+  // persist the current session's uploaded files to disk under the sid; wipes any prior save first so it's a clean overwrite
   public Path saveAsProfile(String sid) {
     Sandbox box = get(sid);
     if (box == null || box.files.isEmpty()) {
@@ -139,6 +151,7 @@ public class SandboxService {
       if (Files.isDirectory(dir)) deleteRecursively(dir);
       Files.createDirectories(dir);
       for (SandboxFile f : box.files.values()) {
+        // encode the slot into the filename (slot_original) so restore can recover which slot each file belonged to
         Path target = dir.resolve(f.slot + "_" + f.filename);
         Files.copy(new ByteArrayInputStream(f.bytes), target, StandardCopyOption.REPLACE_EXISTING);
       }
@@ -149,6 +162,7 @@ public class SandboxService {
     return dir;
   }
 
+  // lightweight listing of a saved profile's files for the UI - name/size/mtime, no contents read
   public List<Map<String, Object>> describeProfile(String sid) {
     Path dir = PROFILE_ROOT.resolve(sid);
     if (!Files.isDirectory(dir)) return List.of();
@@ -170,6 +184,7 @@ public class SandboxService {
     return out;
   }
 
+  // remove a saved profile from disk; no-op if it was never saved
   public void deleteProfile(String sid) {
     Path dir = PROFILE_ROOT.resolve(sid);
     if (Files.isDirectory(dir)) {
@@ -182,6 +197,7 @@ public class SandboxService {
     }
   }
 
+  // rebuild an in-memory sandbox from a saved profile, undoing the slot_original filename encoding from saveAsProfile
   public Sandbox restoreFromProfile(String sid) {
     Path dir = PROFILE_ROOT.resolve(sid);
     if (!Files.isDirectory(dir)) {
@@ -192,6 +208,7 @@ public class SandboxService {
     try (var stream = Files.list(dir)) {
       stream.forEach(p -> {
         String fname = p.getFileName().toString();
+        // split on the first underscore: everything before is the slot, after is the original filename
         int us = fname.indexOf('_');
         if (us < 0) return;
         String slot = fname.substring(0, us);
@@ -211,6 +228,7 @@ public class SandboxService {
     return box;
   }
 
+  // periodic sweep of idle sandboxes; runs every 5 min (needs @EnableScheduling on the app)
   @Scheduled(fixedDelay = 5 * 60 * 1000)
   void cleanup() {
     Instant cutoff = Instant.now().minus(TTL);
@@ -222,6 +240,7 @@ public class SandboxService {
     }
   }
 
+  // parse RDF into the model; a bad file is warned-and-swallowed so one broken upload doesn't abort the whole session
   private void loadIntoModel(Model model, byte[] bytes, String filename) {
     Lang lang = guessLang(filename);
     try {
@@ -231,6 +250,7 @@ public class SandboxService {
     }
   }
 
+  // pick the RDF syntax off the extension; default to Turtle when it's anything we don't recognize
   private Lang guessLang(String filename) {
     String low = filename.toLowerCase();
     if (low.endsWith(".ttl")) return Lang.TURTLE;
@@ -242,11 +262,13 @@ public class SandboxService {
     return Lang.TURTLE;
   }
 
+  // strip any path off the uploaded name (no directory traversal) and fall back to the slot name if it's blank
   private String safeName(String original, String fallback) {
     if (original == null || original.isBlank()) return fallback;
     return Paths.get(original).getFileName().toString();
   }
 
+  // depth-first delete: sort by path depth descending so children go before their parent dir
   private void deleteRecursively(Path root) throws IOException {
     if (!Files.exists(root)) return;
     try (var stream = Files.walk(root)) {
@@ -257,6 +279,7 @@ public class SandboxService {
     }
   }
 
+  // one session's state: the raw files (LinkedHashMap to keep upload order) plus the parsed Jena model and TTL bookkeeping
   public static class Sandbox {
     public final String sid;
     public final Map<String, SandboxFile> files = new LinkedHashMap<>();
@@ -268,11 +291,13 @@ public class SandboxService {
       this.sid = sid;
     }
 
+    // bump last-used so the cleanup sweep leaves active sandboxes alone
     void touch() {
       this.lastUsed = Instant.now();
     }
   }
 
+  // one uploaded file held in memory - slot is its role (ontology/data/...), bytes are the raw content
   public static class SandboxFile {
     public final String slot;
     public final String filename;

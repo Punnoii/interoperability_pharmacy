@@ -9,6 +9,7 @@ import io.swagger.v3.oas.models.info.Info;
 @Configuration
 public class OpenApiConfig {
 
+  // swagger-ui landing metadata; the endpoint list here is hand-maintained, not auto-generated
   @Bean
   public OpenAPI rxvkgOpenAPI() {
     return new OpenAPI().info(new Info()

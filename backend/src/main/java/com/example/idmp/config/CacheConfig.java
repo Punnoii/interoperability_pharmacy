@@ -9,10 +9,12 @@ import org.springframework.context.annotation.Configuration;
 
 import java.time.Duration;
 
+// caffeine-backed caching for the pricier read paths; tunable via sparql.cache.* props
 @Configuration
 @ConfigurationProperties(prefix = "sparql.cache")
 public class CacheConfig {
 
+    // cache names, referenced by @Cacheable on the services so the strings stay in one place
     public static final String SPARQL_RESULTS = "sparqlResults";
     public static final String ELH_TOPK = "elhTopK";
     public static final String SUBSTANCE_QUICK_SEARCH = "substanceQuickSearch";
@@ -20,6 +22,7 @@ public class CacheConfig {
     private Duration ttl = Duration.ofMinutes(5);
     private int maxEntries = 100;
 
+    // one caffeine spec shared across all three caches — expire-after-write, not access
     @Bean
     public CacheManager cacheManager() {
         CaffeineCacheManager mgr = new CaffeineCacheManager(SPARQL_RESULTS, ELH_TOPK, SUBSTANCE_QUICK_SEARCH);

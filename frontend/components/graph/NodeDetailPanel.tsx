@@ -20,6 +20,8 @@ interface Neighbor {
   direction: "outgoing" | "incoming";
 }
 
+// side panel for the selected node: its IRI/value, degree, and a clickable list of relationships.
+// clicking a neighbor re-selects it, so you can walk the graph without touching the canvas.
 export default function NodeDetailPanel({
   node,
   links,
@@ -31,6 +33,7 @@ export default function NodeDetailPanel({
 }: NodeDetailPanelProps) {
   const nodeById = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
 
+  // walk every link touching this node, tagging each neighbor as incoming or outgoing
   const neighbors = useMemo<Neighbor[]>(() => {
     if (!node) return [];
     const list: Neighbor[] = [];
@@ -48,6 +51,7 @@ export default function NodeDetailPanel({
     return list;
   }, [node, links, nodeById]);
 
+  // nothing selected -> render nothing (kept after the hooks so hook order stays stable)
   if (!node) return null;
 
   const meta = getTypeMeta(node.type, allTypes);

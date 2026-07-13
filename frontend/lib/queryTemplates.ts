@@ -1,3 +1,5 @@
+// canned SPARQL the query UI offers; each template carries its own params + est. runtime.
+// nothing here executes — it's the catalog the runner reads and token-substitutes into.
 export type SourceKey = "all" | "a" | "b" | "c" | "d" | "e";
 
 export type TemplateCategory =
@@ -49,6 +51,7 @@ export const CATEGORY_ORDER: TemplateCategory[] = [
   "tmt",
 ];
 
+// shared PREFIX header prepended to every query below via ${P} — keeps each template readable
 const P = `PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
 PREFIX idmp-mprd: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11615-MedicinalProducts/>
 PREFIX idmp-dtp: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO21090-HarmonizedDatatypes/>
@@ -62,6 +65,8 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 `;
 
+// reusable param defs — the runner swaps each `token` in the query text for the user's pick.
+// SUBSTANCE_PARAM is an autocomplete-backed IRI; the rest are plain text codes/names.
 const SUBSTANCE_PARAM: TemplateParam = {
   token: "{{IRI}}",
   label: "Substance",
@@ -102,6 +107,7 @@ const ATC_PARAM: TemplateParam = {
   defaultValue: "M01AE01",
 };
 
+// the catalog itself, grouped loosely by category (explore -> substance -> codes -> ... -> tmt)
 export const QUERY_TEMPLATES: QueryTemplate[] = [
   {
     id: "tpl-count-substances",

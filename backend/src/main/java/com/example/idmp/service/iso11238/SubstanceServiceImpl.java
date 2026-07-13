@@ -21,10 +21,12 @@ import com.example.idmp.web.dto.iso11238.WikidataEnrichment;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+// runs the templated SPARQL through Ontop, then flattens the sparql-results JSON into our DTOs
 @Service
 public class SubstanceServiceImpl implements SubstanceService {
 
     private static final Logger log = LoggerFactory.getLogger(SubstanceServiceImpl.class);
+    // ask Ontop for JSON results specifically - we hand-parse this shape below
     private static final String ACCEPT_SPARQL_JSON = "application/sparql-results+json";
     private static final int WIKIDATA_RESULT_LIMIT = 5;
 
@@ -40,6 +42,7 @@ public class SubstanceServiceImpl implements SubstanceService {
     }
 
     @Override
+    // flat list for the browse view - source is inferred from the IRI, not stored as a column
     public List<SubstanceSummary> listAll() {
         String body = executeSparql(SubstanceSparqlTemplates.LIST_ALL);
         JsonNode bindings = parseBindings(body);
@@ -58,6 +61,7 @@ public class SubstanceServiceImpl implements SubstanceService {
     }
 
     @Override
+    // full-text-ish search over substance names via SPARQL (distinct from the fast Trino type-ahead)
     public List<SubstanceSummary> searchByName(String keyword) {
         String query = SubstanceSparqlTemplates.searchByName(keyword);
         String body = executeSparql(query);
@@ -77,6 +81,7 @@ public class SubstanceServiceImpl implements SubstanceService {
     }
 
     @Override
+    // the details query cross-joins names x identifiers, so rows repeat - we fold them back into two deduped lists
     public SubstanceDetail getDetails(String substanceIri) {
         String query = SubstanceSparqlTemplates.details(substanceIri);
         String body = executeSparql(query);
@@ -87,6 +92,7 @@ public class SubstanceServiceImpl implements SubstanceService {
         List<IdentifierEntry> identifiers = new ArrayList<>();
 
         for (JsonNode row : bindings) {
+            // type is the same on every row - grab it once
             if (substanceType == null) {
                 substanceType = extractLocalName(textValue(row, "substanceType"));
             }
@@ -96,6 +102,7 @@ public class SubstanceServiceImpl implements SubstanceService {
             String langCode = textValue(row, "langCode");
             if (nameValue != null && !nameValue.isEmpty()) {
                 NameEntry entry = new NameEntry(nameValue, extractLocalName(nameType), langCode);
+                // contains() dedupe relies on the record's equals - cheap since a substance has few names
                 if (!names.contains(entry)) {
                     names.add(entry);
                 }
@@ -110,12 +117,14 @@ public class SubstanceServiceImpl implements SubstanceService {
             }
         }
 
+        // decorate with Wikidata hits keyed off the preferred name; failure just yields an empty block
         WikidataEnrichment wikidata = enrichFromWikidata(names);
 
         return new SubstanceDetail(substanceIri, substanceType, names, identifiers, wikidata);
     }
 
     @Override
+    // given one identifier value, find all substances carrying it - shows the same drug across GSRS/FDA
     public List<CrossSourceResult> crossSourceLookup(String identifier) {
         String query = SubstanceSparqlTemplates.crossSource(identifier);
         String body = executeSparql(query);
@@ -134,6 +143,7 @@ public class SubstanceServiceImpl implements SubstanceService {
         return results;
     }
 
+    // only the PreferredName is worth searching Wikidata with; synonyms would be too noisy
     private WikidataEnrichment enrichFromWikidata(List<NameEntry> names) {
         String preferredName = names.stream()
                 .filter(n -> "PreferredName".equals(n.type()))
@@ -148,18 +158,22 @@ public class SubstanceServiceImpl implements SubstanceService {
         try {
             WikidataSearchResponse response =
                     wikidataEnrichmentService.search(preferredName, WIKIDATA_RESULT_LIMIT);
+            // flag=true means "we actually reached Wikidata", separate from whether items came back
             return new WikidataEnrichment(true, response.items());
         } catch (Exception e) {
+            // third-party call - never let it break the substance page
             log.warn("Wikidata enrichment failed for '{}': {}", preferredName, e.getMessage());
             return new WikidataEnrichment(false, List.of());
         }
     }
 
+    // single choke point so every query uses the same Accept and Ontop client
     private String executeSparql(String sparql) {
         ResponseEntity<String> response = ontopClient.execute(sparql, ACCEPT_SPARQL_JSON);
         return response.getBody();
     }
 
+    // dig down to results.bindings; on any parse trouble hand back an empty array so callers just loop zero times
     private JsonNode parseBindings(String json) {
         try {
             JsonNode root = objectMapper.readTree(json);
@@ -169,6 +183,7 @@ public class SubstanceServiceImpl implements SubstanceService {
         }
     }
 
+    // pull ?var.value out of a sparql-results row, tolerating unbound/OPTIONAL vars (returns null)
     private static String textValue(JsonNode row, String variable) {
         JsonNode node = row.path(variable);
         if (node.isMissingNode() || node.isNull()) {
@@ -177,6 +192,7 @@ public class SubstanceServiceImpl implements SubstanceService {
         return node.path("value").asText(null);
     }
 
+    // turn a full IRI/typecode into a short human label - try dash first (our enum-style codes), then #, then /
     static String extractLocalName(String iri) {
         if (iri == null || iri.isEmpty()) {
             return null;
@@ -196,6 +212,7 @@ public class SubstanceServiceImpl implements SubstanceService {
         return iri;
     }
 
+    // no source column exists in the graph, so we read it out of the IRI path segment
     static String deriveSource(String substanceIri) {
         if (substanceIri == null) {
             return "Unknown";

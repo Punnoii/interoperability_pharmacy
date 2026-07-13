@@ -14,6 +14,7 @@ export interface UserPreferences {
   simThreshold: number;
 }
 
+// seed prefs from the app-wide config so an unset user still gets sensible page sizes / thresholds
 const DEFAULTS: UserPreferences = {
   pageSize: APP_CONFIG.query.pageSize,
   defaultLimit: APP_CONFIG.query.defaultLimit,
@@ -27,6 +28,7 @@ interface PreferencesStore extends UserPreferences {
   reset: () => void;
 }
 
+// local user tuning (page size, autocomplete/similarity thresholds), persisted to localStorage
 export const useUserPreferences = create<PreferencesStore>()(
   persist(
     (set) => ({

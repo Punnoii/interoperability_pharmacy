@@ -1,6 +1,7 @@
 import { prisma } from "./prisma";
 import { hashPassword } from "./auth";
 
+// email lookups are case-insensitive — we always store and query the lowercased form
 export async function findByEmail(email: string) {
   return prisma.user.findUnique({ where: { email: email.toLowerCase() } });
 }
@@ -9,6 +10,7 @@ export async function findById(id: string) {
   return prisma.user.findUnique({ where: { id } });
 }
 
+// register a password user; first-party signups become ADMIN in this single-tenant app
 export async function createUser(username: string, email: string, password: string) {
   const existing = await findByEmail(email);
   if (existing) throw new Error("Email already registered");
@@ -22,6 +24,7 @@ export async function createUser(username: string, email: string, password: stri
   });
 }
 
+// find-or-create for OAuth sign-in; no passwordHash and only USER role since identity is federated
 export async function upsertOAuthUser(email: string, username: string) {
   const lower = email.toLowerCase();
   const existing = await prisma.user.findUnique({ where: { email: lower } });
@@ -31,6 +34,7 @@ export async function upsertOAuthUser(email: string, username: string) {
   });
 }
 
+// used by the reset-password flow once the token's been checked
 export async function updatePasswordByEmail(email: string, password: string) {
   return prisma.user.update({
     where: { email: email.toLowerCase() },
@@ -38,6 +42,7 @@ export async function updatePasswordByEmail(email: string, password: string) {
   });
 }
 
+// admin listing — explicit select so passwordHash never leaves the db layer
 export async function getAllUsers() {
   return prisma.user.findMany({
     orderBy: { createdAt: "desc" },

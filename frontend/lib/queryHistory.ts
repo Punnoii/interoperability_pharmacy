@@ -34,6 +34,7 @@ interface HistoryStore {
   popPending: () => PendingQuery | null;
 }
 
+// mirror a trimmed slice of history into a cookie so the /history server route can read it too — localStorage alone is client-only
 function writeCookieBackup(entries: HistoryEntry[]) {
   const { cookieMax, cookieQueryLimit, cookieMaxAgeDays } = APP_CONFIG.history;
   const compact = entries.slice(0, cookieMax).map((e) => ({
@@ -59,12 +60,14 @@ function clearCookieBackup() {
   Cookies.remove(COOKIE_NAME, { path: COOKIE_PATH });
 }
 
+// recent-query store; entries persist in localStorage, `pending` is a one-shot handoff between pages
 export const useQueryHistory = create<HistoryStore>()(
   persist(
     (set, get) => ({
       entries: [],
       pending: null,
 
+      // record a run, but skip blanks and dedupe an immediate repeat of the last query
       push: (entry) => {
         const trimmed = entry.query.trim();
         if (!trimmed) return;
@@ -95,6 +98,7 @@ export const useQueryHistory = create<HistoryStore>()(
 
       setPending: (p) => set({ pending: p }),
 
+      // read-and-clear: the query builder stashes a query, the results page grabs it exactly once
       popPending: () => {
         const p = get().pending;
         set({ pending: null });
@@ -109,6 +113,7 @@ export const useQueryHistory = create<HistoryStore>()(
   ),
 );
 
+// non-hook accessors so plain functions (fetch handlers, etc.) can touch history without a component
 export function pushHistory(entry: Omit<HistoryEntry, "id" | "timestamp">) {
   useQueryHistory.getState().push(entry);
 }

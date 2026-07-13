@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { hashPassword, verifyPassword } from "@/lib/auth";
 
+// change your own password. requires the current one, so a hijacked session alone can't lock you out
 export async function PATCH(req: NextRequest) {
   const session = await getSession();
   if (!session) {
@@ -38,6 +39,7 @@ export async function PATCH(req: NextRequest) {
     );
   }
 
+  // no local hash means an oauth-only account — there's no password to change here
   const user = await prisma.user.findUnique({
     where: { id: session.sub },
     select: { passwordHash: true },
@@ -46,6 +48,7 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "user not found" }, { status: 404 });
   }
 
+  // confirm they actually know the current password before we overwrite it
   const ok = await verifyPassword(current, user.passwordHash);
   if (!ok) {
     return NextResponse.json(

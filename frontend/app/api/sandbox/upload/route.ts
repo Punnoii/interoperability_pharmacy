@@ -4,12 +4,14 @@ import { getSession } from "@/lib/session";
 
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 
+// accept an RDF/turtle file into the sandbox. session-gated, and we bounce oversized uploads early.
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
   }
 
+  // cheap guard off the declared content-length — real enforcement still happens on the backend
   const declared = Number(req.headers.get("content-length") ?? "0");
   if (declared > MAX_UPLOAD_BYTES) {
     return NextResponse.json({ error: "Upload too large (max 25 MB)" }, { status: 413 });

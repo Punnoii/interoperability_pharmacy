@@ -13,6 +13,7 @@ interface Props {
   onSaved: (next: string) => void;
 }
 
+// rename dialog. no-ops (just closes) if the name is unchanged; otherwise PATCHes the new username
 export default function EditNameModal({ isDark, currentName, onClose, onSaved }: Props) {
   const [value, setValue] = useState(currentName);
   const [saving, setSaving] = useState(false);
@@ -29,6 +30,7 @@ export default function EditNameModal({ isDark, currentName, onClose, onSaved }:
       setError("Name cannot be empty");
       return;
     }
+    // unchanged -> skip the round-trip
     if (next === currentName) {
       onClose();
       return;

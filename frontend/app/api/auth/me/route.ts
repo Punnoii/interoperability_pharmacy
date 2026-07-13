@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/auth";
 import { findById } from "@/lib/users";
 
+// who-am-i for the client. reads the cookie's jwt, then re-fetches the user so
+// the response reflects the current db row rather than whatever was baked into the token
 export async function GET(req: NextRequest) {
   const token = req.cookies.get("auth_token")?.value;
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

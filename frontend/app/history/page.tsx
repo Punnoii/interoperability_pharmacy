@@ -12,6 +12,7 @@ import {
   type HistoryEntry,
 } from "@/lib/queryHistory";
 
+// past-queries list — reads the local (zustand) history store, no server round-trip
 export default function HistoryPage() {
   const [isDark, setIsDark] = useDarkMode();
   const entries = useQueryHistory((s) => s.entries);
@@ -20,12 +21,14 @@ export default function HistoryPage() {
   const [search, setSearch] = useState("");
   const router = useRouter();
 
+  // client-side text filter over the stored queries
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return entries;
     return entries.filter((e) => e.query.toLowerCase().includes(q));
   }, [entries, search]);
 
+  // stash the query then jump to the editor; homepage picks it up via the pending-query handoff
   function handleLoad(e: HistoryEntry) {
     setPendingQuery({ query: e.query });
     router.push("/homepage");
@@ -35,6 +38,7 @@ export default function HistoryPage() {
     remove(id);
   }
 
+  // wipes the whole store — confirm first since there's no undo
   function handleClearAll() {
     if (!confirm("Are you sure you want to clear all history?")) return;
     clear();

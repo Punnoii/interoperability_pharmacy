@@ -2,6 +2,7 @@ package com.example.idmp.web.dto.similarity;
 
 import jakarta.validation.constraints.NotBlank;
 
+// two concept codes to score against each other
 public class PairSimilarityRequest {
 
   @NotBlank

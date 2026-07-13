@@ -4,6 +4,7 @@ import { getSession } from "@/lib/session";
 
 const { backendUrl, routes } = APP_CONFIG.api;
 
+// raw SPARQL passthrough to Ontop. gated behind a session since it can run arbitrary queries.
 export async function POST(req: NextRequest) {
     const session = await getSession();
     if (!session) {

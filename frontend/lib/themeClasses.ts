@@ -1,3 +1,4 @@
+// central light/dark tailwind class map — components read from here so we tweak palette in one spot, not per-component
 export function themeClasses(isDark: boolean) {
   return {
     text:     isDark ? "text-slate-100" : "text-gray-900",

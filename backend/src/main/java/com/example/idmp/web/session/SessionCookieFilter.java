@@ -16,6 +16,8 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
+// stamps every visitor with an anonymous session id — no login, just enough to scope saved sandbox/profile state
+// highest precedence so the id is on the request before any controller or downstream filter looks for it
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class SessionCookieFilter implements Filter {
@@ -30,16 +32,18 @@ public class SessionCookieFilter implements Filter {
     HttpServletRequest req = (HttpServletRequest) request;
     HttpServletResponse res = (HttpServletResponse) response;
 
+    // first-time (or cookie-cleared) visitor: mint a fresh id and set it back on the response
     String sid = readSid(req);
     if (sid == null || sid.isBlank()) {
       sid = UUID.randomUUID().toString();
       Cookie c = new Cookie(COOKIE_NAME, sid);
       c.setPath("/");
-      c.setHttpOnly(true);
+      c.setHttpOnly(true); // js never needs it, keep it out of reach of scripts
       c.setMaxAge(MAX_AGE_DAYS * 24 * 60 * 60);
       res.addCookie(c);
     }
 
+    // hand the id downstream via request attribute so controllers don't re-parse cookies
     req.setAttribute(ATTRIBUTE, sid);
     chain.doFilter(req, res);
   }
@@ -53,6 +57,7 @@ public class SessionCookieFilter implements Filter {
     return null;
   }
 
+  // controller-side accessor; blows up loudly if the filter somehow didn't run for this request
   public static String require(HttpServletRequest req) {
     Object v = req.getAttribute(ATTRIBUTE);
     if (v == null) throw new IllegalStateException("Session cookie filter not active");

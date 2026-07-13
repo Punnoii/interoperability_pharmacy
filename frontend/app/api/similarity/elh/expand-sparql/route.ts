@@ -3,6 +3,7 @@ import { APP_CONFIG } from "@/lib/config";
 
 const { backendUrl, routes } = APP_CONFIG.api;
 
+// takes a concept and returns the expanded SPARQL the ELH engine would run for it — used by the sandbox/explorer.
 export async function POST(req: NextRequest) {
   const body = await req.json();
 

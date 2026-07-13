@@ -7,9 +7,11 @@ import java.util.List;
 import java.util.Locale;
 import org.springframework.stereotype.Service;
 
+// dumb-but-useful keyword heuristics that guess which ISO IDMP area/mapping a source column belongs to
 @Service
 public class MappingSuggestionService {
 
+  // returns every ISO area whose keyword set the column name hits - scores are hand-tuned confidence hints for the UI
   public List<IsoAreaSuggestion> suggestIsoAreas(
       String table,
       String column,
@@ -58,6 +60,7 @@ public class MappingSuggestionService {
     return suggestions;
   }
 
+  // one step more specific than areas - proposes a concrete target field + the RDF triple pattern to emit
   public List<MappingSuggestion> suggestMappings(
       String table,
       String column,
@@ -125,6 +128,7 @@ public class MappingSuggestionService {
     return suggestions;
   }
 
+  // lowercase with ROOT locale so matching is stable regardless of server locale (dodges the Turkish-i trap)
   private static String normalize(String value) {
     return value == null ? "" : value.toLowerCase(Locale.ROOT);
   }

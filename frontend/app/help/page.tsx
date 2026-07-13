@@ -18,8 +18,10 @@ import Header from "@/components/layout/Header";
 import { useDarkMode } from "@/lib/useDarkMode";
 import { themeClasses } from "@/lib/themeClasses";
 
+// static user guide / FAQ — no data fetching, just docs laid out in themed sections
 export default function HelpPage() {
   const [isDark, setIsDark] = useDarkMode();
+  // tc bundles the light/dark class strings so we don't repeat ternaries everywhere
   const tc = themeClasses(isDark);
   const bg = isDark ? "bg-slate-950 text-slate-100" : "bg-gray-50 text-gray-900";
 
@@ -162,6 +164,7 @@ interface SectionProps {
   children: React.ReactNode;
 }
 
+// titled card with an icon header — one per help topic
 function Section({ icon, title, tc, children }: SectionProps) {
   return (
     <section className={`rounded-2xl border ${tc.card}`}>
@@ -176,6 +179,7 @@ function Section({ icon, title, tc, children }: SectionProps) {
   );
 }
 
+// small labelled divider inside a Section
 function SubHead({ icon, text, tc }: { icon: React.ReactNode; text: string; tc: ReturnType<typeof themeClasses> }) {
   return (
     <div className="flex items-center gap-1.5 mt-2 first:mt-0">
@@ -185,6 +189,7 @@ function SubHead({ icon, text, tc }: { icon: React.ReactNode; text: string; tc: 
   );
 }
 
+// renders a keyboard key like Ctrl / Enter inline in the docs
 function Kbd({ children, tc }: { children: React.ReactNode; tc: ReturnType<typeof themeClasses> }) {
   return (
     <kbd className={`px-1.5 py-0.5 rounded border text-[10px] font-mono ${tc.btnBase}`}>
@@ -193,6 +198,7 @@ function Kbd({ children, tc }: { children: React.ReactNode; tc: ReturnType<typeo
   );
 }
 
+// row of pill links pointing at other pages of the app
 function NavLinks({ tc, links }: { tc: ReturnType<typeof themeClasses>; links: { href: string; label: string }[] }) {
   return (
     <div className="flex flex-wrap gap-2 pt-1">
@@ -210,6 +216,7 @@ function NavLinks({ tc, links }: { tc: ReturnType<typeof themeClasses>; links: {
   );
 }
 
+// native <details> accordion — one collapsible Q/A
 function FaqItem({ q, a, tc }: { q: string; a: string; tc: ReturnType<typeof themeClasses> }) {
   return (
     <details className={`group rounded border ${tc.rowDiv}`}>

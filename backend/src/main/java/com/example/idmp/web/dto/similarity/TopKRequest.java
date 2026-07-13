@@ -3,6 +3,7 @@ package com.example.idmp.web.dto.similarity;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 
+// ask for the k nearest concepts to one seed, within a scope prefix
 public class TopKRequest {
 
   @NotBlank

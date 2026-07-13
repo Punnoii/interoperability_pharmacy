@@ -3,6 +3,7 @@ import { APP_CONFIG } from "@/lib/config";
 
 const { backendUrl, routes } = APP_CONFIG.api;
 
+// top-k nearest concepts for a given query concept. body carries the concept + k; backend does the ranking.
 export async function POST(req: NextRequest) {
   const body = await req.json();
 

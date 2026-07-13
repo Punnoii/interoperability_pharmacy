@@ -14,12 +14,14 @@ import { APP_CONFIG } from "@/lib/config";
 
 const { routes } = APP_CONFIG.api;
 
+// one row from the substance quick-search endpoint; unii is the shown badge, iri fills template params
 export interface SubstanceHit {
   iri: string;
   name: string;
   unii: string;
 }
 
+// slimmed-down bookmark — palette only needs enough to list + apply
 interface BookmarkLite {
   id: string;
   name: string;
@@ -34,6 +36,7 @@ interface QuickSearchProps {
   onApply: (query: string, run: boolean) => void;
 }
 
+// swap every {{TOKEN}} in the template query for the user's value (or the param default)
 function fillTokens(template: QueryTemplate, values: Record<string, string>): string {
   let out = template.query;
   for (const param of template.params ?? []) {
@@ -42,19 +45,23 @@ function fillTokens(template: QueryTemplate, values: Record<string, string>): st
   return out;
 }
 
+// the ⌘K command palette: fuzzy-search substances + templates + saved queries, then insert or run
 export default function QuickSearch({ isDark, templates, bookmarks, onClose, onApply }: QuickSearchProps) {
   const [term, setTerm] = useState("");
   const [debounced] = useDebounce(term, 200);
   const [hits, setHits] = useState<SubstanceHit[]>([]);
   const [hitsLoading, setHitsLoading] = useState(false);
+  // picked = a template chosen that needs param input; null means we're on the search list
   const [picked, setPicked] = useState<QueryTemplate | null>(null);
   const [values, setValues] = useState<Record<string, string>>({});
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // grab focus on open, and again when we drop back to the search view from the param form
   useEffect(() => {
     inputRef.current?.focus();
   }, [picked]);
 
+  // esc backs out of the param form first, then closes the palette
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -66,11 +73,13 @@ export default function QuickSearch({ isDark, templates, bookmarks, onClose, onA
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose, picked]);
 
+  // live substance lookup while typing on the search view; skipped once a template is picked
   useEffect(() => {
     if (picked || debounced.trim().length < 2) {
       setHits([]);
       return;
     }
+    // abort the in-flight request if the term changes before it lands (avoids stale results)
     const ctrl = new AbortController();
     setHitsLoading(true);
     fetch(`${routes.substancesQuickSearch}?q=${encodeURIComponent(debounced.trim())}&limit=6`, {
@@ -83,8 +92,10 @@ export default function QuickSearch({ isDark, templates, bookmarks, onClose, onA
     return () => ctrl.abort();
   }, [debounced, picked]);
 
+  // templates fuzzy-matched against name/description/keywords, grouped into category sections
   const grouped = useMemo(() => {
     const w = term.trim().toLowerCase();
+    // best score across name/desc/keywords; short/empty term shows everything (score 1)
     const match = (t: QueryTemplate) => {
       if (w.length < 2) return 1;
       return Math.max(
@@ -94,6 +105,7 @@ export default function QuickSearch({ isDark, templates, bookmarks, onClose, onA
       );
     };
     const out: Array<{ category: TemplateCategory; items: QueryTemplate[] }> = [];
+    // walk categories in a fixed order so sections don't jump around as scores change
     for (const category of CATEGORY_ORDER) {
       const items = templates
         .filter((t) => (t.category ?? "explore") === category)
@@ -106,12 +118,14 @@ export default function QuickSearch({ isDark, templates, bookmarks, onClose, onA
     return out;
   }, [term, templates]);
 
+  // saved queries matching the term; with no term just show a few recents
   const matchedBookmarks = useMemo(() => {
     const w = term.trim().toLowerCase();
     if (w.length < 2) return bookmarks.slice(0, 3);
     return bookmarks.filter((b) => hybridScore(w, b.name) >= 0.3).slice(0, 4);
   }, [term, bookmarks]);
 
+  // param-less templates apply straight away; ones with params open the fill-in form instead
   const openTemplate = useCallback((t: QueryTemplate) => {
     if (!t.params || t.params.length === 0) {
       onApply(t.query, false);
@@ -125,6 +139,7 @@ export default function QuickSearch({ isDark, templates, bookmarks, onClose, onA
     setTerm("");
   }, [onApply, onClose]);
 
+  // theme class bundles reused across the two views
   const panel = isDark ? "bg-slate-900 border-slate-700" : "bg-white border-gray-200";
   const text = isDark ? "text-slate-100" : "text-gray-900";
   const muted = isDark ? "text-slate-400" : "text-gray-500";
@@ -137,6 +152,7 @@ export default function QuickSearch({ isDark, templates, bookmarks, onClose, onA
   const badge = isDark ? "bg-slate-800 text-slate-400" : "bg-gray-100 text-gray-500";
 
   return (
+    // dimmed backdrop; click-through closes, card stops propagation below
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-[8vh] bg-black/50" onClick={onClose} role="presentation">
       <div
         className={`w-full max-w-2xl max-h-[78vh] flex flex-col rounded-xl border shadow-2xl ${panel}`}
@@ -145,6 +161,7 @@ export default function QuickSearch({ isDark, templates, bookmarks, onClose, onA
         aria-modal="true"
         aria-label="Quick search"
       >
+        {/* two faces of the palette: the param-fill form (picked) vs the search list */}
         {picked ? (
           <>
             <div className={`flex items-center gap-3 px-4 py-3 border-b ${divide}`}>
@@ -161,6 +178,7 @@ export default function QuickSearch({ isDark, templates, bookmarks, onClose, onA
             </div>
 
             <div className="flex-1 overflow-auto px-4 py-4 flex flex-col gap-4">
+              {/* one field per param — substance params get the autocomplete widget, others a plain input */}
               {picked.params?.map((p) =>
                 p.kind === "substance" ? (
                   <SubstanceField
@@ -190,6 +208,7 @@ export default function QuickSearch({ isDark, templates, bookmarks, onClose, onA
               )}
             </div>
 
+            {/* insert drops the filled query into the editor; run now fires it immediately */}
             <div className={`flex items-center justify-end gap-2 px-4 py-3 border-t ${divide}`}>
               <button
                 onClick={() => { onApply(fillTokens(picked, values), false); onClose(); }}
@@ -224,12 +243,14 @@ export default function QuickSearch({ isDark, templates, bookmarks, onClose, onA
             </div>
 
             <div className="flex-1 overflow-auto py-2">
+              {/* substance hits: picking one jumps into the full-profile template pre-seeded with its IRI */}
               {hits.length > 0 && (
                 <Section isDark={isDark} title="Substances" icon={<FlaskConical size={12} />}>
                   {hits.map((h) => (
                     <button
                       key={`${h.unii}:${h.name}`}
                       onClick={() => {
+                        // prefer the full-profile template, else any template that takes a substance
                         const t = templates.find((x) => x.id === "tpl-substance-full-profile") ?? templates.find((x) => x.params?.some((p) => p.kind === "substance"));
                         if (!t) return;
                         const initial: Record<string, string> = {};
@@ -261,6 +282,7 @@ export default function QuickSearch({ isDark, templates, bookmarks, onClose, onA
                 </Section>
               )}
 
+              {/* the template catalog, one Section per category */}
               {grouped.map(({ category, items }) => (
                 <Section
                   key={category}
@@ -310,6 +332,7 @@ export default function QuickSearch({ isDark, templates, bookmarks, onClose, onA
   );
 }
 
+// labelled group header with an icon, wrapping a run of result rows
 function Section({ isDark, title, icon, children }: { isDark: boolean; title: string; icon: React.ReactNode; children: React.ReactNode }) {
   const muted = isDark ? "text-slate-500" : "text-gray-400";
   return (
@@ -323,6 +346,7 @@ function Section({ isDark, title, icon, children }: { isDark: boolean; title: st
   );
 }
 
+// self-contained substance picker for a template param: type a name, pick a hit, emits its IRI upward
 function SubstanceField({
   isDark,
   label,
@@ -336,11 +360,13 @@ function SubstanceField({
   value: string;
   onChange: (iri: string) => void;
 }) {
+  // local search term is separate from the committed value (the IRI) shown at the bottom
   const [term, setTerm] = useState("");
   const [debounced] = useDebounce(term, 200);
   const [hits, setHits] = useState<SubstanceHit[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // same debounced + abortable lookup as the palette, scoped to this one field
   useEffect(() => {
     if (debounced.trim().length < 2) {
       setHits([]);
@@ -391,6 +417,7 @@ function SubstanceField({
           </div>
         )}
       </div>
+      {/* shows the committed IRI (or a dash) so the user can see what got selected */}
       <p className={`text-[11px] font-mono truncate ${muted}`} title={value}>{value || "—"}</p>
     </div>
   );

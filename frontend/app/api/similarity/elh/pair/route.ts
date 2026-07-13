@@ -3,6 +3,7 @@ import { APP_CONFIG } from "@/lib/config";
 
 const { backendUrl, routes } = APP_CONFIG.api;
 
+// score a single a/b concept pair. the /explain sibling gives the breakdown; this one's just the number.
 export async function POST(req: NextRequest) {
   const body = await req.json();
 

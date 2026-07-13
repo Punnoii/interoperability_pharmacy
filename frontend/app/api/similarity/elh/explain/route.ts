@@ -3,6 +3,8 @@ import { APP_CONFIG } from "@/lib/config";
 
 const { backendUrl, routes } = APP_CONFIG.api;
 
+// explains why two concepts (a, b) score the way they do under the ELH similarity measure.
+// rebuild the query via URL so the two IRIs get encoded safely rather than string-concatenated.
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const a = searchParams.get("a") ?? "";

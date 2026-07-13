@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 
+// build a gmail transport from env creds; null when unconfigured so callers can no-op instead of throwing
 export function getTransport() {
   const user = process.env.GMAIL_USER;
   const pass = process.env.GMAIL_APP_PASSWORD;
@@ -10,6 +11,7 @@ export function getTransport() {
   });
 }
 
+// send the reset link; with no mail creds we just log it (dev) and report sent:false so the flow still works
 export async function sendPasswordResetEmail(to: string, link: string): Promise<{ sent: boolean }> {
   const transport = getTransport();
   if (!transport) {

@@ -10,7 +10,9 @@ interface GraphStatsProps {
   isDark: boolean;
 }
 
+// corner overlay: total node/edge counts plus a per-type legend with live counts
 export default function GraphStats({ nodes, edgeCount, allTypes, isDark }: GraphStatsProps) {
+  // tally nodes per type for the legend rows
   const counts = useMemo(() => {
     const c = new Map<string, number>();
     for (const n of nodes) c.set(n.type, (c.get(n.type) ?? 0) + 1);
@@ -51,6 +53,7 @@ export default function GraphStats({ nodes, edgeCount, allTypes, isDark }: Graph
                     className="inline-block w-2 h-2 rounded-full"
                     style={{ background: isDark ? meta.colorDark : meta.color }}
                   />
+                  {/* prefix with ? since the type key is the SPARQL variable name */}
                   <span className={`font-mono ${muted}`}>?{meta.label}</span>
                 </div>
                 <span className={`font-semibold tabular-nums ${number}`}>

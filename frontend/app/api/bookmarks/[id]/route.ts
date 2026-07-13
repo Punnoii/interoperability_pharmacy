@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
+// shared gate for PATCH/DELETE: must be logged in AND own the bookmark, or you get 401/403/404.
+// keeps one user from touching another's rows by guessing an id
 async function authorize(id: string) {
   const session = await getSession();
   if (!session) {
@@ -25,6 +27,7 @@ async function authorize(id: string) {
   return { session };
 }
 
+// rename/edit a saved query. only the supplied fields get patched, all length-checked
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -72,6 +75,7 @@ export async function PATCH(
     data.source = body.source.trim();
   }
 
+  // nothing valid to change — bail rather than issue an empty update
   if (Object.keys(data).length === 0) {
     return NextResponse.json(
       { error: "no updatable fields supplied" },
@@ -94,6 +98,7 @@ export async function PATCH(
   return NextResponse.json({ bookmark });
 }
 
+// drop a saved query. authorize() already confirmed ownership, so the delete is safe
 export async function DELETE(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },

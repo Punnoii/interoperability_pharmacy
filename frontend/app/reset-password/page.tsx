@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 
+// landing page for the emailed reset link (?token=...) — set a new password
 export default function ResetPasswordPage() {
   const router = useRouter();
   const [token, setToken] = useState("");
@@ -15,6 +16,7 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
 
+  // pull the token out of the URL client-side; empty token -> we show the "bad link" state below
   useEffect(() => {
     const t = new URLSearchParams(window.location.search).get("token") ?? "";
     setToken(t);
@@ -23,6 +25,7 @@ export default function ResetPasswordPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    // cheap client check before we bother the server
     if (password !== confirm) {
       setError("Passwords do not match");
       return;
@@ -37,7 +40,7 @@ export default function ResetPasswordPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Reset failed");
       setDone(true);
-      setTimeout(() => router.push("/"), 2500);
+      setTimeout(() => router.push("/"), 2500); // let them read the success note, then send to login
     } catch (err) {
       setError(err instanceof Error ? err.message : "Reset failed");
     } finally {

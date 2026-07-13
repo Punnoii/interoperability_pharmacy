@@ -2,15 +2,18 @@ import jaccard from "talisman/metrics/jaccard";
 import ngrams from "talisman/tokenizers/ngrams";
 import { APP_CONFIG } from "./config";
 
+// split into lowercased word tokens, keeping latin + thai chars; drop 1-char noise
 const tokens = (s: string): string[] =>
   s.toLowerCase()
     .replace(/[^a-z0-9ก-๙\s]/g, " ")
     .split(/\s+/)
     .filter((t) => t.length > 1);
 
+// strip to a bare alphanumeric+thai string for char-level n-gram comparison
 const normalize = (s: string): string =>
   s.toLowerCase().replace(/[^a-z0-9ก-๙]/g, "");
 
+// blend word-set and 3-gram jaccard, take the better of the two — catches both reworded and misspelled matches
 export function nameSimilarity(a: string, b: string): number {
   if (!a || !b) return 0;
   const wordScore = jaccard(tokens(a), tokens(b));
@@ -23,6 +26,7 @@ export function nameSimilarity(a: string, b: string): number {
   return Math.max(wordScore, charScore);
 }
 
+// autocomplete ranking: similarity plus bonuses for substring/prefix hits, clamped to 1 so exact prefixes float to the top
 export function hybridScore(query: string, target: string): number {
   if (!query || !target) return 0;
   const { startsWithBonus, substringBonus } = APP_CONFIG.similarity;

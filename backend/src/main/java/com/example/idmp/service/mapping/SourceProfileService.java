@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
+// profiles a raw source table through Trino: columns, sample values, and guessed ISO mappings
 @Service
 public class SourceProfileService {
     private final TrinoClient trinoClient;
@@ -23,6 +24,7 @@ public class SourceProfileService {
     this.mappingSuggestionService = mappingSuggestionService;
     }
 
+    // catalog.schema.table -> per-column profile; identifiers go straight into SQL so they're validated hard first
     public SourceProfileResponse profile(String catalog, String schema, String table) {
         validateIdentifier(catalog, "catalog");
         validateIdentifier(schema, "schema");
@@ -30,6 +32,7 @@ public class SourceProfileService {
 
         List<FieldProfile> fields = new ArrayList<>();
 
+        // SHOW COLUMNS is the cheapest way to get name+type without reading data
         String sql = "SHOW COLUMNS FROM "
             + quote(catalog) + "."
             + quote(schema) + "."
@@ -43,6 +46,7 @@ public class SourceProfileService {
         while (resultSet.next()) {
             String columnName = resultSet.getString("Column");
             String columnType = resultSet.getString("Type");
+            // one extra query per column to grab a handful of real values for the heuristics
             List<String> samples = sampleValues(connection, catalog, schema, table, columnName);
 
             fields.add(new FieldProfile(
@@ -60,6 +64,7 @@ public class SourceProfileService {
         return new SourceProfileResponse(catalog, schema, table, fields);
     }
 
+    // these identifiers can't be parameterized, so whitelist to plain SQL-identifier chars = no injection
     private static void validateIdentifier(String value, String name) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException(name + " is required");
@@ -69,10 +74,12 @@ public class SourceProfileService {
         }
     }
 
+    // double-quote for Trino and escape embedded quotes by doubling them, belt-and-braces with the validation above
     private static String quote(String identifier) {
         return "\"" + identifier.replace("\"", "\"\"") + "\"";
     }
 
+    // grab up to 5 non-null values as varchar so any column type renders as a preview string
     private List<String> sampleValues(
         Connection connection,
         String catalog,
@@ -98,6 +105,7 @@ public class SourceProfileService {
         }
         }
     } catch (Exception ex) {
+        // sampling is nice-to-have; a bad column shouldn't sink the whole profile
         return List.of();
     }
 

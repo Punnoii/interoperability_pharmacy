@@ -25,6 +25,7 @@ import { truncate } from "@/lib/format";
 
 const { routes } = APP_CONFIG.api;
 
+// settings screen — appearance, display/query prefs, and the destructive data actions
 export default function SettingsPage() {
   const [isDark, setIsDark] = useDarkMode();
   const { user, logout } = useAuth();
@@ -37,6 +38,7 @@ export default function SettingsPage() {
   const [status, setStatus] = useState<{ kind: "ok" | "err"; msg: string } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
+  // nuke the backend SPARQL/ELH caches; busy flag keeps the button from double-firing
   async function handleClearCache() {
     setBusy("cache");
     setStatus(null);
@@ -55,6 +57,7 @@ export default function SettingsPage() {
     }
   }
 
+  // local history only — server never sees this one
   function handleClearHistory() {
     if (!confirm(`Clear all ${historyCount} history entries?`)) return;
     clearHistory();
@@ -217,6 +220,7 @@ interface SectionProps {
   children: React.ReactNode;
 }
 
+// grouping card with an icon header (Appearance, Display, Data, ...)
 function Section({ icon, title, tc, children }: SectionProps) {
   return (
     <section className={`rounded-2xl border ${tc.card}`}>
@@ -238,6 +242,7 @@ interface RowProps {
   children: React.ReactNode;
 }
 
+// one setting line: label + hint on the left, the control on the right
 function Row({ label, hint, tc, children }: RowProps) {
   return (
     <div className={`flex items-center justify-between gap-4 px-4 py-3 border-b last:border-b-0 ${tc.rowDiv}`}>
@@ -258,6 +263,7 @@ interface ToggleProps {
   offIcon?: React.ReactNode;
 }
 
+// hand-rolled switch — the knob slides via an inline left offset instead of a CSS class
 function Toggle({ isDark, checked, onChange, onIcon, offIcon }: ToggleProps) {
   const trackBg = checked
     ? "bg-blue-600"
@@ -297,6 +303,7 @@ interface SelectProps {
   isDark: boolean;
 }
 
+// plain themed dropdown (page size, etc.)
 function Select({ value, onChange, options, isDark }: SelectProps) {
   const cls = isDark
     ? "bg-slate-900 border-slate-700 text-slate-100"
@@ -322,6 +329,7 @@ interface NumberInputProps {
   isDark: boolean;
 }
 
+// number field that clamps to [min,max] and ignores non-numeric input
 function NumberInput({ value, onChange, min, max, isDark }: NumberInputProps) {
   const cls = isDark
     ? "bg-slate-900 border-slate-700 text-slate-100"
@@ -350,6 +358,7 @@ interface RangeInputProps {
   isDark: boolean;
 }
 
+// slider + live readout for the 0–1 threshold settings
 function RangeInput({ value, onChange, min, max, step, isDark }: RangeInputProps) {
   return (
     <div className="flex items-center gap-2">

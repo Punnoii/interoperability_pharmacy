@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+// column-level profiling of a source table so the mapping UI can suggest R2RML mappings
 @RestController
 @RequestMapping("/api/mapping")
 @CrossOrigin(origins = "*")
@@ -18,6 +19,7 @@ public class MappingProfileController {
     this.sourceProfileService = sourceProfileService;
   }
 
+  // profile one table by its fully-qualified trino coords (catalog.schema.table)
   @GetMapping("/profile")
   public SourceProfileResponse profile(
       @RequestParam("catalog") String catalog,

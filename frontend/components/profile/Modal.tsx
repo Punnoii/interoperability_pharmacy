@@ -9,6 +9,8 @@ interface ModalProps {
   children: React.ReactNode;
 }
 
+// generic centered modal shell. backdrop click closes; the inner stopPropagation keeps clicks
+// inside the panel from bubbling out and triggering that close
 export function Modal({ isDark, title, onClose, children }: ModalProps) {
   const panel = isDark ? "bg-slate-900 border-slate-700" : "bg-white border-gray-200";
   const border = isDark ? "border-slate-700" : "border-gray-200";
@@ -44,6 +46,7 @@ interface FooterProps {
   confirmLabel: string;
 }
 
+// shared cancel/confirm footer; both buttons disable while saving and the confirm shows a spinner
 export function ModalFooter({ isDark, onCancel, onConfirm, saving, confirmLabel }: FooterProps) {
   const cancelBtn = isDark
     ? "border-slate-700 text-slate-300 hover:bg-slate-800"

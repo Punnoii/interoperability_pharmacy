@@ -2,6 +2,7 @@ package com.example.idmp.web.dto.similarity;
 
 import java.math.BigDecimal;
 
+// pairwise similarity result — the score plus which method/ontology produced it
 public class PairSimilarityResponse {
 
   private String conceptA;

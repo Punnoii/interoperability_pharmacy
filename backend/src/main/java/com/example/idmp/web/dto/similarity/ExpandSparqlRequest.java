@@ -2,6 +2,7 @@ package com.example.idmp.web.dto.similarity;
 
 import jakarta.validation.constraints.NotBlank;
 
+// body for /expand — raw SPARQL carrying the @expand annotations
 public class ExpandSparqlRequest {
 
   @NotBlank

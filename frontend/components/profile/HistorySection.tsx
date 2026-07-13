@@ -7,6 +7,7 @@ interface Props {
   history: HistoryEntry[];
 }
 
+// scrollable query-history list; each row shows timestamp, row count or error, and a clipped query
 export default function HistorySection({ isDark, history }: Props) {
   const muted = isDark ? "text-slate-400" : "text-gray-500";
   const code = isDark ? "text-slate-300" : "text-gray-700";
@@ -47,6 +48,7 @@ export default function HistorySection({ isDark, history }: Props) {
                   </>
                 )}
               </div>
+              {/* cap long queries so one giant entry can't blow out the row */}
               <pre className={`text-xs font-mono leading-relaxed overflow-x-auto max-h-24 ${code}`}>
                 {h.query.length > 240 ? h.query.slice(0, 240) + "\n..." : h.query}
               </pre>

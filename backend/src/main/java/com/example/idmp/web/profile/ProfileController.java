@@ -19,6 +19,8 @@ import com.example.idmp.web.session.SessionCookieFilter;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+// manages the per-session persisted mapping config (the "profile") that survives sandbox restarts
+// allowCredentials=false is fine — the sid rides on the (httpOnly) cookie, not a bearer we need to echo
 @RestController
 @RequestMapping("/api/profile")
 @CrossOrigin(origins = "*", allowCredentials = "false")
@@ -30,11 +32,13 @@ public class ProfileController {
     this.service = service;
   }
 
+  // what's saved for this session — file list plus a convenience exists/count summary
   @GetMapping("/config")
   public Map<String, Object> getConfig(HttpServletRequest req) {
     String sid = SessionCookieFilter.require(req);
     List<Map<String, Object>> files = service.describeProfile(sid);
 
+    // LinkedHashMap so the json keys come out in this order rather than hash order
     Map<String, Object> resp = new LinkedHashMap<>();
     resp.put("sid", sid);
     resp.put("exists", !files.isEmpty());
@@ -43,6 +47,7 @@ public class ProfileController {
     return resp;
   }
 
+  // wipe this session's saved profile
   @DeleteMapping("/config")
   public Map<String, Object> deleteConfig(HttpServletRequest req) {
     String sid = SessionCookieFilter.require(req);
@@ -50,6 +55,7 @@ public class ProfileController {
     return Map.of("deleted", true);
   }
 
+  // rehydrate a live sandbox from the saved profile — 404 if there's nothing stored yet
   @PostMapping("/config/restore")
   public Map<String, Object> restoreConfig(HttpServletRequest req) {
     String sid = SessionCookieFilter.require(req);
@@ -61,6 +67,7 @@ public class ProfileController {
       resp.put("triples", box.model.size());
       return resp;
     } catch (IllegalStateException ex) {
+      // service signals "no profile to restore" via ISE; translate that to a 404 for the client
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage());
     }
   }

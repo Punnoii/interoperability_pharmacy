@@ -39,6 +39,7 @@ interface SavedConfig {
 
 const EMPTY_CONFIG: SavedConfig = { exists: false, fileCount: 0, files: [] };
 
+// account page — profile card + a three-way tab (bookmarks / history / saved upload config)
 export default function ProfilePage() {
   const [isDark, setIsDark] = useDarkMode();
   const [user, setUser] = useState<User | null>(null);
@@ -51,6 +52,7 @@ export default function ProfilePage() {
   const [editingName, setEditingName] = useState(false);
   const [changingPw, setChangingPw] = useState(false);
 
+  // pull user + bookmarks + saved config together; each response is optional-ok so one failure doesn't blank the page
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
@@ -76,7 +78,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     loadAll();
-    setHistory(getHistory());
+    setHistory(getHistory()); // history is local-only, read straight from the store
   }, [loadAll]);
 
   const bg = isDark ? "bg-slate-950 text-slate-100" : "bg-gray-50 text-gray-900";

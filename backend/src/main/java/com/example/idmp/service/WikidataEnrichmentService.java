@@ -14,6 +14,7 @@ import com.example.idmp.web.dto.WikidataSearchItem;
 import com.example.idmp.web.dto.WikidataSearchResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 
+// pulls extra context for a substance off the public Wikidata search API
 @Service
 public class WikidataEnrichmentService {
 
@@ -21,6 +22,8 @@ public class WikidataEnrichmentService {
   private final String apiUrl;
   private final String language;
 
+  // dedicated wikidataRestClient bean keeps its timeouts separate from our internal calls;
+  // url/language are overridable but default to the public en endpoint
   public WikidataEnrichmentService(
       @Qualifier("wikidataRestClient") RestClient restClient,
       @Value("${wikidata.api-url:https://www.wikidata.org/w/api.php}") String apiUrl,
@@ -31,6 +34,7 @@ public class WikidataEnrichmentService {
     }
 
   public WikidataSearchResponse search(String query, int limit) {
+    // clamp to 1..10 - this is best-effort enrichment, no reason to hammer their API
     int safeLimit = Math.max(1,Math.min(limit,10));
 
     URI uri = UriComponentsBuilder.fromUriString(apiUrl)
@@ -43,11 +47,13 @@ public class WikidataEnrichmentService {
         .toUri();
     JsonNode root = restClient.get()
         .uri(uri)
+        // Wikidata asks for a descriptive User-Agent or they may throttle/block
         .header("User-Agent", "idmp-backend-demo/0.1 (educational project)")
         .header("Accept", "application/json")
         .retrieve()
         .body(JsonNode.class);
 
+    // walk the "search" array by hand rather than binding a full DTO - we only want a few fields
     List<WikidataSearchItem> items = new ArrayList<>();
     if (root != null) {
       for (JsonNode item : root.path("search")) {

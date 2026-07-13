@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 
 const STORAGE_KEY = "rxvkg.darkMode";
 
+// toggle the `dark` class tailwind keys off; guarded for SSR where document doesn't exist
 function applyDarkClass(isDark: boolean) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
@@ -11,6 +12,7 @@ function applyDarkClass(isDark: boolean) {
   else root.classList.remove("dark");
 }
 
+// dark-mode state that's optimistic from localStorage but reconciled with the server preference
 export function useDarkMode(): [boolean, (next: boolean) => void] {
   const [isDark, setIsDarkState] = useState<boolean>(false);
 
@@ -19,12 +21,14 @@ export function useDarkMode(): [boolean, (next: boolean) => void] {
   }, [isDark]);
 
   useEffect(() => {
+    // paint the cached choice immediately to avoid a flash, then fetch the authoritative value
     try {
       const cached = window.localStorage.getItem(STORAGE_KEY);
       if (cached === "true") setIsDarkState(true);
     } catch {
     }
 
+    // guard against a late fetch resolving after unmount and clobbering state
     let cancelled = false;
     (async () => {
       try {
@@ -47,6 +51,7 @@ export function useDarkMode(): [boolean, (next: boolean) => void] {
     };
   }, []);
 
+  // flip locally right away, cache it, then persist to the server fire-and-forget (errors ignored)
   const setIsDark = useCallback((next: boolean) => {
     setIsDarkState(next);
     try {

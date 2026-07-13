@@ -1,3 +1,4 @@
+// central tuning knobs + the map of app-relative api routes; imported everywhere so numbers live in one place
 export const APP_CONFIG = {
   autocomplete: {
     threshold: 0.2,
@@ -24,7 +25,9 @@ export const APP_CONFIG = {
     },
   },
   api: {
+    // spring backend base; overridden per-deploy via env, localhost for dev
     backendUrl: process.env.BACKEND_URL ?? "http://localhost:8082",
+    // next api-route paths the frontend calls; most just proxy through to backendUrl
     routes: {
       sparql:               "/api/sparql",
       nlp:                  "/api/nlp",

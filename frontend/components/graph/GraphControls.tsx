@@ -9,6 +9,8 @@ interface GraphControlsProps {
   onZoomOut: () => void;
 }
 
+// little zoom in/out + reset button cluster overlaid on the graph; all it does is call back
+// into GraphCanvas's imperative handle
 export default function GraphControls({
   isDark,
   onResetView,

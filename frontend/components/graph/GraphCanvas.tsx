@@ -19,14 +19,19 @@ interface GraphCanvasProps {
   onSelectNode: (node: GraphNode | null) => void;
 }
 
+// below this zoom scale node labels are too dense to read, so we hide them
 const LABEL_HIDE_ZOOM = 0.45;
+// opacity for the nodes/links pushed to the background when something is focused
 const DIM = 0.2;
 
+// d3 mutates link endpoints from id strings into node objects after the first tick — normalize both
 function endpointId(end: string | GraphNode | undefined | null): string | null {
   if (end == null) return null;
   return typeof end === "string" ? end : end.id;
 }
 
+// force-directed svg graph rendered imperatively with d3 — react owns the data, d3 owns the DOM
+// inside the svg and the running simulation. parent drives zoom/reset through the forwarded handle.
 const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function GraphCanvas(
   { nodes, links, allTypes, isDark, selectedNodeId, searchTerm, onSelectNode },
   ref
@@ -35,6 +40,7 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
   const wrapRef = useRef<HTMLDivElement>(null);
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
   const simRef = useRef<d3.Simulation<GraphNode, GraphLink> | null>(null);
+  // d3 event handlers are bound once; keep the latest onSelect in a ref so they never call a stale one
   const onSelectRef = useRef(onSelectNode);
   onSelectRef.current = onSelectNode;
 
@@ -46,6 +52,7 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
     linkLabel: isDark ? "#94a3b8" : "#64748b",
   }), [isDark]);
 
+  // id -> neighbor ids, precomputed for the focus/dim highlight on hover + selection
   const adjacency = useMemo(() => {
     const m = new Map<string, Set<string>>();
     for (const l of links) {
@@ -60,12 +67,14 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
     return m;
   }, [links]);
 
+  // zoom/reset controls the parent's GraphControls buttons call into
   useImperativeHandle(ref, () => ({
     resetView: () => {
       const svg = svgRef.current;
       const zoom = zoomRef.current;
       if (!svg || !zoom) return;
       d3.select(svg).transition().duration(400).call(zoom.transform, d3.zoomIdentity);
+      // clearing fx/fy releases any nodes the user pinned by dragging
       nodes.forEach((n) => {
         n.fx = null;
         n.fy = null;
@@ -80,11 +89,13 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
     },
   }));
 
+  // main build: wipes and re-renders the whole scene + restarts the sim whenever data or theme changes
   useEffect(() => {
     const svgEl = svgRef.current;
     const wrap = wrapRef.current;
     if (!svgEl || !wrap) return;
 
+    // measure the wrapper for the viewBox; fall back to 800x600 if it hasn't laid out yet
     const W = wrap.clientWidth || 800;
     const H = wrap.clientHeight || 600;
     const svg = d3.select(svgEl).attr("viewBox", `0 0 ${W} ${H}`);
@@ -92,6 +103,7 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
 
     const { edge: edgeColor, edgeHi, labelFill, labelHalo, linkLabel: linkLabelColor } = colors;
 
+    // two arrowhead markers — a base one and a highlighted one for focused edges
     const defs = svg.append("defs");
     const arrow = (id: string, color: string, size: number) =>
       defs
@@ -108,11 +120,13 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
     arrow("arrow-base", edgeColor, 6);
     arrow("arrow-hi", edgeHi, 7);
 
+    // single <g> that the zoom transform is applied to; layered so nodes paint over edges
     const root = svg.append("g");
     const linkLayer = root.append("g").attr("class", "link-layer");
     const linkLabelLayer = root.append("g").attr("class", "link-label-layer");
     const nodeLayer = root.append("g").attr("class", "node-layer");
 
+    // radius scales with sqrt(degree) so hubs read bigger without ballooning
     const radius = (d: GraphNode) => 10 + Math.sqrt(Math.max(1, d.degree)) * 3.2;
 
     const linkSel = linkLayer
@@ -137,7 +151,7 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
       .attr("text-anchor", "middle")
       .attr("dominant-baseline", "middle")
       .style("pointer-events", "none")
-      .style("opacity", 0);
+      .style("opacity", 0); // edge labels stay hidden until an edge is focused
 
     const nodeSel = nodeLayer
       .selectAll<SVGGElement, GraphNode>("g.node")
@@ -170,10 +184,12 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
       .style("pointer-events", "none")
       .style("user-select", "none");
 
+    // native tooltip on hover — cheap, no extra DOM
     nodeSel.append("title").text((d) => `${d.type}: ${d.id}\nConnections: ${d.degree}`);
 
     nodeSel
       .on("mouseenter", function (_, d) {
+        // hover-highlight is suppressed while a node is pinned selected (that effect owns the focus)
         if (selectedNodeId) return;
         applyFocus(d.id);
       })
@@ -185,8 +201,10 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
         onSelectRef.current(d);
       });
 
+    // click on empty canvas clears the selection
     svg.on("click", () => onSelectRef.current(null));
 
+    // drag pins a node (fx/fy) and briefly reheats the sim so neighbors settle around it
     const drag = d3
       .drag<SVGGElement, GraphNode>()
       .on("start", (e, d) => {
@@ -213,6 +231,7 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
       .on("zoom", (event) => {
         root.attr("transform", event.transform.toString());
         const k = event.transform.k;
+        // only toggle label visibility when we actually cross the threshold, not on every wheel tick
         if ((zoomK < LABEL_HIDE_ZOOM) !== (k < LABEL_HIDE_ZOOM)) {
           if (k < LABEL_HIDE_ZOOM) {
             labelSel.style("display", "none");
@@ -227,6 +246,7 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
 
     const linkCount = links.length;
     const nodeCount = nodes.length;
+    // cool the layout down faster on big graphs so it stops churning sooner
     const decay = nodeCount > 200 ? 0.05 : 0.0228;
 
     const sim = d3
@@ -244,11 +264,13 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
       .force("charge", d3.forceManyBody().strength(nodeCount > 200 ? -180 : -260))
       .force("center", d3.forceCenter(W / 2, H / 2))
       .force("collision", d3.forceCollide<GraphNode>().radius((d) => radius(d) + 22))
+      // weak pull toward center on both axes keeps disconnected components from drifting off-screen
       .force("x", d3.forceX(W / 2).strength(0.04))
       .force("y", d3.forceY(H / 2).strength(0.04));
 
     simRef.current = sim;
 
+    // per-frame: push simulated positions into the line/node attributes
     sim.on("tick", () => {
       linkSel
         .attr("x1", (d) => (d.source as GraphNode).x ?? 0)
@@ -259,12 +281,15 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
       nodeSel.attr("transform", (d) => `translate(${d.x ?? 0},${d.y ?? 0})`);
     });
 
+    // position edge labels once the layout settles — no point recomputing midpoints every tick
     sim.on("end", () => {
       linkLabelSel
         .attr("x", (d) => (((d.source as GraphNode).x ?? 0) + ((d.target as GraphNode).x ?? 0)) / 2)
         .attr("y", (d) => (((d.source as GraphNode).y ?? 0) + ((d.target as GraphNode).y ?? 0)) / 2);
     });
 
+    // spotlight focusId + its neighbors, dim the rest and reveal the touching edge labels.
+    // null resets everything back to the flat look.
     function applyFocus(focusId: string | null) {
       if (!focusId) {
         nodeSel.select("circle").attr("fill-opacity", 1).attr("stroke-width", 2.5);
@@ -309,6 +334,7 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
       });
     }
 
+    // re-apply the persistent selection after a rebuild so it survives data/theme changes
     if (selectedNodeId) applyFocus(selectedNodeId);
 
     return () => {
@@ -316,6 +342,8 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
     };
   }, [nodes, links, allTypes, isDark, adjacency, colors]);
 
+  // search highlight — dims everything except nodes whose label or id contains the term.
+  // reaches into d3's existing selection instead of rebuilding the scene.
   useEffect(() => {
     const svg = svgRef.current;
     if (!svg) return;
@@ -340,6 +368,8 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
     linkSel.style("opacity", 0.25);
   }, [searchTerm, nodes]);
 
+  // persistent selection highlight, driven by the selectedNodeId prop. mirrors applyFocus but
+  // recomputes neighbors from links since the closure version above lives in a different effect.
   useEffect(() => {
     const svg = svgRef.current;
     if (!svg) return;
@@ -399,6 +429,7 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
       <svg
         ref={svgRef}
         className={`w-full h-full ${isDark ? "bg-slate-900" : "bg-gray-50"}`}
+        // touchAction:none so pinch/drag pans the graph instead of scrolling the page
         style={{ willChange: "transform", touchAction: "none" }}
       />
     </div>

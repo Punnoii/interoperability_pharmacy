@@ -11,6 +11,7 @@ interface Props {
   bookmarks: Bookmark[];
 }
 
+// read-only list of the user's saved SPARQL queries; shows a hint when there are none
 export default function BookmarksSection({ isDark, bookmarks }: Props) {
   const muted = isDark ? "text-slate-400" : "text-gray-500";
   const subtle = isDark ? "text-slate-300" : "text-gray-700";

@@ -3,6 +3,7 @@ package com.example.idmp.web.dto.similarity;
 import java.math.BigDecimal;
 import java.util.List;
 
+// ranked neighbours for a concept, with the request params + timing echoed back
 public class TopKResponse {
 
   private String concept;
@@ -52,6 +53,7 @@ public class TopKResponse {
   public List<Neighbor> getResults() { return results; }
   public void setResults(List<Neighbor> results) { this.results = results; }
 
+  // one ranked neighbour — concept code, its label, and the similarity score
   public static class Neighbor {
     private String concept;
     private String label;
