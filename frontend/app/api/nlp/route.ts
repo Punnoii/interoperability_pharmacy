@@ -75,10 +75,10 @@ function extractSparql(text: string): string {
 }
 
 const MODEL_CHAIN = [
-  "gemini-2.5-flash",
+  "gemini-2.0-flash",
+  "gemini-flash-latest",
   "gemini-2.5-flash-lite",
-  "gemini-1.5-flash-8b",
-  "gemini-1.5-flash",
+  "gemini-2.0-flash-lite",
 ];
 
 async function callGemini(apiKey: string, prompt: string, model: string): Promise<Response> {
@@ -95,24 +95,11 @@ async function callGemini(apiKey: string, prompt: string, model: string): Promis
   );
 }
 
-export async function POST(req: NextRequest) {
-  const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
-  }
-
-  const { query } = await req.json() as { query: string };
-
-  if (!query?.trim()) {
-    return NextResponse.json({ error: "query is required" }, { status: 400 });
-  }
-
+async function generateWithGemini(prompt: string): Promise<NextResponse> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ error: "GEMINI_API_KEY is not configured on the server" }, { status: 500 });
   }
-
-  const prompt = buildChainOfThoughtPrompt(query.trim());
 
   let lastError = "";
   for (const model of MODEL_CHAIN) {
@@ -135,13 +122,65 @@ export async function POST(req: NextRequest) {
       candidates?: { content?: { parts?: { text?: string }[] } }[];
     };
     const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-    const sparql = extractSparql(rawText);
-
-    return NextResponse.json({ sparql, reasoning: rawText, model });
+    return NextResponse.json({ sparql: extractSparql(rawText), reasoning: rawText, model });
   }
 
   return NextResponse.json(
     { error: `All models quota-exceeded. Last: ${lastError}` },
     { status: 429 }
   );
+}
+
+async function generateWithOllama(prompt: string): Promise<NextResponse> {
+  const base = process.env.OLLAMA_URL || "http://ollama:11434";
+  const model = process.env.OLLAMA_MODEL || "qwen2.5:7b";
+
+  let res: Response;
+  try {
+    res = await fetch(`${base}/api/generate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model,
+        prompt,
+        stream: false,
+        options: { temperature: 0, num_predict: 2048 },
+      }),
+    });
+  } catch (e) {
+    return NextResponse.json({ error: `Cannot reach Ollama at ${base}: ${String(e)}` }, { status: 502 });
+  }
+
+  if (!res.ok) {
+    const errText = await res.text();
+    return NextResponse.json(
+      { error: `Ollama error ${res.status}: ${errText.slice(0, 300)}` },
+      { status: res.status }
+    );
+  }
+
+  const data = await res.json() as { response?: string };
+  const rawText = data.response ?? "";
+  return NextResponse.json({ sparql: extractSparql(rawText), reasoning: rawText, model });
+}
+
+export async function POST(req: NextRequest) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
+  }
+
+  const { query } = await req.json() as { query: string };
+
+  if (!query?.trim()) {
+    return NextResponse.json({ error: "query is required" }, { status: 400 });
+  }
+
+  const prompt = buildChainOfThoughtPrompt(query.trim());
+  const provider = (process.env.NLP_PROVIDER || "gemini").toLowerCase();
+
+  if (provider === "ollama") {
+    return generateWithOllama(prompt);
+  }
+  return generateWithGemini(prompt);
 }

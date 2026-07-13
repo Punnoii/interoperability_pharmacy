@@ -543,7 +543,7 @@ export default function QueryPanel({
   const inputCls = tc.input;
 
   return (
-    <div className="flex flex-col md:flex-row h-full overflow-hidden">
+    <div className="flex flex-col md:flex-row md:h-full md:overflow-hidden">
       <DatabaseInfoPanel
         isDark={isDark}
         mode={queryMode}
@@ -559,7 +559,7 @@ export default function QueryPanel({
         onDeleteBookmark={handleDeleteBookmark}
       />
 
-      <section className="flex-1 overflow-auto">
+      <section className="md:flex-1 md:overflow-auto">
         {queryMode === "nlp" ? renderNLPView() : renderManualView()}
       </section>
 
@@ -654,7 +654,7 @@ export default function QueryPanel({
       : "bg-gray-50 border-gray-200 text-gray-600";
 
     return (
-      <div className="flex flex-col h-full gap-4 p-6 overflow-auto">
+      <div className="flex flex-col md:h-full gap-4 p-4 sm:p-6 md:overflow-auto">
         <div className="flex items-center gap-2">
           <Sparkles size={18} className="text-blue-600" />
           <h2 className={`text-base font-bold ${heading}`}>Ask in Natural Language</h2>
@@ -727,7 +727,7 @@ export default function QueryPanel({
           </div>
         </div>
 
-        <div ref={resultsRef} className={`flex-1 rounded-lg border overflow-hidden ${card}`}>
+        <div ref={resultsRef} className={`md:flex-1 rounded-lg border overflow-hidden ${card}`}>
           {error && (
             <div className="flex flex-col items-center justify-center h-32 gap-2 px-6 text-red-500">
               <p className="text-sm font-semibold">Query failed</p>
@@ -751,56 +751,87 @@ export default function QueryPanel({
             </div>
           )}
           {!isLoading && !error && results && bindings.length > 0 && (
-            <div className="flex flex-col h-full">
-              <div className={`flex items-center px-4 py-2 border-b ${isDark ? "border-slate-700 bg-slate-900/50" : "border-gray-200 bg-gray-50"}`}>
-                <span className={`text-xs font-semibold ${subtle}`}>
-                  {bindings.length.toLocaleString()} result{bindings.length !== 1 ? "s" : ""}
-                </span>
+            <div className="flex flex-col md:h-full">
+              <div className={`flex flex-wrap items-center justify-between gap-3 px-4 py-2 border-b ${isDark ? "border-slate-700 bg-slate-900/50" : "border-gray-200 bg-gray-50"}`}>
+                {viewMode === "table" ? (
+                  <span className={`text-xs font-semibold ${subtle}`}>
+                    {bindings.length.toLocaleString()} result{bindings.length !== 1 ? "s" : ""}
+                  </span>
+                ) : (
+                  <span className="w-px" />
+                )}
+                <div className={`flex rounded-md overflow-hidden border text-xs font-medium ${isDark ? "border-slate-700" : "border-gray-300"}`}>
+                  <ViewToggle active={viewMode === "table"} onClick={() => setViewMode("table")} isDark={isDark} icon={<Table2 size={13} />} label="Table" />
+                  <ViewToggle active={viewMode === "graph"} onClick={() => setViewMode("graph")} disabled={vars.length < 2} title={vars.length < 2 ? "Need at least 2 SELECT variables" : undefined} isDark={isDark} icon={<Network size={13} />} label="Graph" />
+                </div>
+                {viewMode === "table" ? (
+                  <span className={`text-xs tabular-nums ${muted}`}>Page {page} of {totalPages}</span>
+                ) : (
+                  <span className="w-px" />
+                )}
               </div>
-              <div className="overflow-auto max-h-80">
-                <table className="w-full text-sm border-collapse">
-                  <thead className={`text-xs uppercase ${isDark ? "bg-slate-900 text-slate-400" : "bg-gray-50 text-gray-600"}`}>
-                    <tr>
-                      <th className={`px-3 py-2 text-left font-semibold w-10 border-b ${isDark ? "border-slate-700" : "border-gray-200"}`}>#</th>
-                      {vars.map((v) => (
-                        <th key={v} className={`px-3 py-2 text-left font-semibold border-b ${isDark ? "border-slate-700" : "border-gray-200"}`}>{v}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {bindings.slice(0, 30).map((binding, idx) => {
-                      const terms = rowTerms(binding, vars);
-                      return (
-                      <tr
-                        key={idx}
-                        onClick={() => terms.length > 0 && setWikiTerms(terms)}
-                        title={terms.length > 0 ? `Look up “${terms[0]}” on Wikidata` : undefined}
-                        className={`${terms.length > 0 ? "cursor-pointer" : ""} ${isDark ? "border-b border-slate-800 hover:bg-slate-700/40" : "border-b border-gray-100 hover:bg-gray-50"}`}
-                      >
-                        <td className={`px-3 py-2 text-xs font-mono ${muted}`}>{idx + 1}</td>
-                        {vars.map((v) => {
-                          const cell = binding[v];
-                          const isUri = cell?.type === "uri";
-                          return (
-                            <td key={v} className="px-3 py-2 max-w-xs">
-                              {cell ? (
-                                isUri ? (
-                                  <a href={cell.value} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="truncate block text-xs font-mono text-blue-600 hover:underline" title={cell.value}>{cell.value}</a>
-                                ) : (
-                                  <span className={`text-xs truncate block ${subtle}`} title={cell.value}>{cell.value}</span>
-                                )
-                              ) : (
-                                <span className={`text-xs ${muted}`}>—</span>
-                              )}
-                            </td>
-                          );
-                        })}
+              {viewMode === "graph" && (
+                <div className="h-[60vh] md:h-auto md:flex-1 min-h-[360px] overflow-hidden">
+                  <ResultsGraph vars={vars} bindings={bindings} isDark={isDark} />
+                </div>
+              )}
+              {viewMode === "table" && (
+                <div className="overflow-auto max-h-[70vh] md:max-h-none md:flex-1">
+                  <table className="w-full min-w-[640px] text-sm border-collapse">
+                    <thead className={`text-xs uppercase ${isDark ? "bg-slate-900 text-slate-400" : "bg-gray-50 text-gray-600"}`}>
+                      <tr>
+                        <th className={`px-3 py-2 text-left font-semibold w-10 border-b ${isDark ? "border-slate-700" : "border-gray-200"}`}>#</th>
+                        {vars.map((v) => (
+                          <th key={v} className={`px-3 py-2 text-left font-semibold border-b ${isDark ? "border-slate-700" : "border-gray-200"}`}>{v}</th>
+                        ))}
                       </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {pageBindings.map((binding, idx) => {
+                        const terms = rowTerms(binding, vars);
+                        return (
+                        <tr
+                          key={idx}
+                          onClick={() => terms.length > 0 && setWikiTerms(terms)}
+                          title={terms.length > 0 ? `Look up “${terms[0]}” on Wikidata` : undefined}
+                          className={(terms.length > 0 ? "cursor-pointer " : "") + (isDark ? "border-b border-slate-800 hover:bg-slate-700/40" : "border-b border-gray-100 hover:bg-gray-50")}
+                        >
+                          <td className={`px-3 py-2 text-xs font-mono ${muted}`}>{(page - 1) * PAGE_SIZE + idx + 1}</td>
+                          {vars.map((v) => {
+                            const cell = binding[v];
+                            const isUri = cell?.type === "uri";
+                            return (
+                              <td key={v} className="px-3 py-2 max-w-xs">
+                                {cell ? (
+                                  isUri ? (
+                                    <a href={cell.value} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="truncate block text-xs font-mono text-blue-600 hover:underline dark:text-blue-400" title={cell.value}>{cell.value}</a>
+                                  ) : (
+                                    <span className={`text-xs truncate block ${subtle}`} title={cell.value}>{cell.value}</span>
+                                  )
+                                ) : (
+                                  <span className={`text-xs ${muted}`}>—</span>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {viewMode === "table" && totalPages > 1 && (
+                <div className={`flex items-center justify-between gap-3 px-4 py-2 border-t ${isDark ? "border-slate-700 bg-slate-900/50" : "border-gray-200 bg-gray-50"}`}>
+                  <PageBtn isDark={isDark} disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>← Previous</PageBtn>
+                  <div className="flex gap-1">
+                    {pageNumbers(page, totalPages).map((n) => (
+                      <button key={n} onClick={() => setPage(n)} className={`w-7 h-7 text-xs rounded border tabular-nums ${n === page ? "bg-blue-600 text-white border-blue-600" : isDark ? "border-slate-700 text-slate-400 hover:bg-slate-800" : "border-gray-300 text-gray-600 hover:bg-gray-100"}`}>{n}</button>
+                    ))}
+                  </div>
+                  <PageBtn isDark={isDark} disabled={page === totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Next →</PageBtn>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -819,8 +850,8 @@ export default function QueryPanel({
 
   function renderManualView() {
     return (
-    <div className="flex flex-col h-full gap-4 p-6 overflow-auto">
-      <div className={`flex gap-3 items-stretch rounded-lg border p-3 ${card}`}>
+    <div className="flex flex-col md:h-full gap-4 p-4 sm:p-6 md:overflow-auto">
+      <div className={`flex flex-col sm:flex-row gap-3 sm:items-stretch rounded-lg border p-3 ${card}`}>
         <div className="flex-1 relative">
           <textarea
             ref={queryTextareaRef}
@@ -925,7 +956,7 @@ export default function QueryPanel({
           <button
             onClick={() => setPaletteOpen(true)}
             title="Quick search — substances & query templates (⌘K)"
-            className={`flex items-center gap-2 px-3 py-2 rounded text-sm font-medium border ${tc.btnBase}`}
+            className={`flex items-center justify-center gap-2 px-3 py-2 rounded text-sm font-medium border ${tc.btnBase}`}
           >
             <Search size={14} />
             <span>Templates</span>
@@ -933,7 +964,7 @@ export default function QueryPanel({
         </div>
       </div>
 
-      <div ref={resultsRef} className={`flex-1 rounded-lg border overflow-hidden ${card}`}>
+      <div ref={resultsRef} className={`md:flex-1 rounded-lg border overflow-hidden ${card}`}>
         {error && (
           <div className="flex flex-col items-center justify-center h-64 gap-2 px-6 text-red-500">
             <p className="text-sm font-semibold">Query failed</p>
@@ -962,7 +993,7 @@ export default function QueryPanel({
         )}
 
         {!isLoading && !error && results && bindings.length > 0 && (
-          <div className="flex flex-col h-full">
+          <div className="flex flex-col md:h-full">
             <div
               className={`flex flex-wrap items-center justify-between gap-3 px-4 py-2 border-b${isDark ? "border-slate-700 bg-slate-900/50" : "border-gray-200 bg-gray-50"
                 }`}
@@ -1007,14 +1038,14 @@ export default function QueryPanel({
             </div>
 
             {viewMode === "graph" && (
-              <div className="flex-1 min-h-[420px] overflow-hidden">
+              <div className="h-[60vh] md:h-auto md:flex-1 min-h-[360px] overflow-hidden">
                 <ResultsGraph vars={vars} bindings={bindings} isDark={isDark} />
               </div>
             )}
 
             {viewMode === "table" && (
-              <div className="flex-1 overflow-auto">
-                <table className="w-full text-sm border-collapse">
+              <div className="overflow-auto max-h-[70vh] md:max-h-none md:flex-1">
+                <table className="w-full min-w-[640px] text-sm border-collapse">
                   <thead
                     className={`text-xs uppercase ${isDark ? "bg-slate-900 text-slate-400" : "bg-gray-50 text-gray-600"
                       }`}
@@ -1221,7 +1252,7 @@ function DatabaseInfoPanel({
   const openBookmark = openMenuId ? bookmarks.find((b) => b.id === openMenuId) : null;
 
   return (
-    <aside className={`w-full md:w-72 md:shrink-0 border-r overflow-y-auto ${bg}`}>
+    <aside className={`w-full md:w-72 shrink-0 border-b md:border-b-0 md:border-r md:max-h-none md:overflow-y-auto ${bg}`}>
       <div className="flex flex-col gap-4 p-4">
         <div className="flex items-center gap-2">
           <Database size={16} className="text-blue-600" />

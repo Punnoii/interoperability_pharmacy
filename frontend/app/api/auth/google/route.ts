@@ -4,7 +4,7 @@ import crypto from "crypto";
 export async function GET(req: NextRequest) {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   if (!clientId) {
-    return NextResponse.redirect(new URL("/?error=google_not_configured", req.url));
+    return NextResponse.redirect(new URL("/?error=google_not_configured", process.env.APP_URL || req.url));
   }
 
   const redirectUri = `${process.env.APP_URL || req.nextUrl.origin}/api/auth/google/callback`;

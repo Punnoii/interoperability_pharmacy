@@ -92,6 +92,9 @@ services:
       MAIL_FROM: ${MAIL_FROM:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-false}
+      NLP_PROVIDER: ${NLP_PROVIDER:-gemini}
+      OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:7b}
     depends_on:
       backend:
         condition: service_healthy
@@ -102,5 +105,23 @@ services:
       retries: 3
       start_period: 30s
 
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["rm -f /usr/lib/ollama/libggml-cpu-sapphirerapids.so; exec ollama serve"]
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+      - NVIDIA_VISIBLE_DEVICES=void
+    volumes:
+      - ollama-data:/root/.ollama
+    healthcheck:
+      test: [ "CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
 volumes:
   postgres-data:
+  ollama-data:

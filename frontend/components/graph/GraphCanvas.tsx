@@ -399,7 +399,7 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, GraphCanvasProps>(function Gra
       <svg
         ref={svgRef}
         className={`w-full h-full ${isDark ? "bg-slate-900" : "bg-gray-50"}`}
-        style={{ willChange: "transform" }}
+        style={{ willChange: "transform", touchAction: "none" }}
       />
     </div>
   );

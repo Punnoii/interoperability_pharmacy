@@ -8,22 +8,33 @@ interface TokenPayload {
   role: string;
 }
 
+function externalBase(req: NextRequest): string {
+  const fwdHost = req.headers.get("x-forwarded-host");
+  if (fwdHost) {
+    const proto = req.headers.get("x-forwarded-proto") ?? "https";
+    return `${proto}://${fwdHost}`;
+  }
+  if (process.env.APP_URL) return process.env.APP_URL;
+  return req.nextUrl.origin;
+}
+
 export function middleware(req: NextRequest) {
   const token = req.cookies.get("auth_token")?.value;
   const { pathname } = req.nextUrl;
+  const base = externalBase(req);
 
   if (!token) {
-    return NextResponse.redirect(new URL("/", req.url));
+    return NextResponse.redirect(new URL("/", base));
   }
 
   if (pathname.startsWith("/admin")) {
     try {
       const payload = jwtDecode<TokenPayload>(token);
       if (payload.role !== "ADMIN") {
-        return NextResponse.redirect(new URL("/homepage", req.url));
+        return NextResponse.redirect(new URL("/homepage", base));
       }
     } catch {
-      return NextResponse.redirect(new URL("/", req.url));
+      return NextResponse.redirect(new URL("/", base));
     }
   }
 

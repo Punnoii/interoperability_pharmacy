@@ -4,7 +4,9 @@ import { upsertOAuthUser } from "@/lib/users";
 
 export async function GET(req: NextRequest) {
   const url = req.nextUrl;
-  const fail = (e: string) => NextResponse.redirect(new URL(`/?error=${e}`, req.url));
+  const fwdHost = req.headers.get("x-forwarded-host");
+  const base = process.env.APP_URL || (fwdHost ? `${req.headers.get("x-forwarded-proto") ?? "https"}://${fwdHost}` : url.origin);
+  const fail = (e: string) => NextResponse.redirect(new URL(`/?error=${e}`, base));
 
   if (url.searchParams.get("error")) return fail("google_denied");
 
@@ -53,7 +55,7 @@ export async function GET(req: NextRequest) {
       role: user.role,
     });
 
-    const res = NextResponse.redirect(new URL("/homepage", req.url));
+    const res = NextResponse.redirect(new URL("/homepage", base));
     res.cookies.set("auth_token", jwt, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

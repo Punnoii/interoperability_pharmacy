@@ -153,6 +153,7 @@ services:
       - DATABASE_URL=postgresql://postgres:pgpass@postgres:5432/postgres?schema=public
       - JWT_SECRET=rxvkg-dev-secret-change-in-production
       - ALLOW_REGISTRATION=true
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
     volumes:
       - ./frontend:/app
       - /app/node_modules

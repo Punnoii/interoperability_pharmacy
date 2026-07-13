@@ -26,7 +26,7 @@ export default function HomePage() {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} isDark={isDark} />
 
-        <main className="flex-1 overflow-hidden flex flex-col">
+        <main className="flex-1 overflow-y-auto md:overflow-hidden flex flex-col">
           {activeTab === "query" && <QueryPanel isDark={isDark} />}
           {activeTab === "explore" && <SubstanceSimilarity isDark={isDark} />}
           {activeTab === "upload" && <UploadPanel isDark={isDark} />}
