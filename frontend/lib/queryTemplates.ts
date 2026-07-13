@@ -168,7 +168,8 @@ WHERE {
 SELECT DISTINCT ?codeSystem
 WHERE {
   ?cs a idmp-dtp:CodeSystem ;
-      rdfs:label ?codeSystem .
+      cmns-dsg:hasName ?csn .
+  ?csn cmns-txt:hasTextValue ?codeSystem .
 }
 ORDER BY ?codeSystem
 LIMIT 60

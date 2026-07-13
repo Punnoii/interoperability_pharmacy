@@ -1,83 +1,169 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
 
-// system prompt — the ontology cheat-sheet we hand the model so it writes SPARQL
-// that actually matches our schema (prefixes, the 2-hop rule, classifier IRIs, etc.)
-const DOMAIN_KNOWLEDGE = `You are an expert SPARQL query generator for the IDMP ISO 11238 Substances Ontology system.
-Your task is to convert natural language (Thai or English) into a valid, executable SPARQL query.
+// worked examples covering the query shapes we care about (SELECT / LIMIT / ASK / COUNT).
+// few-shot beats a giant schema dump here — the model copies the property paths from these.
+const FEW_SHOT_EXAMPLES: { question: string; sparql: string }[] = [
+  // UC1-CQ9 / SELECT — chemical structure
+  {
+    question: "Describe the chemical structure of the substance ADENINE [USP MONOGRAPH].",
+    sparql: `PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
+PREFIX cmns-txt: <https://www.omg.org/spec/Commons/TextDatatype/>
+PREFIX cmns-qtu: <https://www.omg.org/spec/Commons/QuantitiesAndUnits/>
 
-[AVAILABLE PREFIXES - include ONLY what you use in the query body]
-PREFIX :            <http://example.com/idmp-demo/>
-PREFIX idmp-sub:    <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
-PREFIX idmp-dtp:    <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO21090-HarmonizedDatatypes/>
-PREFIX cmns-id:     <https://www.omg.org/spec/Commons/Identifiers/>
-PREFIX cmns-dsg:    <https://www.omg.org/spec/Commons/Designators/>
-PREFIX cmns-txt:    <https://www.omg.org/spec/Commons/TextDatatype/>
-PREFIX lcc-639-1:   <https://www.omg.org/spec/LCC/Languages/ISO639-1-LanguageCodes/>
-PREFIX rdf:         <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX rdfs:        <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX xsd:         <http://www.w3.org/2001/XMLSchema#>
+SELECT ?smiles ?formula ?mw
+WHERE {
+  ?sub idmp-sub:hasSubstanceName/idmp-sub:hasSubstanceNameValue "ADENINE [USP MONOGRAPH]" .
+  OPTIONAL { ?sub idmp-sub:hasDefiningStructure/idmp-sub:hasSMILES/idmp-sub:hasSMILESValue ?smiles }
+  OPTIONAL { ?sub idmp-sub:hasDefiningMolecularFormula/cmns-txt:hasTextValue ?formula }
+  OPTIONAL { ?sub idmp-sub:hasDefiningMolecularWeight/cmns-qtu:hasNumericValue ?mw }
+}`,
+  },
+  // UC1-CQ3 / LIMIT — products by active moiety
+  {
+    question: "Give 5 products that contain substances with active moiety Apixaban [USAN].",
+    sparql: `PREFIX idmp-mprd: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11615-MedicinalProducts/>
+PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
+PREFIX cmns-dsg: <https://www.omg.org/spec/Commons/Designators/>
+PREFIX cmns-rlcmp: <https://www.omg.org/spec/Commons/RolesAndCompositions/>
+PREFIX cmns-txt: <https://www.omg.org/spec/Commons/TextDatatype/>
 
-[PREFIX RULES]
-- rdf: is ALWAYS required (every query uses rdf:type)
-- Include a prefix ONLY if its namespace appears in the query body
-- Do NOT include unused prefixes
+SELECT DISTINCT ?product ?pname
+WHERE {
+  ?moiety idmp-sub:hasSubstanceName/idmp-sub:hasSubstanceNameValue "Apixaban [USAN]" .
+  ?rel idmp-sub:hasRelatedSubstance ?moiety ;
+       idmp-sub:hasSubjectSubstance ?sub ;
+       cmns-dsg:isSignifiedBy/cmns-txt:hasTextValue "ACTIVE MOIETY" .
+  ?ai cmns-rlcmp:isPlayedBy ?sub .
+  ?comp idmp-mprd:hasActiveIngredient ?ai .
+  ?product cmns-dsg:isDefinedIn ?comp ;
+           cmns-dsg:hasName/idmp-mprd:hasFullMedicinalProductName ?pname
+}
+LIMIT 5`,
+  },
+  // UC1-CQ4-UNII / ASK — yes/no registration check
+  {
+    question: "Is a UNII registered for ROCCUS CHRYSOPS FLESH, COOKED?",
+    sparql: `PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
+PREFIX idmp-nara: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/NorthAmericanJurisdiction/NorthAmericanRegistrationAuthorities/>
+PREFIX cmns-id: <https://www.omg.org/spec/Commons/Identifiers/>
 
-[GOLDEN RULE: Always use 2-Hop Pattern]
-NEVER connect literals directly to ?substance.
-- Name search : ?substance idmp-sub:hasSubstanceName ?n . ?n idmp-sub:hasSubstanceNameValue ?name .
-- Identifier  : ?substance cmns-id:isIdentifiedBy ?i  . ?i  cmns-txt:hasTextValue ?identifier .
+ASK
+WHERE {
+  ?code a idmp-nara:UniqueIngredientNumber ;
+        cmns-id:identifies ?sub .
+  ?sub idmp-sub:hasSubstanceName/idmp-sub:hasSubstanceNameValue "ROCCUS CHRYSOPS FLESH, COOKED"
+}`,
+  },
+  // UC1-CQ2 / COUNT — number of active moieties
+  {
+    question: "How many active moieties does TESTOSTERONE UNDECANOATE have?",
+    sparql: `PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
+PREFIX cmns-dsg: <https://www.omg.org/spec/Commons/Designators/>
+PREFIX cmns-txt: <https://www.omg.org/spec/Commons/TextDatatype/>
 
-[CLASSIFIER IRIs]
-- Preferred Name : <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceNameClassifier-PreferredName>
-- Brand Name     : <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceNameClassifier-BrandName>
-- Synonym        : <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceNameClassifier-SynonymName>
-- Chemical type  : <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/SubstanceTypeClassifier-Chemical>
-- Language en    : <https://www.omg.org/spec/LCC/Languages/ISO639-1-LanguageCodes/en>
+SELECT (COUNT(DISTINCT ?moiety) AS ?count)
+WHERE {
+  ?sub idmp-sub:hasSubstanceName/idmp-sub:hasSubstanceNameValue "TESTOSTERONE UNDECANOATE" .
+  ?rel idmp-sub:hasSubjectSubstance ?sub ;
+       idmp-sub:hasRelatedSubstance ?moiety ;
+       cmns-dsg:isSignifiedBy/cmns-txt:hasTextValue "ACTIVE MOIETY"
+}`,
+  },
+  // UC1-CQ4 / SELECT — jurisdiction-specific code
+  {
+    question: "Which EudraVigilance (SMS) code does EUDISTEMON HUMIFUSUM WHOLE have?",
+    sparql: `PREFIX idmp-sub: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/ISO11238-Substances/>
+PREFIX idmp-eura: <https://spec.pistoiaalliance.org/idmp/ontology/ISO/EuropeanJurisdiction/EuropeanRegistrationAuthorities/>
+PREFIX cmns-id: <https://www.omg.org/spec/Commons/Identifiers/>
+PREFIX cmns-txt: <https://www.omg.org/spec/Commons/TextDatatype/>
 
-[SOURCE EXTRACTION]
-BIND(REPLACE(STR(?substance), "^.*/substance/([a-z])/.*$", "$1") AS ?source)
-Sources: a=Company A (PostgreSQL), b=Company B (PostgreSQL), c=Company C (MySQL),
-         d=Company D (MongoDB), e=Company E (PostgreSQL raw)
+SELECT ?val
+WHERE {
+  ?sub idmp-sub:hasSubstanceName/idmp-sub:hasSubstanceNameValue "EUDISTEMON HUMIFUSUM WHOLE" ;
+       cmns-id:isIdentifiedBy ?code .
+  ?code a idmp-eura:EudraVigilanceCode ;
+        cmns-txt:hasTextValue ?val
+}`,
+  },
+];
 
-[CASE-INSENSITIVE FILTER]
-FILTER(CONTAINS(LCASE(?name), LCASE("search_term")))`;
+// one-liner role/domain framing that opens every prompt
+const CONTEXT_HEADER =
+  "You are a SPARQL query generator for a pharmaceutical knowledge graph\n" +
+  "based on the IDMP (Identification of Medicinal Products) standard.";
 
-// glue the user's question onto the domain knowledge + a little chain-of-thought nudge.
-// the step list matters a lot for the smaller models — without it they over-join.
+// the chain-of-thought scaffold — walking these 5 steps keeps the smaller models from over-joining
+const COT_STEPS = `=== INSTRUCTIONS ===
+Think step by step. Write out your reasoning for EACH step below before the query:
+
+Step 1 - What form does the answer take?
+         yes/no question -> ASK
+         build a graph -> CONSTRUCT
+         anything else -> SELECT
+
+Step 2 - What do I need to return?
+         List the variables or values the question is asking for.
+
+Step 3 - Which class do I start from?
+         Pick the anchor class from the schema that matches the subject of the question.
+
+Step 4 - How do I reach each value?
+         Trace the property path from the anchor class to each return value.
+         Every literal sits behind at least one intermediate node, do not skip it.
+
+Step 5 - Are there any conditions?
+         Exact match: "value"^^xsd:string
+         Partial match: STRSTARTS / CONTAINS / UCASE
+         Missing values: OPTIONAL
+         Exclude: FILTER NOT EXISTS
+         Aggregate: COUNT / GROUP BY / HAVING / ORDER BY / LIMIT`;
+
+// tells the model to reason first, then emit the query after a lone "SPARQL:" line (extractSparql keys off that)
+const COT_OUTPUT_FORMAT = `=== OUTPUT FORMAT ===
+First write your step-by-step reasoning (Step 1 to Step 5).
+Then, on its own line, write exactly:
+SPARQL:
+and after it output ONLY the raw SPARQL query (no markdown fences, starting with PREFIX or SELECT/ASK).`;
+
+// assemble the full prompt: context + few-shot examples + CoT steps + output format + the actual question
 function buildChainOfThoughtPrompt(nlQuery: string): string {
-  return `${DOMAIN_KNOWLEDGE}
+  const examples = FEW_SHOT_EXAMPLES
+    .map((ex, i) => `# Example ${i + 1}\nQuestion: ${ex.question}\nSPARQL:\n${ex.sparql}`)
+    .join("\n\n");
 
-Generate a SPARQL query for: "${nlQuery}"
+  return `${CONTEXT_HEADER}
 
-Think step by step:
-1.. What entities / classes are involved?
-2. How many hops are needed? Prefer the shortest path.
-   Each extra triple acts as an implicit filter — add only if required by the schema.
-3. What FILTER / BIND / classifiers are needed?
-4. Include only prefixes that actually appear in the query body.
-5. Does the resualt need ORDER BY or LIMIT?
-6. Remove any triple pattern not used in SELECT or GROUP BY.
+=== EXAMPLES ===
+${examples}
 
-Then output the final SPARQL query.`;
+${COT_STEPS}
+
+${COT_OUTPUT_FORMAT}
+
+=== YOUR TASK ===
+Question: ${nlQuery}`;
 }
 
-// the model usually wraps the query in ```fences``` (or rambles first), so dig the
-// actual SPARQL back out. no fence? grab from the first PREFIX/SELECT/ASK/... keyword.
+// the model reasons first and drops the query after a "SPARQL:" line, so slice from the last one.
+// still tolerant of the old behaviour: strip ```fences``` or fall back to the first query keyword.
 function extractSparql(text: string): string {
-  const fenceMatch = text.match(/```(?:sparql)?\n?([\s\S]+?)```/i);
+  const markerAt = text.toUpperCase().lastIndexOf("SPARQL:");
+  const body = markerAt >= 0 ? text.slice(markerAt + "SPARQL:".length) : text;
+
+  const fenceMatch = body.match(/```(?:sparql)?\n?([\s\S]+?)```/i);
   if (fenceMatch) return fenceMatch[1].trim();
 
   const indices: number[] = [];
   for (const kw of ["PREFIX", "SELECT", "ASK", "CONSTRUCT", "DESCRIBE"]) {
-    const idx = text.toUpperCase().indexOf(kw);
+    const idx = body.toUpperCase().indexOf(kw);
     if (idx >= 0) indices.push(idx);
   }
   if (indices.length > 0) {
-    return text.slice(Math.min(...indices)).trim();
+    return body.slice(Math.min(...indices)).trim();
   }
 
-  return text.trim();
+  return body.trim();
 }
 
 // try these in order, first one that answers wins. 2.5-flash is deliberately not here —
@@ -99,7 +185,8 @@ async function callGemini(apiKey: string, prompt: string, model: string): Promis
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.0, maxOutputTokens: 2048 },
+        // roomier cap than before — CoT reasoning eats tokens before the query even starts
+        generationConfig: { temperature: 0.0, maxOutputTokens: 4096 },
       }),
     }
   );
@@ -160,7 +247,9 @@ async function generateWithOllama(prompt: string): Promise<NextResponse> {
         model,
         prompt,
         stream: false,
-        options: { temperature: 0, num_predict: 2048 },
+        // bumped for the CoT reasoning + query; num_ctx raised too so the long few-shot prompt + output
+        // don't overflow ollama's default 4k window and get truncated
+        options: { temperature: 0, num_predict: 4096, num_ctx: 8192 },
       }),
     });
   } catch (e) {
